@@ -14,8 +14,10 @@ use TYPO3\Flow\Object\ObjectManagerInterface;
 
 /**
  * EventHandlerLocator
+ *
+ * @Flow\Scope("singleton")
  */
-class EventHandlerLocator
+class EventHandlerLocator implements EventHandlerLocatorInterface
 {
     /**
      * @var ObjectManagerInterface
