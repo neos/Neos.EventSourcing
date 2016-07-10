@@ -10,7 +10,7 @@ namespace Flowpack\Cqrs\Message;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * MessageInterface
+ * MessageMetadata
  */
 class MessageMetadata
 {
