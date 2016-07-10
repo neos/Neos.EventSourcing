@@ -9,6 +9,7 @@ namespace Flowpack\Cqrs\EventStore\EventSerializer;
 
 use Flowpack\Cqrs\Domain\Uuid;
 use Flowpack\Cqrs\Event\EventInterface;
+use Flowpack\Cqrs\EventStore\Exception\EventSerializerException;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
