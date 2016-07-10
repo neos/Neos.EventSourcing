@@ -18,17 +18,11 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class EventBus implements MessageBusInterface
 {
-    /** @var EventHandlerLocator */
-    protected $locator;
-
     /**
-     * EventBus constructor
-     * @param EventHandlerLocator $locator
+     * @var EventHandlerLocatorInterface
+     * @Flow\Inject
      */
-    public function __construct(EventHandlerLocator $locator)
-    {
-        $this->locator = $locator;
-    }
+    protected $locator;
 
     /**
      * @param MessageInterface $message
