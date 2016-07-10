@@ -15,22 +15,9 @@ use TYPO3\Flow\Annotations as Flow;
 interface MessageInterface
 {
     /**
-     * @param  string $name
-     * @param  \DateTime $timestamp
-     * @return void
-     */
-    public function setMetadata($name, \DateTime $timestamp);
-
-    /**
      * @return MessageMetadata
      */
     public function getMetadata();
-
-    /**
-     * @param  array $payload
-     * @return void
-     */
-    public function setPayload(array $payload);
     
     /**
      * @return array
@@ -38,13 +25,11 @@ interface MessageInterface
     public function getPayload();
 
     /**
-     * Proxy to getMetadata()->getName()
      * @return string
      */
     public function getName();
 
     /**
-     * Proxy to getMetadata()->getTimestamp()
      * @return \DateTime
      */
     public function getTimestamp();

@@ -25,17 +25,6 @@ trait MessageTrait
     protected $payload;
 
     /**
-     * Should be called on message creating time (in message constructor)
-     *
-     * @param string $name
-     * @param \DateTime $timestamp
-     */
-    final public function setMetadata($name, \DateTime $timestamp)
-    {
-        $this->metadata = new MessageMetadata($name, $timestamp);
-    }
-
-    /**
      * @return array
      */
     final public function getMetadata()
