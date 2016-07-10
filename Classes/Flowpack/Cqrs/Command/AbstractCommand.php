@@ -10,6 +10,7 @@ namespace Flowpack\Cqrs\Command;
 use Flowpack\Cqrs\Domain\Timestamp;
 use Flowpack\Cqrs\Exception;
 use Flowpack\Cqrs\Message\MessageMetadata;
+use Flowpack\Cqrs\Message\MessageTrait;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -17,86 +18,14 @@ use TYPO3\Flow\Annotations as Flow;
  */
 abstract class AbstractCommand implements CommandInterface
 {
-    /**
-     * @var array
-     */
-    protected $metadata = [];
-
-    /**
-     * @var array
-     */
-    protected $payload = [];
+    use MessageTrait;
 
     /**
      * @param array $payload
      */
     public function __construct(array $payload)
     {
+        $this->metadata = new MessageMetadata(get_called_class(), Timestamp::create());
         $this->payload = $payload;
-        $this->setMetadata(get_called_class(), Timestamp::create());
-    }
-
-    /**
-     * @param  string $name
-     * @param  \DateTime $timestamp
-     * @return void
-     */
-    public function setMetadata($name, \DateTime $timestamp)
-    {
-        $this->metadata = [
-            'name' => $name,
-            'timestamp' => $timestamp
-        ];
-    }
-
-    /**
-     * @return MessageMetadata
-     */
-    public function getMetadata()
-    {
-        return $this->metadata;
-    }
-
-    /**
-     * @param  array $payload
-     * @return void
-     */
-    public function setPayload(array $payload)
-    {
-        $this->payload = $payload;
-    }
-
-    /**
-     * @return array
-     */
-    public function getPayload()
-    {
-        return $this->payload;
-    }
-
-    /**
-     * Proxy to getMetadata()->getName()
-     * @return string
-     * @throws Exception
-     */
-    public function getName()
-    {
-        if (!isset($this->metadata['name'])) {
-            throw new Exception('Empty name, invalid command');
-        }
-        return $this->metadata['name'];
-    }
-
-    /**
-     * Proxy to getMetadata()->getTimestamp()
-     * @return \DateTime
-     * @throws Exception
-     */
-    public function getTimestamp()
-    {
-        if (!isset($this->metadata['timestamp'])) {
-            throw new Exception('Empty timestamp, invalid command');
-        }
-        return $this->metadata['timestamp'];
     }
 }
