@@ -48,6 +48,10 @@ class InMemoryEventStorage implements EventStorageInterface
                 sprintf('Version %d does not match current version %d', $this->streamData[$identifier]->getVersion(), $currentVersion)
             );
         }
+        if (isset($this->streamData[$identifier])) {
+            $currentData = $this->streamData[$identifier]->getData();
+            $data = array_merge($currentData, $data);
+        }
         $this->streamData[$identifier] = new EventStreamData($identifier, $aggregateName, $data, $nextVersion);
     }
 
