@@ -15,7 +15,7 @@ use TYPO3\Flow\Log\SystemLoggerInterface;
  * @Flow\Scope("singleton")
  * @Flow\Aspect
  */
-class CommandHandlerLoggerAspect
+class CommandHandlerMonitoringAspect
 {
     /**
      * @var SystemLoggerInterface
@@ -24,12 +24,20 @@ class CommandHandlerLoggerAspect
     protected $logger;
 
     /**
-     * @Flow\Before("within(Flowpack\Cqrs\Command\CommandHandlerInterface) && method(public .*->handle())")
+     * @Flow\Around("within(Flowpack\Cqrs\Command\CommandHandlerInterface) && method(public .*->handle())")
      * @param JoinPointInterface $joinPoint
      */
     public function log(JoinPointInterface $joinPoint)
     {
+        $startTime = microtime(true);
+
+        $joinPoint->getAdviceChain()->proceed($joinPoint);
+
         $command = $joinPoint->getMethodArgument('command');
-        $this->logger->log(vsprintf('action=handle command="%s"', [$command->getName()]), LOG_INFO);
+
+        $this->logger->log(vsprintf('action=monitoring type=command-handler command="%s" elapsed_time=%f', [
+            $command->getName(),
+            microtime(true) - $startTime
+        ]), LOG_DEBUG);
     }
 }
