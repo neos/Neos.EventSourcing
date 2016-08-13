@@ -73,13 +73,9 @@ class EventSourcedRepository implements RepositoryInterface
      */
     public function save(AggregateRootInterface $aggregate)
     {
-        $identifier = $aggregate->getAggregateIdentifier();
-
-        $uncommitedEvents = $aggregate->pullUncommittedEvents();
-
         try {
             $stream = $this->eventStore
-                ->get($identifier);
+                ->get($aggregate->getAggregateIdentifier());
         } catch (EventStreamNotFoundException $e) {
             $stream = new EventStream(
                 $aggregate->getAggregateIdentifier(),
@@ -88,6 +84,7 @@ class EventSourcedRepository implements RepositoryInterface
                 1
             );
         } finally {
+            $uncommitedEvents = $aggregate->pullUncommittedEvents();
             $stream->addEvents($uncommitedEvents);
         }
 
