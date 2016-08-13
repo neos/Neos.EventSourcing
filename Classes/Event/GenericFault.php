@@ -10,6 +10,7 @@ namespace Flowpack\Cqrs\Event;
 use Flowpack\Cqrs\Domain\Timestamp;
 use Flowpack\Cqrs\Exception;
 use Flowpack\Cqrs\Message\MessageInterface;
+use Flowpack\Cqrs\Message\MessageMetadata;
 use Flowpack\Cqrs\Message\MessageTrait;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -20,17 +21,6 @@ class GenericFault implements FaultInterface
 {
     use MessageTrait;
 
-    const NAME = 'GenericFault';
-
-    /** @var EventInterface */
-    public $event;
-
-    /** @var EventHandlerInterface */
-    public $handler;
-
-    /** @var Exception */
-    public $exception;
-
     /**
      * @param MessageInterface $event
      * @param EventHandlerInterface $handler
@@ -38,20 +28,36 @@ class GenericFault implements FaultInterface
      */
     public function __construct(MessageInterface $event, EventHandlerInterface $handler, \Exception $exception)
     {
-        $this->event = $event;
-        $this->handler = $handler;
-        $this->exception = $exception;
-
-
-        $this->setMetadata(
-            self::NAME,
-            Timestamp::create()
-        );
+        $this->metadata = new MessageMetadata(get_called_class(), Timestamp::create());
 
         $this->setPayload([
             'event' => $event,
             'handler' => $handler,
             'exception' => $exception
         ]);
+    }
+
+    /**
+     * @return EventInterface
+     */
+    public function getEvent(): EventInterface
+    {
+        return $this->getPayload()['event'];
+    }
+
+    /**
+     * @return EventHandlerInterface
+     */
+    public function getHandler(): EventHandlerInterface
+    {
+        return $this->getPayload()['handler'];
+    }
+
+    /**
+     * @return Exception
+     */
+    public function getException(): Exception
+    {
+        return $this->getPayload()['exception'];
     }
 }
