@@ -34,25 +34,25 @@ class InMemoryEventStorage implements EventStorageInterface
     }
 
     /**
-     * @param string $identifier
+     * @param string $aggregateIdentifier
      * @param string $aggregateName
      * @param array $data
      * @param integer $currentVersion
      * @param integer $nextVersion
      * @throws ConcurrencyException
      */
-    public function commit(string $identifier, string $aggregateName, array $data, int $currentVersion, int $nextVersion)
+    public function commit(string $aggregateIdentifier, string $aggregateName, array $data, int $currentVersion, int $nextVersion)
     {
-        if (isset($this->streamData[$identifier]) && $this->streamData[$identifier]->getVersion() !== $currentVersion) {
+        if (isset($this->streamData[$aggregateIdentifier]) && $this->streamData[$aggregateIdentifier]->getVersion() !== $currentVersion) {
             throw new ConcurrencyException(
-                sprintf('Version %d does not match current version %d', $this->streamData[$identifier]->getVersion(), $currentVersion)
+                sprintf('Version %d does not match current version %d', $this->streamData[$aggregateIdentifier]->getVersion(), $currentVersion)
             );
         }
-        if (isset($this->streamData[$identifier])) {
-            $currentData = $this->streamData[$identifier]->getData();
+        if (isset($this->streamData[$aggregateIdentifier])) {
+            $currentData = $this->streamData[$aggregateIdentifier]->getData();
             $data = array_merge($currentData, $data);
         }
-        $this->streamData[$identifier] = new EventStreamData($identifier, $aggregateName, $data, $nextVersion);
+        $this->streamData[$aggregateIdentifier] = new EventStreamData($aggregateIdentifier, $aggregateName, $data, $nextVersion);
     }
 
     /**
