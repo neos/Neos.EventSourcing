@@ -15,19 +15,29 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class EventStream implements \IteratorAggregate
 {
-    /** @var string */
-    protected $aggregateId;
+    /**
+     * @var string
+     */
+    protected $aggregateIdentifier;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     protected $aggregateName;
 
-    /** @var EventInterface[] All AR events */
+    /**
+     * @var EventInterface[] All AR events
+     */
     protected $events = [];
 
-    /** @var array New AR events, since AR reconstituted from stream */
+    /**
+     * @var array New AR events, since AR reconstituted from stream
+     */
     protected $new = [];
 
-    /** @var int */
+    /**
+     * @var integer
+     */
     protected $version;
 
     /**
@@ -39,7 +49,7 @@ class EventStream implements \IteratorAggregate
      */
     public function __construct(string $identifier, string $aggregateName, array $events = [], int $version = null)
     {
-        $this->aggregateId = $identifier;
+        $this->aggregateIdentifier = $identifier;
         $this->aggregateName = $aggregateName;
         $this->events = $events;
         $this->version = $version ?: 1;
@@ -48,9 +58,9 @@ class EventStream implements \IteratorAggregate
     /**
      * @return string
      */
-    public function getAggregateId()
+    public function getAggregateIdentifier()
     {
-        return $this->aggregateId;
+        return $this->aggregateIdentifier;
     }
 
     /**
@@ -115,7 +125,6 @@ class EventStream implements \IteratorAggregate
 
     /**
      * Retrieve an external iterator
-     * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
      * @return \ArrayIterator
      */
     public function getIterator()

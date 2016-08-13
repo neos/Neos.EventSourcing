@@ -75,7 +75,7 @@ class EventStore implements EventStoreInterface
             return;
         }
 
-        $aggregateRootId = $stream->getAggregateId();
+        $aggregateRootId = $stream->getAggregateIdentifier();
         $aggregateName = $stream->getAggregateName();
         $currentVersion = $stream->getVersion();
         $nextVersion = $currentVersion + $newEventsQuantity;

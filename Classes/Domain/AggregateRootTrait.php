@@ -86,7 +86,7 @@ trait AggregateRootTrait
             throw new RuntimeException('AggregateRoot is already reconstituted from event stream.');
         }
 
-        $this->setAggregateIdentifier($stream->getAggregateId());
+        $this->setAggregateIdentifier($stream->getAggregateIdentifier());
         $this->setAggregateName($stream->getAggregateName());
 
         /** @var EventInterface $event */
