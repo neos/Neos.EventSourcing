@@ -22,11 +22,6 @@ interface AggregateRootInterface
     public function getAggregateIdentifier(): string;
 
     /**
-     * @return string
-     */
-    public function getAggregateName(): string;
-
-    /**
      * @param EventInterface $event
      * @return void
      */

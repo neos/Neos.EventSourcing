@@ -51,22 +51,6 @@ trait AggregateRootTrait
     }
 
     /**
-     * @param string $aggregateName
-     */
-    protected function setAggregateName($aggregateName)
-    {
-        $this->aggregateName = $aggregateName;
-    }
-
-    /**
-     * @return string
-     */
-    final public function getAggregateName(): string
-    {
-        return $this->aggregateName;
-    }
-
-    /**
      * @param  EventInterface $event
      * @return void
      */
@@ -87,7 +71,6 @@ trait AggregateRootTrait
         }
 
         $this->setAggregateIdentifier($stream->getAggregateIdentifier());
-        $this->setAggregateName($stream->getAggregateName());
 
         /** @var EventInterface $event */
         foreach ($stream as $event) {
