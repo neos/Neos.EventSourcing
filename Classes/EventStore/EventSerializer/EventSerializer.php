@@ -9,13 +9,21 @@ namespace Flowpack\Cqrs\EventStore\EventSerializer;
 
 use Flowpack\Cqrs\Event\EventInterface;
 use Flowpack\Cqrs\EventStore\Exception\EventSerializerException;
+use Flowpack\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Object\ObjectManagerInterface;
 
 /**
  * EventSerializer
  */
 class EventSerializer implements EventSerializerInterface
 {
+    /**
+     * @var ObjectManagerInterface
+     * @Flow\Inject
+     */
+    protected $objectManager;
+
     /**
      * @param EventInterface $event
      * @return array
@@ -33,13 +41,14 @@ class EventSerializer implements EventSerializerInterface
             }
         }
 
-        return [
+        $data = [
             'class' => get_class($event),
-            'id' => (string)$event->getId(),
+            'identifier' => (string)$event->getAggregateIdentifier(),
             'name' => $event->getName(),
             'timestamp' => $event->getTimestamp()->format(\DateTime::ISO8601),
             'payload' => $payload
         ];
+        return $data;
     }
 
     /**
@@ -51,37 +60,30 @@ class EventSerializer implements EventSerializerInterface
     {
         $schema = [
             'class',
-            'id',
+            'identifier',
             'name',
             'timestamp',
             'payload'
         ];
 
         // $data array structure validation
-        if (count(array_intersect_key($schema, $data)) !== count($schema)) {
+        if (count(array_intersect_key($schema, array_keys($data))) !== count($schema)) {
             throw new EventSerializerException('No event class specified or invalid entry');
         }
 
-        $reflection = new \ReflectionClass($data['class']);
-
         $payload = $data['payload'];
-
         foreach ($payload as $key => &$value) {
             if (!is_array($value) || !array_key_exists('_php_class', $value)) {
                 continue;
             }
-
-            $class = new \ReflectionClass($value['_php_class']);
-            $value = $class->newInstanceArgs($value['_value']);
+            $value = $this->objectManager->get($value['_php_class'], $value['_value']);
         }
 
         /** @var EventInterface $event */
-        $event = $reflection->newInstanceArgs($data['payload']);
-        $event->setMetadata(
-            $data['name'],
-            new \DateTime($data['timestamp'])
-        );
-        $event->setId($data['id']);
+        $metaData = new MessageMetadata($data['name'], new \DateTime($data['timestamp']));
+        $event = $this->objectManager->get($data['class'], $data['payload'], $metaData);
+
+        $event->setAggregateIdentifier($data['identifier']);
 
         return $event;
     }

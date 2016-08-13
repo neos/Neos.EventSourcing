@@ -26,9 +26,10 @@ interface EventStorageInterface
      * @param string $aggregateName
      * @param array $data
      * @param integer $currentVersion
+     * @param integer $nextVersion
      * @return void
      */
-    public function commit(string $identifier, string $aggregateName, array $data, int $currentVersion);
+    public function commit(string $identifier, string $aggregateName, array $data, int $currentVersion, int $nextVersion);
 
     /**
      * @param string $identifier

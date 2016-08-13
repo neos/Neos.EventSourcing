@@ -60,7 +60,7 @@ class EventStreamData
     /**
      * @return int
      */
-    public function getVersion(): integer
+    public function getVersion(): int
     {
         return $this->version;
     }

@@ -38,14 +38,18 @@ class InMemoryEventStorage implements EventStorageInterface
      * @param string $aggregateName
      * @param array $data
      * @param integer $currentVersion
+     * @param integer $nextVersion
      * @throws ConcurrencyException
      */
-    public function commit(string $identifier, string $aggregateName, array $data, int $currentVersion)
+    public function commit(string $identifier, string $aggregateName, array $data, int $currentVersion, int $nextVersion)
     {
         if (isset($this->streamData[$identifier]) && $this->streamData[$identifier]->getVersion() !== $currentVersion) {
-            throw new ConcurrencyException();
+            throw new ConcurrencyException(
+                sprintf('Version %d does not match current version %d', $this->streamData[$identifier]->getVersion(), $currentVersion)
+            );
         }
-        $this->streamData[$identifier] = new EventStreamData($identifier, $aggregateName, $data, ++$currentVersion);
+        $this->streamData[$identifier] = new EventStreamData($identifier, $aggregateName, $data, $nextVersion);
+        print_r($this->streamData);
     }
 
     /**
@@ -66,6 +70,6 @@ class InMemoryEventStorage implements EventStorageInterface
         if (isset($this->streamData[$identifier])) {
             return $this->streamData[$identifier]->getVersion();
         }
-        return null;
+        return 1;
     }
 }

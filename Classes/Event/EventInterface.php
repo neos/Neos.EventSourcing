@@ -7,25 +7,24 @@ namespace Flowpack\Cqrs\Event;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Domain\Uuid;
 use Flowpack\Cqrs\Message\MessageInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * EventInterface
+ * Event Interface
  */
 interface EventInterface extends MessageInterface
 {
     /**
      * Aggregate Root ID
-     * @param  Uuid $id
-     * @return void
+     * @param string $identifier
+     * @return EventInterface
      */
-    public function setId(Uuid $id);
+    public function setAggregateIdentifier(string $identifier): EventInterface;
 
     /**
      * Aggregate Root ID
-     * @return Uuid
+     * @return string
      */
-    public function getId();
+    public function getAggregateIdentifier();
 }

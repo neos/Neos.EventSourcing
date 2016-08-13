@@ -78,7 +78,9 @@ class EventStore implements EventStoreInterface
         $aggregateRootId = $stream->getAggregateId();
         $aggregateName = $stream->getAggregateName();
         $currentVersion = $stream->getVersion();
-        $newVersion = $currentVersion + $newEventsQuantity;
+        $nextVersion = $currentVersion + $newEventsQuantity;
+
+        echo "$currentVersion => $nextVersion (with $newEventsQuantity events)";
 
         $eventData = [];
 
@@ -93,9 +95,9 @@ class EventStore implements EventStoreInterface
             throw new ConcurrencyException('Aggregate root versions mismatch');
         }
 
-        $this->storage->commit($aggregateRootId, $aggregateName, $eventData, $newVersion);
+        $this->storage->commit($aggregateRootId, $aggregateName, $eventData, $currentVersion, $nextVersion);
 
-        $stream->markAllApplied($newVersion);
+        $stream->markAllApplied($nextVersion);
 
         return;
     }

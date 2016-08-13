@@ -19,7 +19,7 @@ interface AggregateRootInterface
     /**
      * @return string
      */
-    public function getIdentifier(): string;
+    public function getAggregateIdentifier(): string;
 
     /**
      * @return string

@@ -7,6 +7,7 @@ namespace Flowpack\Cqrs\Event;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
+use Flowpack\Cqrs\Domain\Timestamp;
 use Flowpack\Cqrs\Exception;
 use Flowpack\Cqrs\Message\MessageInterface;
 use Flowpack\Cqrs\Message\MessageTrait;
@@ -44,7 +45,7 @@ class GenericFault implements FaultInterface
 
         $this->setMetadata(
             self::NAME,
-            new \DateTime()
+            Timestamp::create()
         );
 
         $this->setPayload([

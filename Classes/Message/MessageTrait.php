@@ -7,7 +7,7 @@ namespace Flowpack\Cqrs\Message;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Domain\Uuid;
+use Flowpack\Cqrs\Event\EventInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -15,16 +15,24 @@ use TYPO3\Flow\Annotations as Flow;
  */
 trait MessageTrait
 {
-    /** @var string */
+    /**
+     * @var string
+     */
     protected $aggregateName;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     protected $aggregateIdentifier;
 
-    /** @var MessageMetadata */
+    /**
+     * @var MessageMetadata
+     */
     protected $metadata;
 
-    /** @var array */
+    /**
+     * @var array
+     */
     protected $payload;
 
     /**
@@ -42,11 +50,12 @@ trait MessageTrait
      * Should be called on message creating time (in message constructor)
      *
      * @param array $payload
-     * @return void
+     * @return static
      */
-    final public function setPayload(array $payload)
+    final public function setPayload(array $payload): EventInterface
     {
         $this->payload = $payload;
+        return $this;
     }
 
     /**
@@ -67,18 +76,22 @@ trait MessageTrait
 
     /**
      * @param string $aggregateName
+     * @return static
      */
-    final public function setAggregateName(string $aggregateName)
+    final public function setAggregateName(string $aggregateName): EventInterface
     {
         $this->aggregateName = $aggregateName;
+        return $this;
     }
 
     /**
      * @param string $aggregateIdentifier
+     * @return static
      */
-    final public function setAggregateIdentifier(string $aggregateIdentifier)
+    final public function setAggregateIdentifier(string $aggregateIdentifier): EventInterface
     {
         $this->aggregateIdentifier = $aggregateIdentifier;
+        return $this;
     }
 
     /**

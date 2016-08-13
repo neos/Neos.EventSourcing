@@ -20,11 +20,26 @@ abstract class AbstractEvent implements EventInterface
     use MessageTrait;
 
     /**
-     * @param array $payload
+     * @var string
      */
-    public function __construct(array $payload)
+    protected $identifier;
+
+    /**
+     * @param array $payload
+     * @param MessageMetadata $metadata
+     */
+    public function __construct(array $payload, MessageMetadata $metadata = null)
     {
-        $this->metadata = new MessageMetadata(get_called_class(), Timestamp::create());
+        $this->metadata = $metadata ?: new MessageMetadata(get_called_class(), Timestamp::create());
         $this->payload = $payload;
+    }
+
+    /**
+     * @param array $payload
+     * @return EventInterface
+     */
+    public static function create(array $payload)
+    {
+        return new static($payload);
     }
 }

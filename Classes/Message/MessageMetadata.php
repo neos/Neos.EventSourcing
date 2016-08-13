@@ -21,7 +21,6 @@ class MessageMetadata
     protected $timestamp;
 
     /**
-     * MessageMetadata constructor
      * @param string $name
      * @param \DateTime $timestamp
      */
@@ -40,7 +39,7 @@ class MessageMetadata
     }
 
     /**
-     * @return DateTime
+     * @return \DateTime
      */
     public function getTimestamp()
     {

@@ -11,6 +11,7 @@ use Flowpack\Cqrs\Event\EventInterface;
 use Flowpack\Cqrs\EventStore\EventStream;
 use Flowpack\Cqrs\RuntimeException;
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Utility\Arrays;
 
 /**
  * AggregateRootTrait
@@ -20,7 +21,7 @@ trait AggregateRootTrait
     /**
      * @var string
      */
-    protected $identifier;
+    protected $aggregateIdentifier;
 
     /**
      * @var string
@@ -36,17 +37,17 @@ trait AggregateRootTrait
      * @param string $identifier
      * @return void
      */
-    protected function setIdentifier($identifier)
+    protected function setAggregateIdentifier($identifier)
     {
-        $this->identifier = $identifier;
+        $this->aggregateIdentifier = $identifier;
     }
 
     /**
      * @return string
      */
-    final public function getIdentifier(): string
+    final public function getAggregateIdentifier(): string
     {
-        return $this->identifier;
+        return $this->aggregateIdentifier;
     }
 
     /**
@@ -85,7 +86,7 @@ trait AggregateRootTrait
             throw new RuntimeException('AggregateRoot is already reconstituted from event stream.');
         }
 
-        $this->setIdentifier($stream->getAggregateId());
+        $this->setAggregateIdentifier($stream->getAggregateId());
 
         /** @var EventInterface $event */
         foreach ($stream as $event) {
@@ -113,11 +114,15 @@ trait AggregateRootTrait
     {
         $name = $event->getName();
 
-        $method = sprintf('apply%s', ucfirst($name));
+        $nameParts = Arrays::trimExplode('\\', $name);
+        $className = array_pop($nameParts);
+
+        $method = sprintf('apply%s', ucfirst($className));
 
         if (!method_exists($this, $method)) {
             throw new \LogicException(sprintf(
-                "AR does not contain method '%s' needed for event '%s' to be handled.",
+                "AR '%s' does not contain method '%s' needed for event '%s' to be handled.",
+                get_called_class(),
                 $method,
                 $name
             ));
