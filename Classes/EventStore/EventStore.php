@@ -80,8 +80,6 @@ class EventStore implements EventStoreInterface
         $currentVersion = $stream->getVersion();
         $nextVersion = $currentVersion + $newEventsQuantity;
 
-        echo "$currentVersion => $nextVersion (with $newEventsQuantity events)";
-
         $eventData = [];
 
         /** @var EventInterface $event */

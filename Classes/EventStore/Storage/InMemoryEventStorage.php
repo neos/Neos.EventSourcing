@@ -49,7 +49,6 @@ class InMemoryEventStorage implements EventStorageInterface
             );
         }
         $this->streamData[$identifier] = new EventStreamData($identifier, $aggregateName, $data, $nextVersion);
-        print_r($this->streamData);
     }
 
     /**
