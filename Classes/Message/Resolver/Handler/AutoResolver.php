@@ -23,6 +23,6 @@ class AutoResolver implements ResolverInterface
      */
     public function resolve($messageName)
     {
-        return sprintf('%sHandler', $messageName);
+        return str_replace("\\Command\\", "\\CommandHandler\\", $messageName) . 'Handler';
     }
 }
