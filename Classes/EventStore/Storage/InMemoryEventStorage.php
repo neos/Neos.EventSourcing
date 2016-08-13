@@ -68,7 +68,7 @@ class InMemoryEventStorage implements EventStorageInterface
      * @param  string $identifier
      * @return integer Current Aggregate Root version
      */
-    public function getCurrentVersion(string $identifier)
+    public function getCurrentVersion(string $identifier): int
     {
         if (isset($this->streamData[$identifier])) {
             return $this->streamData[$identifier]->getVersion();

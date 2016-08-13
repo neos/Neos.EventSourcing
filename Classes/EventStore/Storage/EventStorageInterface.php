@@ -41,5 +41,5 @@ interface EventStorageInterface
      * @param  string $identifier
      * @return integer Current Aggregate Root version
      */
-    public function getCurrentVersion(string $identifier);
+    public function getCurrentVersion(string $identifier): int;
 }
