@@ -53,7 +53,7 @@ trait AggregateRootTrait
     /**
      * @param string $aggregateName
      */
-    public function setAggregateName($aggregateName)
+    protected function setAggregateName($aggregateName)
     {
         $this->aggregateName = $aggregateName;
     }
@@ -87,6 +87,7 @@ trait AggregateRootTrait
         }
 
         $this->setAggregateIdentifier($stream->getAggregateId());
+        $this->setAggregateName($stream->getAggregateName());
 
         /** @var EventInterface $event */
         foreach ($stream as $event) {
