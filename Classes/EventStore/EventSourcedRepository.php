@@ -34,11 +34,10 @@ class EventSourcedRepository implements RepositoryInterface
 
     /**
      * @param string $identifier
-     * @param string $aggregateName |null To be sure AR we will get is the proper instance
      * @return AggregateRootInterface
      * @throws AggregateRootNotFoundException
      */
-    public function find($identifier, $aggregateName = null): AggregateRootInterface
+    public function find($identifier): AggregateRootInterface
     {
         try {
             /** @var EventStream $eventStream */
@@ -47,15 +46,6 @@ class EventSourcedRepository implements RepositoryInterface
             throw new AggregateRootNotFoundException(sprintf(
                 "AggregateRoot with id '%s' not found", $identifier
             ), 1471077948);
-        }
-
-        if ($aggregateName && ($aggregateName !== $eventStream->getAggregateName())) {
-            throw new AggregateRootNotFoundException(sprintf(
-                "AggregateRoot with id '%s' found, but its name '%s' does not match requested '%s'",
-                $identifier,
-                $eventStream->getAggregateName(),
-                $aggregateName
-            ), 1471077957);
         }
 
         $reflection = new \ReflectionClass($eventStream->getAggregateName());
