@@ -43,7 +43,7 @@ class EventSerializer implements EventSerializerInterface
 
         $data = [
             'class' => get_class($event),
-            'identifier' => (string)$event->getAggregateIdentifier(),
+            'aggregate_identifier' => $event->getAggregateIdentifier(),
             'name' => $event->getName(),
             'timestamp' => $event->getTimestamp()->format(\DateTime::ISO8601),
             'payload' => $payload
@@ -60,7 +60,7 @@ class EventSerializer implements EventSerializerInterface
     {
         $schema = [
             'class',
-            'identifier',
+            'aggregate_identifier',
             'name',
             'timestamp',
             'payload'
@@ -83,7 +83,7 @@ class EventSerializer implements EventSerializerInterface
         $metaData = new MessageMetadata($data['name'], new \DateTime($data['timestamp']));
         $event = $this->objectManager->get($data['class'], $data['payload'], $metaData);
 
-        $event->setAggregateIdentifier($data['identifier']);
+        $event->setAggregateIdentifier($data['aggregate_identifier']);
 
         return $event;
     }
