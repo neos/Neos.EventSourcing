@@ -6,8 +6,8 @@
         "typo3/flow": ">=2.3"
     },
     "autoload": {
-        "psr-0": {
-            "Flowpack\\Cqrs": "Classes"
+        "psr-4": {
+            "Flowpack\\Cqrs\\": "Classes"
         }
     }
 }

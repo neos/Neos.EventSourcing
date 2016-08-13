@@ -7,7 +7,6 @@ namespace Flowpack\Cqrs\EventStore;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Domain\Uuid;
 use Flowpack\Cqrs\Event\EventInterface;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -16,7 +15,7 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class EventStream implements \IteratorAggregate
 {
-    /** @var Uuid */
+    /** @var string */
     protected $aggregateId;
 
     /** @var string */
@@ -33,21 +32,21 @@ class EventStream implements \IteratorAggregate
 
     /**
      * EventStream constructor
-     * @param Uuid $aggregateId
+     * @param string $identifier
      * @param $aggregateName
      * @param EventInterface[] $events
-     * @param int $version
+     * @param integer $version
      */
-    public function __construct(Uuid $aggregateId, $aggregateName, array $events = [], $version = 1)
+    public function __construct(string $identifier, string $aggregateName, array $events = [], int $version = null)
     {
-        $this->aggregateId = $aggregateId;
+        $this->aggregateId = $identifier;
         $this->aggregateName = $aggregateName;
         $this->events = $events;
-        $this->version = $version;
+        $this->version = $version ?: 1;
     }
 
     /**
-     * @return Uuid
+     * @return string
      */
     public function getAggregateId()
     {
@@ -79,7 +78,7 @@ class EventStream implements \IteratorAggregate
     }
 
     /**
-     * @return int
+     * @return integer
      */
     public function getVersion()
     {
@@ -106,7 +105,7 @@ class EventStream implements \IteratorAggregate
     }
 
     /**
-     * @param int|null $version
+     * @param integer|null $version
      */
     public function markAllApplied($version = null)
     {

@@ -7,11 +7,11 @@ namespace Flowpack\Cqrs\EventStore;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Domain\Uuid;
 use Flowpack\Cqrs\Event\EventInterface;
 use Flowpack\Cqrs\EventStore\EventSerializer\EventSerializerInterface;
 use Flowpack\Cqrs\EventStore\Exception\ConcurrencyException;
 use Flowpack\Cqrs\EventStore\Exception\EventStreamNotFoundException;
+use Flowpack\Cqrs\EventStore\Storage\EventStorageInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -19,49 +19,44 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class EventStore implements EventStoreInterface
 {
-    /** @var EventStorageInterface */
+    /**
+     * @var EventStorageInterface
+     * @Flow\Inject
+     */
     protected $storage;
 
-    /** @var EventSerializerInterface */
+    /**
+     * @var EventSerializerInterface
+     * @Flow\Inject
+     */
     protected $serializer;
 
     /**
-     * EventStoreWrapper constructor
-     * @param EventStorageInterface $storage
-     * @param EventSerializerInterface $serializer
-     */
-    public function __construct(EventStorageInterface $storage, EventSerializerInterface $serializer)
-    {
-        $this->storage = $storage;
-        $this->serializer = $serializer;
-    }
-
-    /**
      * Get events for AR
-     * @param  Uuid $aggregateRootId
+     * @param  string $identifier
      * @return EventStream Can be empty stream
      * @throws EventStreamNotFoundException
      */
-    public function get(Uuid $aggregateRootId)
+    public function get(string $identifier): EventStream
     {
         /** @var EventStreamData $streamData */
-        $streamData = $this->storage->load($aggregateRootId);
-        
+        $streamData = $this->storage->load($identifier);
+
         if (!$streamData || (!$streamData instanceof EventStreamData)) {
             throw new EventStreamNotFoundException();
         }
 
         $events = [];
 
-        foreach ($streamData->data as $eventData) {
+        foreach ($streamData->getData() as $eventData) {
             $events[] = $this->serializer->deserialize($eventData);
         }
 
         return new EventStream(
-            new Uuid($streamData->id),
-            $streamData->name,
+            $streamData->getId(),
+            $streamData->getName(),
             $events,
-            $streamData->version
+            $streamData->getVersion()
         );
     }
 
@@ -98,7 +93,7 @@ class EventStore implements EventStoreInterface
             throw new ConcurrencyException('Aggregate root versions mismatch');
         }
 
-        $this->storage->write($aggregateRootId, $aggregateName, $eventData, $newVersion);
+        $this->storage->commit($aggregateRootId, $aggregateName, $eventData, $newVersion);
 
         $stream->markAllApplied($newVersion);
 

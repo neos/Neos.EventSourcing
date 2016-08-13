@@ -15,8 +15,11 @@ use TYPO3\Flow\Annotations as Flow;
  */
 trait MessageTrait
 {
-    /** @var Uuid AggregateRoot ID */
-    protected $id;
+    /** @var string */
+    protected $aggregateName;
+
+    /** @var string */
+    protected $aggregateIdentifier;
 
     /** @var MessageMetadata */
     protected $metadata;
@@ -31,7 +34,7 @@ trait MessageTrait
     {
         return [
             'name' => $this->metadata->getName(),
-            'timestamp' => $this->metadata->getTimestamp(),
+            'timestamp' => $this->metadata->getTimestamp()
         ];
     }
 
@@ -55,19 +58,35 @@ trait MessageTrait
     }
 
     /**
-     * @param Uuid $id
+     * @return string
      */
-    final public function setId(Uuid $id)
+    final public function getAggregateName(): string
     {
-        $this->id = $id;
+        return $this->aggregateName;
     }
 
     /**
-     * @return Uuid
+     * @param string $aggregateName
      */
-    final public function getId()
+    final public function setAggregateName(string $aggregateName)
     {
-        return $this->id;
+        $this->aggregateName = $aggregateName;
+    }
+
+    /**
+     * @param string $aggregateIdentifier
+     */
+    final public function setAggregateIdentifier(string $aggregateIdentifier)
+    {
+        $this->aggregateIdentifier = $aggregateIdentifier;
+    }
+
+    /**
+     * @return string
+     */
+    final public function getAggregateIdentifier()
+    {
+        return $this->aggregateIdentifier;
     }
 
     /**

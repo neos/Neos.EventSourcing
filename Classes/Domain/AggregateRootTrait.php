@@ -17,30 +17,36 @@ use TYPO3\Flow\Annotations as Flow;
  */
 trait AggregateRootTrait
 {
-    /** @var Uuid */
-    protected $id;
+    /**
+     * @var string
+     */
+    protected $identifier;
 
-    /** @var  string */
+    /**
+     * @var string
+     */
     protected $aggregateName;
 
-    /** @var array */
+    /**
+     * @var array
+     */
     protected $events = [];
 
     /**
-     * @param  Uuid $uuid
+     * @param string $identifier
      * @return void
      */
-    protected function setId(Uuid $uuid)
+    protected function setIdentifier($identifier)
     {
-        $this->id = $uuid;
+        $this->identifier = $identifier;
     }
 
     /**
-     * @return Uuid
+     * @return string
      */
-    final public function getId()
+    final public function getIdentifier(): string
     {
-        return $this->id;
+        return $this->identifier;
     }
 
     /**
@@ -54,7 +60,7 @@ trait AggregateRootTrait
     /**
      * @return string
      */
-    final public function getAggregateName()
+    final public function getAggregateName(): string
     {
         return $this->aggregateName;
     }
@@ -79,7 +85,7 @@ trait AggregateRootTrait
             throw new RuntimeException('AggregateRoot is already reconstituted from event stream.');
         }
 
-        $this->setId($stream->getAggregateId());
+        $this->setIdentifier($stream->getAggregateId());
 
         /** @var EventInterface $event */
         foreach ($stream as $event) {
@@ -90,7 +96,7 @@ trait AggregateRootTrait
     /**
      * @return array
      */
-    public function pullUncommittedEvents()
+    public function pullUncommittedEvents(): array
     {
         $events = $this->events;
 

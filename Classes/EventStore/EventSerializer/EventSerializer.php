@@ -7,7 +7,6 @@ namespace Flowpack\Cqrs\EventStore\EventSerializer;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Domain\Uuid;
 use Flowpack\Cqrs\Event\EventInterface;
 use Flowpack\Cqrs\EventStore\Exception\EventSerializerException;
 use TYPO3\Flow\Annotations as Flow;
@@ -26,14 +25,6 @@ class EventSerializer implements EventSerializerInterface
         $payload = $event->getPayload();
 
         foreach ($payload as $key => &$value) {
-
-            if ($value instanceof Uuid) {
-                $value = [
-                    '_php_class' => Uuid::class,
-                    '_value' => (string)$value
-                ];
-            }
-
             if ($value instanceof \DateTime) {
                 $value = [
                     '_php_class' => \DateTime::class,
@@ -90,7 +81,7 @@ class EventSerializer implements EventSerializerInterface
             $data['name'],
             new \DateTime($data['timestamp'])
         );
-        $event->setId(new Uuid($data['id']));
+        $event->setId($data['id']);
 
         return $event;
     }

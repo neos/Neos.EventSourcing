@@ -10,7 +10,6 @@ namespace Flowpack\Cqrs\EventStore;
 use Flowpack\Cqrs\Domain\AggregateRootInterface;
 use Flowpack\Cqrs\Domain\Exception\AggregateRootNotFoundException;
 use Flowpack\Cqrs\Domain\RepositoryInterface;
-use Flowpack\Cqrs\Domain\Uuid;
 use Flowpack\Cqrs\Event\EventBus;
 use Flowpack\Cqrs\Event\EventInterface;
 use Flowpack\Cqrs\EventStore\Exception\EventStreamNotFoundException;
@@ -21,46 +20,42 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class EventSourcedRepository implements RepositoryInterface
 {
-    /** @var EventStoreInterface */
+    /**
+     * @var EventStoreInterface
+     * @Flow\Inject
+     */
     protected $eventStore;
 
-    /** @var EventBus */
+    /**
+     * @var EventBus
+     * @Flow\Inject
+     */
     protected $eventBus;
 
     /**
-     * @param EventStoreInterface $eventStore
-     * @param EventBus $eventBus
-     */
-    public function __construct(EventStoreInterface $eventStore, EventBus $eventBus)
-    {
-        $this->eventStore = $eventStore;
-        $this->eventBus = $eventBus;
-    }
-
-    /**
-     * @param Uuid $aggregateRootId
+     * @param string $identifier
      * @param string $aggregateName |null To be sure AR we will get is the proper instance
      * @return AggregateRootInterface
      * @throws AggregateRootNotFoundException
      */
-    public function find(Uuid $aggregateRootId, $aggregateName = null)
+    public function find($identifier, $aggregateName = null): AggregateRootInterface
     {
         try {
             /** @var EventStream $eventStream */
-            $eventStream = $this->eventStore->get($aggregateRootId);
+            $eventStream = $this->eventStore->get($identifier);
         } catch (EventStreamNotFoundException $e) {
             throw new AggregateRootNotFoundException(sprintf(
-                "AggregateRoot with id '%s' not found", $aggregateRootId
-            ));
+                "AggregateRoot with id '%s' not found", $identifier
+            ), 1471077948);
         }
 
         if ($aggregateName && ($aggregateName !== $eventStream->getAggregateName())) {
             throw new AggregateRootNotFoundException(sprintf(
                 "AggregateRoot with id '%s' found, but its name '%s' does not match requested '%s'",
-                $aggregateRootId,
+                $identifier,
                 $eventStream->getAggregateName(),
                 $aggregateName
-            ));
+            ), 1471077957);
         }
 
         $reflection = new \ReflectionClass($eventStream->getAggregateName());
@@ -78,24 +73,22 @@ class EventSourcedRepository implements RepositoryInterface
      */
     public function save(AggregateRootInterface $aggregate)
     {
-        /** @var Uuid $id */
-        $id = $aggregate->getId();
+        $identifier = $aggregate->getIdentifier();
 
-        /** @var array $newEvents */
-        $events = $aggregate->pullUncommittedEvents();
+        $uncommitedEvents = $aggregate->pullUncommittedEvents();
 
         try {
 
             /** @var EventStream $stream */
-            $stream = $this->eventStore->get($id);
-            $stream->addEvents($newEvents);
+            $stream = $this->eventStore->get($identifier);
+            $stream->addEvents($uncommitedEvents);
 
         } catch (EventStreamNotFoundException $e) {
 
             $stream = new EventStream(
-                $aggregate->getId(),
+                $aggregate->getIdentifier(),
                 get_class($aggregate),
-                $newEvents,
+                $uncommitedEvents,
                 1
             );
 
@@ -104,7 +97,7 @@ class EventSourcedRepository implements RepositoryInterface
         $this->eventStore->commit($stream);
 
         /** @var EventInterface $event */
-        foreach ($events as $event) {
+        foreach ($uncommitedEvents as $event) {
             $this->eventBus->handle($event);
         }
     }

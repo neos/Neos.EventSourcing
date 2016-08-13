@@ -15,11 +15,11 @@ use TYPO3\Flow\Annotations as Flow;
 interface RepositoryInterface
 {
     /**
-     * @param Uuid $aggregateRootId AggregateRoot ID
+     * @param string $identifier AggregateRoot ID
      * @param string|null $aggregateName Optional name of the AggregateRoot
      * @return AggregateRootInterface|null AggregateRoot
      */
-    public function find(Uuid $aggregateRootId, $aggregateName = null);
+    public function find($identifier, $aggregateName = null): AggregateRootInterface;
 
     /**
      * @param AggregateRootInterface $aggregate

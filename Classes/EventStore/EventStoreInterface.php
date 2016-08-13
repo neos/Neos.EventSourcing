@@ -7,7 +7,6 @@ namespace Flowpack\Cqrs\EventStore;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Domain\Uuid;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -17,10 +16,10 @@ interface EventStoreInterface
 {
     /**
      * Get events for AR
-     * @param  Uuid $aggregateRootId
+     * @param  string $identifier
      * @return EventStream Can be empty stream
      */
-    public function get(Uuid $aggregateRootId);
+    public function get(string $identifier): EventStream;
 
     /**
      * Persist new AR events

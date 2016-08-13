@@ -17,14 +17,14 @@ use TYPO3\Flow\Annotations as Flow;
 interface AggregateRootInterface
 {
     /**
-     * @return Uuid
+     * @return string
      */
-    public function getId();
+    public function getIdentifier(): string;
 
     /**
      * @return string
      */
-    public function getAggregateName();
+    public function getAggregateName(): string;
 
     /**
      * @param EventInterface $event
@@ -39,7 +39,7 @@ interface AggregateRootInterface
     public function reconstituteFromEventStream(EventStream $stream);
 
     /**
-     * @return EventStream
+     * @return array
      */
-    public function pullUncommittedEvents();
+    public function pullUncommittedEvents(): array;
 }

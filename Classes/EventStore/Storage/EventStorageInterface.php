@@ -1,0 +1,44 @@
+<?php
+namespace Flowpack\Cqrs\EventStore\Storage;
+
+/*
+ * This file is part of the Flowpack.Cqrs package.
+ *
+ * (c) Hand crafted with love in each details by medialib.tv
+ */
+
+use Flowpack\Cqrs\EventStore\EventStreamData;
+use TYPO3\Flow\Annotations as Flow;
+
+/**
+ * EventStorageInterface
+ */
+interface EventStorageInterface
+{
+    /**
+     * @param string $identifier
+     * @return EventStreamData Aggregate Root events
+     */
+    public function load(string $identifier);
+
+    /**
+     * @param string $identifier
+     * @param string $aggregateName
+     * @param array $data
+     * @param integer $currentVersion
+     * @return void
+     */
+    public function commit(string $identifier, string $aggregateName, array $data, int $currentVersion);
+
+    /**
+     * @param string $identifier
+     * @return boolean
+     */
+    public function contains(string $identifier): boolean;
+
+    /**
+     * @param  string $identifier
+     * @return integer Current Aggregate Root version
+     */
+    public function getCurrentVersion(string $identifier);
+}
