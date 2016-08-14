@@ -24,20 +24,30 @@ class CommandHandlerMonitoringAspect
     protected $logger;
 
     /**
+     * @var boolean
+     * @Flow\InjectConfiguration(path="command.monitoring.commandHandlerMonitoring.enabled")
+     */
+    protected $enabled;
+
+    /**
      * @Flow\Around("within(Flowpack\Cqrs\Command\CommandHandlerInterface) && method(public .*->handle())")
      * @param JoinPointInterface $joinPoint
      */
     public function log(JoinPointInterface $joinPoint)
     {
-        $startTime = microtime(true);
+        if ($this->enabled) {
+            $startTime = microtime(true);
 
-        $joinPoint->getAdviceChain()->proceed($joinPoint);
+            $joinPoint->getAdviceChain()->proceed($joinPoint);
 
-        $command = $joinPoint->getMethodArgument('command');
+            $command = $joinPoint->getMethodArgument('command');
 
-        $this->logger->log(vsprintf('action=monitoring type=command-handler command="%s" elapsed_time=%f', [
-            $command->getName(),
-            microtime(true) - $startTime
-        ]), LOG_DEBUG);
+            $this->logger->log(vsprintf('action=monitoring type=command-handler command="%s" elapsed_time=%f', [
+                $command->getName(),
+                microtime(true) - $startTime
+            ]), LOG_DEBUG);
+        } else {
+            $joinPoint->getAdviceChain()->proceed($joinPoint);
+        }
     }
 }
