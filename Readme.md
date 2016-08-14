@@ -1,10 +1,88 @@
 # CRQS for Flow Framework
 
-This package is currently under development and not fully working, please don't use it in production.
+_This package is currently under development and not fully working, please don't use it in production._
 
 This package is inspired by [LiteCQRS](https://github.com/beberlei/litecqrs-php) and [Broadway](https://github.com/qandidate-labs/broadway).
 
-The goal of the project is to offer a lean and opinionated way to integrate CQRS pattern in your Flow framework package.
+The goal of the project is to provide infrastructure to support CQRS/ES project based on Flow Framework
+
+# Components
+
+Currently most components are included in the ```Flowpack.Cqrs``` package. In the future some component can be splitted 
+in distinct package for more flexibility. 
+
+## Command
+
+* [x] **CommandBus**: default implementation, implement your own based on ```CommandBusInterface```
+* [x] **Command**: implement your own based on ```CommandInterface```
+* [x] **CommandHandler**: implement your own based on ```CommandHandlerInterface```
+
+### Monitoring
+
+You can disable (enabled by default) the command handler performance monitoring. The monitoring is implemented with AOP, 
+check ```Settings.yaml``` for the configuration.
+
+## Domain
+
+* [x] **AggregateRoot**: implement your own based on ```AggregateRootInterface``` with ```AggregateRootTrait```
+* [x] **Repository**: implement your own based on ```RepositoryInterface```
+
+## Event
+
+* [x] **EventBus**: default implementation, implement your own based on ```EventBusInterface```
+* [x] **EventHandlerLocator**: based on class annotations, implement your own based on ```EventHandlerLocatorInterface```
+* [x] **Event**: implement your own based on ```EventInterface``` + ```AbstractEvent```
+* [x] **GenericFault**: event triggered by the EventBus is an event handler throw an exception
+
+### How to register your event handler ?
+
+This package promote small classes, an EventHandler is a class that handle a single type of message:
+ 
+    use Flowpack\Cqrs\Annotations as Cqrs;
+    
+    /**
+     * @Cqrs\EventHandler(event="Your\Package\Event\ConfirmationFailed")
+     */
+    class NotifySupportOnConfirmationFailed implements EventHandlerInterface
+    {
+        /**
+         * @param EventInterface $event
+         */
+        public function handle(EventInterface $event)
+        {
+            ...
+        }
+    }
+
+**Work in Progress:** For the final version of the package we should change how the event are named. Currently we use the 
+ full class namespace. We used a lots NatsIO as a queue server, and we love how NatsIO handle subject and especialy how
+ you can listen to subject with magic caracter like ```*``` and ```>```. So the final naming of the event could be the 
+ full class namespace, lowercased with backslashes replaced by dots and uppercamel case to be prefixed with dots. 
+ So in our example ```Your\Package\Event\ConfirmationFailed``` will become ```your.package.event.confirmation.failed```
+ 
+ With this new naming convention the annotation will be improved to support ```your.package.event.*.failed``` (all 
+ failed events) or ```your.package.event.>``` (all events in the your package), this can offer great flexibility and
+ consistency with NatsIO conventions.
+
+## EventStore
+
+* [x] **EventSerializer**: default implementation, implement your own based on ```EventSerializerInterface```
+* [x] **InMemoryEventStorage**: simple testing implementation with not persistence only memory based, implement your own based on ```EventStorageInterface```
+* [x] **EventSourcedRepository**: abstract class to create an Event Sourced Repository
+* [x] **EventStore**: default implementation, implement your own based on ```EventStoreInterface```
+* [x] **EventStream**
+* [x] **EventStreamData**
+
+Other event store implementation will be provided by external package. In the future, the ```InMemoryEventStorage``` will
+move to an external package.
+
+## Message
+
+Messaging infrastructure, base class/traits to build your own Events.
+
+## Query
+
+[not documented, work in progress]
 
 Acknowledgments
 ---------------
