@@ -53,7 +53,7 @@ class EventStore implements EventStoreInterface
         }
 
         return new EventStream(
-            $streamData->getId(),
+            $streamData->getAggregateIdentifier(),
             $streamData->getName(),
             $events,
             $streamData->getVersion()
