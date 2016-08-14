@@ -18,7 +18,7 @@ interface RepositoryInterface
      * @param string $identifier AggregateRoot ID
      * @return AggregateRootInterface|null AggregateRoot
      */
-    public function find($identifier): AggregateRootInterface;
+    public function findByIdentifier($identifier): AggregateRootInterface;
 
     /**
      * @param AggregateRootInterface $aggregate
