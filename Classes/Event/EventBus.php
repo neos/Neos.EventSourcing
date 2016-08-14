@@ -7,7 +7,6 @@ namespace Flowpack\Cqrs\Event;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Message\MessageBusInterface;
 use Flowpack\Cqrs\Message\MessageInterface;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -16,7 +15,7 @@ use TYPO3\Flow\Annotations as Flow;
  *
  * @Flow\Scope("singleton")
  */
-class EventBus implements MessageBusInterface
+class EventBus implements EventBusInterface
 {
     /**
      * @var EventHandlerLocatorInterface

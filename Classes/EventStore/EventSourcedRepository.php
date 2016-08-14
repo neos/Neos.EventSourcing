@@ -10,7 +10,7 @@ namespace Flowpack\Cqrs\EventStore;
 use Flowpack\Cqrs\Domain\AggregateRootInterface;
 use Flowpack\Cqrs\Domain\Exception\AggregateRootNotFoundException;
 use Flowpack\Cqrs\Domain\RepositoryInterface;
-use Flowpack\Cqrs\Event\EventBus;
+use Flowpack\Cqrs\Event\EventBusInterface;
 use Flowpack\Cqrs\Event\EventInterface;
 use Flowpack\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use TYPO3\Flow\Annotations as Flow;
@@ -27,7 +27,7 @@ class EventSourcedRepository implements RepositoryInterface
     protected $eventStore;
 
     /**
-     * @var EventBus
+     * @var EventBusInterface
      * @Flow\Inject
      */
     protected $eventBus;
@@ -37,7 +37,7 @@ class EventSourcedRepository implements RepositoryInterface
      * @return AggregateRootInterface
      * @throws AggregateRootNotFoundException
      */
-    public function find($identifier): AggregateRootInterface
+    public function findByIdentifier($identifier): AggregateRootInterface
     {
         try {
             /** @var EventStream $eventStream */
