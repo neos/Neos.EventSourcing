@@ -7,7 +7,6 @@ namespace Flowpack\Cqrs\Query;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Message\MessageBusInterface;
 use Flowpack\Cqrs\Message\MessageInterface;
 use Flowpack\Cqrs\Message\MessageResultInterface;
 use Flowpack\Cqrs\Message\Resolver\ResolverInterface;
@@ -20,7 +19,7 @@ use TYPO3\Flow\Object\ObjectManagerInterface;
  *
  * @Flow\Scope("singleton")
  */
-class QueryBus implements MessageBusInterface
+class QueryBus implements QueryBusInterface
 {
     /**
      * @var ObjectManagerInterface
