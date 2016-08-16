@@ -6,6 +6,17 @@ This package is inspired by [LiteCQRS](https://github.com/beberlei/litecqrs-php)
 
 The goal of the project is to provide infrastructure to support CQRS/ES project based on Flow Framework
 
+# Packages
+
+The features are splitted in differents packages:
+
+* **Flowpack.Cqrs**: this package, mostly infrastructure (interface, trait, abstract class) and the event/query bus
+* **Flowpack.EventStore**: event store to support event sourcing
+* **Flowpack.EventStore.InMemoryStorageAdapter**: in memory event storage, mainly for testing
+* **Flowpack.EventStore.DatabaseStorageAdapter**: doctrine dbal based event storage
+
+More storage can be added later (Redis, ...).
+
 # Components
 
 Currently most components are included in the ```Flowpack.Cqrs``` package. In the future some component can be splitted 
@@ -66,15 +77,7 @@ This package promote small classes, an EventHandler is a class that handle a sin
 
 ## EventStore
 
-* [x] **EventSerializer**: default implementation, implement your own based on ```EventSerializerInterface```
-* [x] **InMemoryEventStorage**: simple testing implementation with not persistence only memory based, implement your own based on ```EventStorageInterface```
-* [x] **EventSourcedRepository**: abstract class to create an Event Sourced Repository
-* [x] **EventStore**: default implementation, implement your own based on ```EventStoreInterface```
-* [x] **EventStream**
-* [x] **EventStreamData**
-
-Other event store implementation will be provided by external package. In the future, the ```InMemoryEventStorage``` will
-move to an external package.
+See package **Flowpack.EventStore**.
 
 ## Message
 

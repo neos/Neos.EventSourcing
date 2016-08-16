@@ -8,8 +8,6 @@ namespace Flowpack\Cqrs\Domain;
  */
 
 use Flowpack\Cqrs\Event\EventInterface;
-use Flowpack\Cqrs\EventStore\EventStream;
-use Flowpack\Cqrs\RuntimeException;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Utility\Arrays;
 
@@ -58,24 +56,6 @@ trait AggregateRootTrait
     {
         $this->executeEvent($event);
         $this->events[] = $event;
-    }
-
-    /**
-     * @param EventStream $stream
-     * @throws RuntimeException
-     */
-    public function reconstituteFromEventStream(EventStream $stream)
-    {
-        if ($this->events) {
-            throw new RuntimeException('AggregateRoot is already reconstituted from event stream.');
-        }
-
-        $this->setAggregateIdentifier($stream->getAggregateIdentifier());
-
-        /** @var EventInterface $event */
-        foreach ($stream as $event) {
-            $this->executeEvent($event);
-        }
     }
 
     /**
