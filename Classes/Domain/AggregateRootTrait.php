@@ -78,7 +78,7 @@ trait AggregateRootTrait
     {
         $name = $event->getName();
 
-        $nameParts = Arrays::trimExplode('\\', $name);
+        $nameParts = Arrays::trimExplode('.', $name);
         $className = array_pop($nameParts);
 
         $method = sprintf('apply%s', ucfirst($className));

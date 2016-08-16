@@ -30,7 +30,7 @@ abstract class AbstractEvent implements EventInterface
      */
     public function __construct(array $payload, MessageMetadata $metadata = null)
     {
-        $this->metadata = $metadata ?: new MessageMetadata(get_called_class(), Timestamp::create());
+        $this->metadata = $metadata ?: new MessageMetadata(str_replace('\\', '.', get_called_class()), Timestamp::create());
         $this->payload = $payload;
     }
 

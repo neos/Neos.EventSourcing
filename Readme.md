@@ -52,7 +52,7 @@ This package promote small classes, an EventHandler is a class that handle a sin
     use Flowpack\Cqrs\Annotations as Cqrs;
     
     /**
-     * @Cqrs\EventHandler(event="Your\Package\Event\ConfirmationFailed")
+     * @Cqrs\EventHandler(event="Your.Package.Event.ConfirmationFailed")
      */
     class NotifySupportOnConfirmationFailed implements EventHandlerInterface
     {
@@ -65,15 +65,10 @@ This package promote small classes, an EventHandler is a class that handle a sin
         }
     }
 
-**Work in Progress:** For the final version of the package we should change how the event are named. Currently we use the 
- full class namespace. We used a lots NatsIO as a queue server, and we love how NatsIO handle subject and especialy how
- you can listen to subject with magic caracter like ```*``` and ```>```. So the final naming of the event could be the 
- full class namespace, lowercased with backslashes replaced by dots and uppercamel case to be prefixed with dots. 
- So in our example ```Your\Package\Event\ConfirmationFailed``` will become ```your.package.event.confirmation.failed```
- 
- With this new naming convention the annotation will be improved to support ```your.package.event.*.failed``` (all 
- failed events) or ```your.package.event.>``` (all events in the your package), this can offer great flexibility and
- consistency with NatsIO conventions.
+**Work in Progress:** Currently the annotation support only a full event name (class namespace with backslash 
+replaced by dot), in a future version we will add support ```your.package.event.*.event``` (```*``` for any `
+valid caracter except ```.``) or ```your.package.event.>``` (all events bellow the given namespace), 
+this can offer great flexibility. The idea is based on NatsIO subject handling.
 
 ## EventStore
 
