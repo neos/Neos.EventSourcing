@@ -15,8 +15,8 @@ use TYPO3\Flow\Annotations as Flow;
 interface RepositoryInterface
 {
     /**
-     * @param string $identifier AggregateRoot ID
-     * @return AggregateRootInterface|null AggregateRoot
+     * @param string $identifier
+     * @return AggregateRootInterface|null
      */
     public function findByIdentifier($identifier): AggregateRootInterface;
 
@@ -25,4 +25,10 @@ interface RepositoryInterface
      * @return void
      */
     public function save(AggregateRootInterface $aggregate);
+
+    /**
+     * @param string $identifier
+     * @return boolean
+     */
+    public function contains($identifier): bool;
 }
