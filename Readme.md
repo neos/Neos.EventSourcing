@@ -10,10 +10,10 @@ The goal of the project is to provide infrastructure to support CQRS/ES project 
 
 The features are splitted in differents packages:
 
-* **Flowpack.Cqrs**: this package, mostly infrastructure (interface, trait, abstract class) and the event/query bus
-* **Flowpack.EventStore**: event store to support event sourcing
-* **Flowpack.EventStore.InMemoryStorageAdapter**: in memory event storage, mainly for testing
-* **Flowpack.EventStore.DatabaseStorageAdapter**: doctrine dbal based event storage
+* **[Flowpack.Cqrs](https://github.com/dfeyer/Flowpack.Cqrs)**: this package, mostly infrastructure (interface, trait, abstract class) and the event/query bus
+* **[Flowpack.EventStore](https://github.com/dfeyer/Flowpack.EventStore)**: event store to support event sourcing
+* **[Flowpack.EventStore.InMemoryStorageAdapter](https://github.com/dfeyer/Flowpack.EventStore.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
+* **Flowpack.EventStore.DatabaseStorageAdapter**: doctrine dbal based event storage, work in progress
 
 More storage can be added later (Redis, ...).
 
