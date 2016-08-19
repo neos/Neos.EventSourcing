@@ -1,13 +1,13 @@
 <?php
-namespace Flowpack\Cqrs\Query;
+namespace Ttree\Cqrs\Query;
 
 /*
- * This file is part of the Flowpack.Cqrs package.
+ * This file is part of the Ttree.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Message\MessageBusInterface;
+use Ttree\Cqrs\Message\MessageBusInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**

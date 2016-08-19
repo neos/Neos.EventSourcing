@@ -1,5 +1,5 @@
 <?php
-namespace Flowpack\Cqrs\Command\Aspect;
+namespace Ttree\Cqrs\Command\Aspect;
 
 /*
  * This file is part of the Medialib.Storage package.
@@ -30,7 +30,7 @@ class CommandHandlerMonitoringAspect
     protected $enabled;
 
     /**
-     * @Flow\Around("within(Flowpack\Cqrs\Command\CommandHandlerInterface) && method(public .*->handle())")
+     * @Flow\Around("within(Ttree\Cqrs\Command\CommandHandlerInterface) && method(public .*->handle())")
      * @param JoinPointInterface $joinPoint
      */
     public function log(JoinPointInterface $joinPoint)

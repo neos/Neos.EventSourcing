@@ -1,5 +1,5 @@
 <?php
-namespace Flowpack\Cqrs\Annotations;
+namespace Ttree\Cqrs\Annotations;
 
 /*
  * This file is part of the Medialib.Storage package.

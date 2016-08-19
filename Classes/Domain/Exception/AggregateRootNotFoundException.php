@@ -1,8 +1,8 @@
 <?php
-namespace Flowpack\Cqrs\Domain\Exception;
+namespace Ttree\Cqrs\Domain\Exception;
 
 /*
- * This file is part of the Flowpack.Cqrs package.
+ * This file is part of the Ttree.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */

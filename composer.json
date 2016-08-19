@@ -1,5 +1,5 @@
 {
-    "name": "flowpack/cqrs",
+    "name": "ttree/cqrs",
     "type": "typo3-flow-package",
     "description": "Lean and opinionated way to integrate CQRS pattern in your Flow framework package",
     "require": {
@@ -8,7 +8,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Flowpack\\Cqrs\\": "Classes"
+            "Ttree\\Cqrs\\": "Classes"
         }
     }
 }

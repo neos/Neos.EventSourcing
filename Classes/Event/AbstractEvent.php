@@ -1,15 +1,15 @@
 <?php
-namespace Flowpack\Cqrs\Event;
+namespace Ttree\Cqrs\Event;
 
 /*
- * This file is part of the Flowpack.Cqrs package.
+ * This file is part of the Ttree.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Domain\Timestamp;
-use Flowpack\Cqrs\Message\MessageMetadata;
-use Flowpack\Cqrs\Message\MessageTrait;
+use Ttree\Cqrs\Domain\Timestamp;
+use Ttree\Cqrs\Message\MessageMetadata;
+use Ttree\Cqrs\Message\MessageTrait;
 use TYPO3\Flow\Annotations as Flow;
 
 /**

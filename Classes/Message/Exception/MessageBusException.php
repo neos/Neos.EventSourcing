@@ -1,13 +1,13 @@
 <?php
-namespace Flowpack\Cqrs\Message\Resolver\Exception;
+namespace Ttree\Cqrs\Message\Resolver\Exception;
 
 /*
- * This file is part of the Flowpack.Cqrs package.
+ * This file is part of the Ttree.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Exception;
+use Ttree\Cqrs\Exception;
 use TYPO3\Flow\Annotations as Flow;
 
 /**

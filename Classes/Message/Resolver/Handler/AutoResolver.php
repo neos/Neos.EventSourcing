@@ -1,13 +1,13 @@
 <?php
-namespace Flowpack\Cqrs\Message\Resolver\Handler;
+namespace Ttree\Cqrs\Message\Resolver\Handler;
 
 /*
- * This file is part of the Flowpack.Cqrs package.
+ * This file is part of the Ttree.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Message\Resolver\ResolverInterface;
+use Ttree\Cqrs\Message\Resolver\ResolverInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**

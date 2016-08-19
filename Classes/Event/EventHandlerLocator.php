@@ -1,15 +1,15 @@
 <?php
-namespace Flowpack\Cqrs\Event;
+namespace Ttree\Cqrs\Event;
 
 /*
- * This file is part of the Flowpack.Cqrs package.
+ * This file is part of the Ttree.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Annotations\EventHandler;
-use Flowpack\Cqrs\Event\Exception\EventBusException;
-use Flowpack\Cqrs\Message\MessageInterface;
+use Ttree\Cqrs\Annotations\EventHandler;
+use Ttree\Cqrs\Event\Exception\EventBusException;
+use Ttree\Cqrs\Message\MessageInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Reflection\ReflectionService;

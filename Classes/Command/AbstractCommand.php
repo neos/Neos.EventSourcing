@@ -1,5 +1,5 @@
 <?php
-namespace Flowpack\Cqrs\Command;
+namespace Ttree\Cqrs\Command;
 
 /*
  * This file is part of the Medialib.Storage package.
@@ -7,10 +7,9 @@ namespace Flowpack\Cqrs\Command;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Domain\Timestamp;
-use Flowpack\Cqrs\Exception;
-use Flowpack\Cqrs\Message\MessageMetadata;
-use Flowpack\Cqrs\Message\MessageTrait;
+use Ttree\Cqrs\Domain\Timestamp;
+use Ttree\Cqrs\Message\MessageMetadata;
+use Ttree\Cqrs\Message\MessageTrait;
 use TYPO3\Flow\Annotations as Flow;
 
 /**

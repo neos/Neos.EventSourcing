@@ -1,16 +1,16 @@
 <?php
-namespace Flowpack\Cqrs\Query;
+namespace Ttree\Cqrs\Query;
 
 /*
- * This file is part of the Flowpack.Cqrs package.
+ * This file is part of the Ttree.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Message\MessageInterface;
-use Flowpack\Cqrs\Message\MessageResultInterface;
-use Flowpack\Cqrs\Message\Resolver\ResolverInterface;
-use Flowpack\Cqrs\Query\Exception\QueryBusException;
+use Ttree\Cqrs\Message\MessageInterface;
+use Ttree\Cqrs\Message\MessageResultInterface;
+use Ttree\Cqrs\Message\Resolver\ResolverInterface;
+use Ttree\Cqrs\Query\Exception\QueryBusException;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 

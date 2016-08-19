@@ -10,16 +10,16 @@ The goal of the project is to provide infrastructure to support CQRS/ES project 
 
 The features are splitted in differents packages:
 
-* **[Flowpack.Cqrs](https://github.com/dfeyer/Flowpack.Cqrs)**: this package, mostly infrastructure (interface, trait, abstract class) and the event/query bus
-* **[Flowpack.EventStore](https://github.com/dfeyer/Flowpack.EventStore)**: event store to support event sourcing
-* **[Flowpack.EventStore.InMemoryStorageAdapter](https://github.com/dfeyer/Flowpack.EventStore.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
-* **[Flowpack.EventStore.DatabaseStorageAdapter](https://github.com/dfeyer/Flowpack.EventStore.DatabaseStorageAdapter)**: doctrine dbal based event storage
+* **[Ttree.Cqrs](https://github.com/dfeyer/Ttree.Cqrs)**: this package, mostly infrastructure (interface, trait, abstract class) and the event/query bus
+* **[Ttree.EventStore](https://github.com/dfeyer/Ttree.EventStore)**: event store to support event sourcing
+* **[Ttree.EventStore.InMemoryStorageAdapter](https://github.com/dfeyer/Ttree.EventStore.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
+* **[Ttree.EventStore.DatabaseStorageAdapter](https://github.com/dfeyer/Ttree.EventStore.DatabaseStorageAdapter)**: doctrine dbal based event storage
 
 More storage can be added later (Redis, ...).
 
 # Components
 
-Currently most components are included in the ```Flowpack.Cqrs``` package. In the future some component can be splitted 
+Currently most components are included in the ```Ttree.Cqrs``` package. In the future some component can be splitted 
 in distinct package for more flexibility. 
 
 ## Command
@@ -49,7 +49,7 @@ check ```Settings.yaml``` for the configuration.
 
 This package promote small classes, an EventHandler is a class that handle a single type of message:
  
-    use Flowpack\Cqrs\Annotations as Cqrs;
+    use Ttree\Cqrs\Annotations as Cqrs;
     
     /**
      * @Cqrs\EventHandler(event="Your.Package.Event.ConfirmationFailed")
@@ -72,7 +72,7 @@ this can offer great flexibility. The idea is based on NatsIO subject handling.
 
 ## EventStore
 
-See package **Flowpack.EventStore**.
+See package **Ttree.EventStore**.
 
 ## Message
 

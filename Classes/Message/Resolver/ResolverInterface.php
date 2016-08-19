@@ -1,8 +1,8 @@
 <?php
-namespace Flowpack\Cqrs\Message\Resolver;
+namespace Ttree\Cqrs\Message\Resolver;
 
 /*
- * This file is part of the Flowpack.Cqrs package.
+ * This file is part of the Ttree.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */

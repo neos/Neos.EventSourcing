@@ -1,14 +1,14 @@
 <?php
-namespace Flowpack\Cqrs\Command;
+namespace Ttree\Cqrs\Command;
 
 /*
- * This file is part of the Flowpack.Cqrs package.
+ * This file is part of the Ttree.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Flowpack\Cqrs\Command\Exception\CommandBusException;
-use Flowpack\Cqrs\Message\Resolver\ResolverInterface;
+use Ttree\Cqrs\Command\Exception\CommandBusException;
+use Ttree\Cqrs\Message\Resolver\ResolverInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 
