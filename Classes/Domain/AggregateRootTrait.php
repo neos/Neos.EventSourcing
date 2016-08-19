@@ -49,11 +49,27 @@ trait AggregateRootTrait
     }
 
     /**
+     * Apply an event to the current aggregate root
+     *
+     * If the event aggregate identifier and name is not set the event
+     * if automatically updated with the current aggregate identifier
+     * and name.
+     *
      * @param  EventInterface $event
      * @return void
      */
     public function apply(EventInterface $event)
     {
+        try {
+            $event->getAggregateIdentifier();
+        } catch (\Throwable $exception) {
+            $event->setAggregateIdentifier($this->getAggregateIdentifier());
+        }
+        try {
+            $event->getAggregateName();
+        } catch (\Throwable $exception) {
+            $event->setAggregateName(get_called_class());
+        }
         $this->executeEvent($event);
         $this->events[] = $event;
     }

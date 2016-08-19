@@ -16,15 +16,24 @@ use TYPO3\Flow\Annotations as Flow;
 interface EventInterface extends MessageInterface
 {
     /**
-     * Aggregate Root ID
      * @param string $identifier
      * @return EventInterface
      */
     public function setAggregateIdentifier(string $identifier): EventInterface;
 
     /**
-     * Aggregate Root ID
      * @return string
      */
-    public function getAggregateIdentifier();
+    public function getAggregateIdentifier(): string;
+
+    /**
+     * @param string $name
+     * @return EventInterface
+     */
+    public function setAggregateName(string $name): EventInterface;
+
+    /**
+     * @return string
+     */
+    public function getAggregateName(): string;
 }

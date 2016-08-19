@@ -76,7 +76,7 @@ trait MessageTrait
 
     /**
      * @param string $aggregateName
-     * @return static
+     * @return EventInterface
      */
     final public function setAggregateName(string $aggregateName): EventInterface
     {
@@ -86,7 +86,7 @@ trait MessageTrait
 
     /**
      * @param string $aggregateIdentifier
-     * @return static
+     * @return EventInterface
      */
     final public function setAggregateIdentifier(string $aggregateIdentifier): EventInterface
     {
@@ -97,7 +97,7 @@ trait MessageTrait
     /**
      * @return string
      */
-    final public function getAggregateIdentifier()
+    final public function getAggregateIdentifier(): string
     {
         return $this->aggregateIdentifier;
     }
