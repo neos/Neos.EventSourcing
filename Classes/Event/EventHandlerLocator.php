@@ -82,6 +82,7 @@ class EventHandlerLocator implements EventHandlerLocatorInterface
     /**
      * @param ObjectManagerInterface $objectManager
      * @return array
+     * @Flow\CompileStatic
      */
     protected static function loadHandlers(ObjectManagerInterface $objectManager)
     {
