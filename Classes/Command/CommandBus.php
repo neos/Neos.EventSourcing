@@ -69,6 +69,7 @@ class CommandBus implements CommandBusInterface
      * @param CommandInterface $message
      * @return CommandHandlerInterface
      * @throws CommandBusException
+     * @todo Use CompileStatic to build a mapping between command and command handler during compilation
      */
     protected function getHandler(CommandInterface $message)
     {
@@ -79,7 +80,7 @@ class CommandBus implements CommandBusInterface
         if (!$this->objectManager->isRegistered($handlerClassName)) {
             throw new CommandBusException(
                 sprintf(
-                    "Cannot instantiate handler '%s' for command '%s'",
+                    "Missing handler '%s' for command '%s'",
                     $handlerClassName,
                     $messageName
                 )
