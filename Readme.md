@@ -24,9 +24,50 @@ in distinct package for more flexibility.
 
 ## Command
 
+
+### CommandBus
+
 * [x] **CommandBus**: default implementation, implement your own based on ```CommandBusInterface```
+
+### Command
+
 * [x] **Command**: implement your own based on ```CommandInterface```
+
+Your command must simply implement the ```CommandInterface```. The ```CommandTrait``` add the 
+method ```CommandInterface::getIdentifier```, the UUID of the command is lazy generated, so you 
+can focus on your command logic.
+
+    class ConfirmOrder implements CommandInterface
+    {
+        use CommandTrait;
+    
+        /**
+         * @var string
+         */
+        protected $aggregateIdentifier;
+    
+        /**
+         * @param string $aggregateIdentifier
+         * @param float $duration
+         */
+        public function __construct(string $aggregateIdentifier)
+        {
+            $this->aggregateIdentifier = $aggregateIdentifier;
+        }
+    
+        /**
+         * @return string
+         */
+        public function getAggregateIdentifier(): string
+        {
+            return $this->aggregateIdentifier;
+        }
+    }
+
+### CommandHandler
+
 * [x] **CommandHandler**: implement your own based on ```CommandHandlerInterface```
+
 
 ### Monitoring
 

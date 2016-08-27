@@ -13,6 +13,10 @@ use TYPO3\Flow\Annotations as Flow;
 /**
  * CommandInterface
  */
-interface CommandInterface extends MessageInterface
+interface CommandInterface
 {
+    /**
+     * @return string
+     */
+    public function getIdentifier(): string;
 }
