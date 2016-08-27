@@ -19,10 +19,10 @@ class AutoResolver implements ResolverInterface
 {
     /**
      * @param  string $messageName
-     * @return string HandlerId
+     * @return string
      */
-    public function resolve($messageName)
+    public function resolve($messageName): string
     {
-        return str_replace("\\Command\\", "\\CommandHandler\\", $messageName) . 'Handler';
+        return $messageName . 'Handler';
     }
 }

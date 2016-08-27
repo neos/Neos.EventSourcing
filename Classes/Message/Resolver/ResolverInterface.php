@@ -16,7 +16,7 @@ interface ResolverInterface
 {
     /**
      * @param  string $messageName
-     * @return string HandlerId
+     * @return string
      */
-    public function resolve($messageName);
+    public function resolve($messageName): string;
 }
