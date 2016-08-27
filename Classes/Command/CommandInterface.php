@@ -15,8 +15,4 @@ use TYPO3\Flow\Annotations as Flow;
  */
 interface CommandInterface
 {
-    /**
-     * @return string
-     */
-    public function getIdentifier(): string;
 }

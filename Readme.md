@@ -33,14 +33,10 @@ in distinct package for more flexibility.
 
 * [x] **Command**: implement your own based on ```CommandInterface```
 
-Your command must simply implement the ```CommandInterface```. The ```CommandTrait``` add the 
-method ```CommandInterface::getIdentifier```, the UUID of the command is lazy generated, so you 
-can focus on your command logic.
+Your command must simply implement the ```CommandInterface```.
 
     class ConfirmOrder implements CommandInterface
     {
-        use CommandTrait;
-    
         /**
          * @var string
          */
