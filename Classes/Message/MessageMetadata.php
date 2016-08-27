@@ -40,6 +40,7 @@ class MessageMetadata
 
     /**
      * @return \DateTime
+     * @todo rename this method to getCreationDate
      */
     public function getTimestamp()
     {
