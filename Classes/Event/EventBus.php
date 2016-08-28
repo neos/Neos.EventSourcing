@@ -7,7 +7,6 @@ namespace Ttree\Cqrs\Event;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Message\MessageInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -24,7 +23,7 @@ class EventBus implements EventBusInterface
     protected $locator;
 
     /**
-     * @param EventInterface $message
+     * @param EventInterface|FaultInterface $message
      * @return void
      */
     public function handle(EventInterface $message)
@@ -35,18 +34,11 @@ class EventBus implements EventBusInterface
         foreach ($handlers as $handler) {
             try {
                 $handler->handle($message);
-            } catch (\Exception $e) {
-
+            } catch (\Exception $exception) {
                 if ($message instanceof FaultInterface) {
                     return;
                 }
-
-// @todo challenge and refactor
-//                $this->handle(new GenericFault(
-//                    $message,
-//                    $handler,
-//                    $e
-//                ));
+                $this->handle(new GenericFault($message, $handler, $exception));
             }
         }
     }

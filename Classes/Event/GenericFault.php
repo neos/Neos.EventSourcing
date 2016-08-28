@@ -16,49 +16,33 @@ use TYPO3\Flow\Annotations as Flow;
 
 /**
  * GenericFault
- * @todo challenge and refactor
  */
 class GenericFault implements FaultInterface
 {
-    use MessageTrait;
+    /**
+     * @var MessageInterface
+     */
+    protected $event;
 
     /**
-     * @param MessageInterface $event
+     * @var EventHandlerInterface
+     */
+    protected $handler;
+
+    /**
+     * @var \Exception
+     */
+    protected $exception;
+
+    /**
+     * @param EventInterface|MessageInterface $event
      * @param EventHandlerInterface $handler
      * @param \Exception $exception
      */
     public function __construct(MessageInterface $event, EventHandlerInterface $handler, \Exception $exception)
     {
-        $this->metadata = new MessageMetadata(get_called_class(), Timestamp::create());
-
-        $this->setPayload([
-            'event' => $event,
-            'handler' => $handler,
-            'exception' => $exception
-        ]);
-    }
-
-    /**
-     * @return EventInterface
-     */
-    public function getEvent(): EventInterface
-    {
-        return $this->getPayload()['event'];
-    }
-
-    /**
-     * @return EventHandlerInterface
-     */
-    public function getHandler(): EventHandlerInterface
-    {
-        return $this->getPayload()['handler'];
-    }
-
-    /**
-     * @return Exception
-     */
-    public function getException(): Exception
-    {
-        return $this->getPayload()['exception'];
+        $this->event = $event;
+        $this->handler = $handler;
+        $this->exception = $exception;
     }
 }

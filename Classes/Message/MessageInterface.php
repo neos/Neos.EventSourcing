@@ -14,23 +14,4 @@ use TYPO3\Flow\Annotations as Flow;
  */
 interface MessageInterface
 {
-    /**
-     * @return MessageMetadata
-     */
-    public function getMetadata();
-    
-    /**
-     * @return array
-     */
-    public function getPayload();
-
-    /**
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * @return \DateTime
-     */
-    public function getTimestamp();
 }
