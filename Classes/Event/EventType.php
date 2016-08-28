@@ -21,36 +21,11 @@ use TYPO3\Flow\Annotations as Flow;
 class EventType
 {
     /**
-     * @var string
-     */
-    protected $name;
-
-    /**
-     * @param $object
-     * @throws RuntimeException
-     */
-    public function __construct($object)
-    {
-        if (!is_object($object)) {
-            throw new RuntimeException('The given value is not of type object', 1472333934);
-        }
-        $this->name = get_class($object);
-    }
-
-    /**
      * @param object $object
-     * @return EventType
-     */
-    public static function create($object): EventType
-    {
-        return new EventType($object);
-    }
-
-    /**
      * @return string
      */
-    function __toString()
+    public static function get($object): string
     {
-        return $this->name;
+        return get_class($object);
     }
 }

@@ -73,7 +73,7 @@ class CommandBus implements CommandBusInterface
      */
     protected function getHandler(CommandInterface $message)
     {
-        $messageName = (string)EventType::create($message);
+        $messageName = EventType::get($message);
 
         $handlerClassName = $this->resolver->resolve($messageName);
 

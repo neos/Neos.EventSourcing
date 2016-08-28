@@ -65,7 +65,7 @@ class EventHandlerLocator implements EventHandlerLocatorInterface
     {
         $handlers = [];
 
-        $name = (string)EventType::create($message);
+        $name = EventType::get($message);
 
         if (!array_key_exists($name, $this->map)) {
             return $handlers;

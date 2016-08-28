@@ -85,7 +85,7 @@ trait AggregateRootTrait
      */
     protected function executeEvent(EventInterface $event)
     {
-        $name = (string)EventType::create($event);
+        $name = EventType::get($event);
 
         $nameParts = Arrays::trimExplode('\\', $name);
         $className = array_pop($nameParts);
