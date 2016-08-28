@@ -65,14 +65,16 @@ class EventHandlerLocator implements EventHandlerLocatorInterface
     {
         $handlers = [];
 
-        $name = EventType::get($message);
+        $subject = EventSubject::get($message);
 
-        if (!array_key_exists($name, $this->map)) {
-            return $handlers;
-        }
-
-        foreach ($this->map[$name] as $handlerName) {
-            $handlers[] = $this->objectManager->get($handlerName);
+        foreach (array_keys($this->map) as $subjectExpression) {
+            preg_match($subjectExpression, $subject, $matches);
+            if (!isset($matches[0]) || $matches[0] !== $subject) {
+                continue;
+            }
+            foreach ($this->map[$subjectExpression] as $handlerName) {
+                $handlers[] = $this->objectManager->get($handlerName);
+            }
         }
 
         return $handlers;
@@ -91,8 +93,10 @@ class EventHandlerLocator implements EventHandlerLocatorInterface
         foreach ($reflectionService->getClassNamesByAnnotation(EventHandler::class) as $handler) {
             /** @var EventHandler $annotation */
             $annotation = $reflectionService->getClassAnnotation($handler, EventHandler::class);
-            $handlers[$annotation->event][md5($handler)] = $handler;
+            $pattern = sprintf('/%s/', str_replace(['.', '*', '>'], ['\\.', '(\\w+)', '.*'], $annotation->subject));
+            $handlers[$pattern][md5($handler)] = $handler;
         }
+        ksort($handlers);
         return $handlers;
     }
 }

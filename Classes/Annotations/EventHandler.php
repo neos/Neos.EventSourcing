@@ -8,11 +8,6 @@ namespace Ttree\Cqrs\Annotations;
  */
 
 /**
- * Used to enable property injection.
- *
- * Flow will build Dependency Injection code for the property and try
- * to inject a value as specified by the var annotation.
- *
  * @Annotation
  * @Target("CLASS")
  */
@@ -21,15 +16,15 @@ final class EventHandler
     /**
      * @var string
      */
-    public $event;
+    public $subject;
 
     /**
      * @param array $values
      */
     public function __construct(array $values)
     {
-        if (isset($values['event'])) {
-            $this->event = (string)$values['event'];
+        if (isset($values['subject'])) {
+            $this->subject = (string)$values['subject'];
         }
     }
 }
