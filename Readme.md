@@ -10,7 +10,8 @@ The goal of the project is to provide infrastructure to support CQRS/ES project 
 
 The features are splitted in differents packages:
 
-* **[Ttree.Cqrs](https://github.com/dfeyer/Ttree.Cqrs)**: this package, mostly infrastructure (interface, trait, abstract class) and the event/query bus
+* **[Ttree.Cqrs](https://github.com/dfeyer/Ttree.Cqrs)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
+* **[Ttree.Cqrs.MonitoringHelper](https://github.com/dfeyer/Ttree.Cqrs.MonitoringHelper)**: aspect to monitor performance of the ```Ttree.Cqrs``` infrastructure
 * **[Ttree.EventStore](https://github.com/dfeyer/Ttree.EventStore)**: event store to support event sourcing
 * **[Ttree.EventStore.InMemoryStorageAdapter](https://github.com/dfeyer/Ttree.EventStore.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
 * **[Ttree.EventStore.DatabaseStorageAdapter](https://github.com/dfeyer/Ttree.EventStore.DatabaseStorageAdapter)**: doctrine dbal based event storage
