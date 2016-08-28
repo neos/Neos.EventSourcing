@@ -1,0 +1,6 @@
+preset: psr4
+
+finder:
+  path:
+    - "Classes"
+    - "Tests"
