@@ -16,9 +16,9 @@ use Ttree\Cqrs\RuntimeException;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * EventName
+ * EventType
  */
-class EventName
+class EventType
 {
     /**
      * @var string
@@ -39,11 +39,11 @@ class EventName
 
     /**
      * @param object $object
-     * @return EventName
+     * @return EventType
      */
-    public static function create($object): EventName
+    public static function create($object): EventType
     {
-        return new EventName($object);
+        return new EventType($object);
     }
 
     /**

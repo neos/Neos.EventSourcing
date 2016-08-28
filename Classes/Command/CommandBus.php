@@ -8,7 +8,7 @@ namespace Ttree\Cqrs\Command;
  */
 
 use Ttree\Cqrs\Command\Exception\CommandBusException;
-use Ttree\Cqrs\Event\EventName;
+use Ttree\Cqrs\Event\EventType;
 use Ttree\Cqrs\Message\Resolver\ResolverInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
@@ -73,7 +73,7 @@ class CommandBus implements CommandBusInterface
      */
     protected function getHandler(CommandInterface $message)
     {
-        $messageName = (string)EventName::create($message);
+        $messageName = (string)EventType::create($message);
 
         $handlerClassName = $this->resolver->resolve($messageName);
 

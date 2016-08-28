@@ -77,9 +77,61 @@ check ```Settings.yaml``` for the configuration.
 
 ## Event
 
+### EventBus
+
 * [x] **EventBus**: default implementation, implement your own based on ```EventBusInterface```
+
+### EventHandlerLocator
+
 * [x] **EventHandlerLocator**: based on class annotations, implement your own based on ```EventHandlerLocatorInterface```
-* [x] **Event**: implement your own based on ```EventInterface``` + ```AbstractEvent```
+
+### Event
+
+* [x] **Event**: implement your own based on ```EventInterface```
+
+This interface contains no methods, so you are free to focus on your domain. The interface is used by Flow to provide 
+infrastructure helpers (monitoring, debugging, ...).
+
+    class ProductedOrdered implements EventInterface
+    {
+        /**
+         * @var string
+         */
+        protected $productIdentifier;
+    
+        /**
+         * @var integer
+         */
+        protected $amount;
+    
+        /**
+         * @param string $publicIdentifier
+         */
+        public function __construct(string $productIdentifier, int $amount)
+        {
+            $this->productIdentifier = $productIdentifier;
+            $this->amount = $amount;
+        }
+    
+        /**
+         * @return string
+         */
+        public function getProductIdentifier(): string
+        {
+            return $this->productIdentifier;
+        }
+    
+        /**
+         * @return string
+         */
+        public function getAmount(): int
+        {
+            return $this->amount;
+        }
+    }
+
+### Generic Fault (WIP)
+
 * [x] **GenericFault**: event triggered by the EventBus is an event handler throw an exception
 
 ### How to register your event handler ?

@@ -16,6 +16,7 @@ use TYPO3\Flow\Annotations as Flow;
 
 /**
  * GenericFault
+ * @todo challenge and refactor
  */
 class GenericFault implements FaultInterface
 {

@@ -7,6 +7,7 @@ namespace Ttree\Cqrs\Message;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
+use Ttree\Cqrs\Domain\Timestamp;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -14,35 +15,53 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class MessageMetadata
 {
-    /** @var string */
-    protected $name;
+    /**
+     * @var string
+     */
+    protected $aggregateName;
 
-    /** @var \DateTime */
+    /**
+     * @var string
+     */
+    protected $aggregateIdentifier;
+
+    /**
+     * @var \DateTime
+     */
     protected $timestamp;
 
     /**
-     * @param string $name
+     * @param string $aggregateName
+     * @param string $aggregateIdentifier
      * @param \DateTime $timestamp
      */
-    public function __construct($name, \DateTime $timestamp)
+    public function __construct(string $aggregateName, string $aggregateIdentifier, \DateTime $timestamp = null)
     {
-        $this->name = $name;
-        $this->timestamp = $timestamp;
+        $this->aggregateName = $aggregateName;
+        $this->aggregateIdentifier = $aggregateIdentifier;
+        $this->timestamp = $timestamp ?: Timestamp::create();
     }
 
     /**
      * @return string
      */
-    public function getName()
+    public function getAggregateName(): string
     {
-        return $this->name;
+        return $this->aggregateName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAggregateIdentifier(): string
+    {
+        return $this->aggregateIdentifier;
     }
 
     /**
      * @return \DateTime
-     * @todo rename this method to getCreationDate
      */
-    public function getTimestamp()
+    public function getTimestamp(): \DateTime
     {
         return $this->timestamp;
     }

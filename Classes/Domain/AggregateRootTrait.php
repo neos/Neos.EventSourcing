@@ -8,8 +8,12 @@ namespace Ttree\Cqrs\Domain;
  */
 
 use Ttree\Cqrs\Event\EventInterface;
+use Ttree\Cqrs\Event\EventType;
+use Ttree\Cqrs\Event\EventTransport;
+use Ttree\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Utility\Arrays;
+use TYPO3\Flow\Utility\TypeHandling;
 
 /**
  * AggregateRootTrait
@@ -27,7 +31,7 @@ trait AggregateRootTrait
     protected $aggregateName;
 
     /**
-     * @var array
+     * @var EventTransport[]
      */
     protected $events = [];
 
@@ -60,18 +64,9 @@ trait AggregateRootTrait
      */
     public function apply(EventInterface $event)
     {
-        try {
-            $event->getAggregateIdentifier();
-        } catch (\Throwable $exception) {
-            $event->setAggregateIdentifier($this->getAggregateIdentifier());
-        }
-        try {
-            $event->getAggregateName();
-        } catch (\Throwable $exception) {
-            $event->setAggregateName(get_called_class());
-        }
         $this->executeEvent($event);
-        $this->events[] = $event;
+        $transport = new EventTransport($event, new MessageMetadata($this->getAggregateIdentifier(), TypeHandling::getTypeForValue($this)));
+        $this->events[] = $transport;
     }
 
     /**
@@ -80,9 +75,7 @@ trait AggregateRootTrait
     public function pullUncommittedEvents(): array
     {
         $events = $this->events;
-
         $this->events = [];
-
         return $events;
     }
 
@@ -92,9 +85,9 @@ trait AggregateRootTrait
      */
     protected function executeEvent(EventInterface $event)
     {
-        $name = $event->getName();
+        $name = (string)EventType::create($event);
 
-        $nameParts = Arrays::trimExplode('.', $name);
+        $nameParts = Arrays::trimExplode('\\', $name);
         $className = array_pop($nameParts);
 
         $method = sprintf('apply%s', ucfirst($className));

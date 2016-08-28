@@ -7,7 +7,7 @@ namespace Ttree\Cqrs\Command\Aspect;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Event\EventName;
+use Ttree\Cqrs\Event\EventType;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Aop\JoinPointInterface;
 use TYPO3\Flow\Log\SystemLoggerInterface;
@@ -44,7 +44,7 @@ class CommandHandlerMonitoringAspect
             $command = $joinPoint->getMethodArgument('command');
 
             $this->logger->log(vsprintf('action=monitoring type=command-handler command="%s" elapsed_time=%f', [
-                EventName::create($command),
+                EventType::create($command),
                 microtime(true) - $startTime
             ]), LOG_DEBUG);
         } else {

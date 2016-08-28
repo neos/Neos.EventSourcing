@@ -24,10 +24,10 @@ class EventBus implements EventBusInterface
     protected $locator;
 
     /**
-     * @param MessageInterface $message
+     * @param EventInterface $message
      * @return void
      */
-    public function handle(MessageInterface $message)
+    public function handle(EventInterface $message)
     {
         /** @var EventHandlerInterface[] $handlers */
         $handlers = $this->locator->getHandlers($message);
@@ -41,11 +41,12 @@ class EventBus implements EventBusInterface
                     return;
                 }
 
-                $this->handle(new GenericFault(
-                    $message,
-                    $handler,
-                    $e
-                ));
+// @todo challenge and refactor
+//                $this->handle(new GenericFault(
+//                    $message,
+//                    $handler,
+//                    $e
+//                ));
             }
         }
     }

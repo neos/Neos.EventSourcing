@@ -9,7 +9,6 @@ namespace Ttree\Cqrs\Event;
 
 use Ttree\Cqrs\Annotations\EventHandler;
 use Ttree\Cqrs\Event\Exception\EventBusException;
-use Ttree\Cqrs\Message\MessageInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Reflection\ReflectionService;
@@ -59,20 +58,20 @@ class EventHandlerLocator implements EventHandlerLocatorInterface
     }
 
     /**
-     * @param MessageInterface $message
+     * @param EventInterface $message
      * @return EventHandlerInterface[]
      */
-    public function getHandlers(MessageInterface $message)
+    public function getHandlers(EventInterface $message)
     {
         $handlers = [];
 
-        $eventName = $message->getName();
+        $name = (string)EventType::create($message);
 
-        if (!array_key_exists($eventName, $this->map)) {
+        if (!array_key_exists($name, $this->map)) {
             return $handlers;
         }
 
-        foreach ($this->map[$eventName] as $handlerName) {
+        foreach ($this->map[$name] as $handlerName) {
             $handlers[] = $this->objectManager->get($handlerName);
         }
 

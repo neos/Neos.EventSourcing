@@ -13,6 +13,11 @@ use TYPO3\Flow\Annotations as Flow;
 /**
  * EventBusInterface
  */
-interface EventBusInterface extends MessageBusInterface
+interface EventBusInterface
 {
+    /**
+     * @param EventInterface $message
+     * @return void
+     */
+    public function handle(EventInterface $message);
 }

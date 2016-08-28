@@ -16,8 +16,8 @@ use TYPO3\Flow\Annotations as Flow;
 interface EventHandlerLocatorInterface
 {
     /**
-     * @param MessageInterface $message
+     * @param EventInterface $message
      * @return EventHandlerInterface[]
      */
-    public function getHandlers(MessageInterface $message);
+    public function getHandlers(EventInterface $message);
 }
