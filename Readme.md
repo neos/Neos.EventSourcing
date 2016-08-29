@@ -18,6 +18,41 @@ The features are splitted in differents packages:
 
 More storage can be added later (Redis, ...).
 
+# Folder Structure
+
+This is a PSR4 package structure, you need to respect the directory structure in the ```Domain```directory:
+ 
+    Your.Package/
+      Application/
+        Controller/
+          ...
+        Command/
+          ...
+      Domain/
+        YourModel/
+          Command/
+          ...
+          CommandHandler/
+          ...
+          Event/
+          ...
+          EventListener/
+          ...
+          ...
+          Model/
+          ...
+          ...
+          Repository/
+          ...
+          ...
+          Service/
+          ...
+
+# Conventions
+
+* ```CommandHandler``` **must** be in the same domain model that the related ```Command```
+* ```EventListener``` **can** only listen to ```Event``` from the current model
+
 # Components
 
 Currently most components are included in the ```Ttree.Cqrs``` package. In the future some component can be splitted 
@@ -82,9 +117,9 @@ check ```Settings.yaml``` for the configuration.
 
 * [x] **EventBus**: default implementation, implement your own based on ```EventBusInterface```
 
-### EventHandlerLocator
+### EventListenerLocator
 
-* [x] **EventHandlerLocator**: based on class annotations, implement your own based on ```EventHandlerLocatorInterface```
+* [x] **EventListenerLocator**: based on convention, implement your own based on ```EventListenerLocatorInterface```
 
 ### Event
 
@@ -135,30 +170,34 @@ infrastructure helpers (monitoring, debugging, ...).
 
 * [x] **GenericFault**: event triggered by the EventBus is an event handler throw an exception
 
-### How to register your event handler ?
+### How to implement you own event listener ?
 
-This package promote small classes, an EventHandler is a class that handle a single type of message:
+Your must implement the ```EventListenerInterface```:
  
-    use Ttree\Cqrs\Annotations as Cqrs;
-    
-    /**
-     * @Cqrs\EventHandler(event="Your.Package.Event.ConfirmationFailed")
-     */
-    class NotifySupportOnConfirmationFailed implements EventHandlerInterface
+    class ConsoleOutputListener implements EventListenerInterface
     {
         /**
-         * @param EventInterface $event
+         * @var SystemLoggerInterface
+         * @Flow\Inject
          */
-        public function handle(EventInterface $event)
+        protected $systemLogger;
+    
+        /**
+         * @param ButtonTagged $event
+         * @param MessageMetadata $metadata
+         */
+        public function onButtonTagged(ButtonTagged $event, MessageMetadata $metadata)
         {
-            ...
+            $this->systemLogger->log('--- ConsoleOutputListener say something has been tagged ---');
         }
     }
+    
+All the wiring between event is done automatically, if you respect the following convention:
 
-**Work in Progress:** Currently the annotation support only a full event name (class namespace with backslash 
-replaced by dot), in a future version we will add support ```your.package.event.*.event``` (```*``` for any `
-valid caracter except ```.``) or ```your.package.event.>``` (all events bellow the given namespace), 
-this can offer great flexibility. The idea is based on NatsIO subject handling.
+* Method name must be on[ShortEventName]
+* The first parameter must be casted with your ```Event```
+* The second parameter is optional, but should be casted to ```MessageMetadata```
+* Listener can only listen to event inside the current model
 
 ## EventStore
 

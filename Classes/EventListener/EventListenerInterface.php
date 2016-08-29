@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Event;
+namespace Ttree\Cqrs\EventListener;
 
 /*
  * This file is part of the Ttree.Cqrs package.
@@ -10,9 +10,8 @@ namespace Ttree\Cqrs\Event;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * EventHandlerInterface
+ * EventListenerInterface
  */
-interface EventHandlerInterface
+interface EventListenerInterface
 {
-    public function handle(EventTransport $transport);
 }

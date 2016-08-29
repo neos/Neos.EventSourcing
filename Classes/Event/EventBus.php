@@ -7,6 +7,8 @@ namespace Ttree\Cqrs\Event;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
+use Ttree\Cqrs\EventListener\EventListenerInterface;
+use Ttree\Cqrs\EventListener\EventListenerLocatorInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -17,7 +19,7 @@ use TYPO3\Flow\Annotations as Flow;
 class EventBus implements EventBusInterface
 {
     /**
-     * @var EventHandlerLocatorInterface
+     * @var EventListenerLocatorInterface
      * @Flow\Inject
      */
     protected $locator;
@@ -28,12 +30,13 @@ class EventBus implements EventBusInterface
      */
     public function handle(EventTransport $transport)
     {
-        /** @var EventHandlerInterface[] $handlers */
-        $handlers = $this->locator->getHandlers($transport->getEvent());
+        /** @var EventListenerInterface[] $handlers */
+        $handlers = $this->locator->getListeners($transport->getEvent());
 
+        /** @var \Closure $handler */
         foreach ($handlers as $handler) {
             try {
-                $handler->handle($transport);
+                $handler($transport);
             } catch (\Exception $exception) {
                 if ($transport instanceof FaultInterface) {
                     return;
