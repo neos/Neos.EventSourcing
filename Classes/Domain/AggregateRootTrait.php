@@ -62,7 +62,7 @@ trait AggregateRootTrait
      * @param  EventInterface $event
      * @return void
      */
-    public function apply(EventInterface $event)
+    public function recordThat(EventInterface $event)
     {
         $this->executeEvent($event);
         $this->events[] = new EventTransport($event, new MessageMetadata($this->getAggregateIdentifier(), TypeHandling::getTypeForValue($this)));
@@ -89,7 +89,7 @@ trait AggregateRootTrait
         $nameParts = Arrays::trimExplode('\\', $name);
         $className = array_pop($nameParts);
 
-        $method = sprintf('apply%s', ucfirst($className));
+        $method = sprintf('when%s', ucfirst($className));
 
         if (!method_exists($this, $method)) {
             throw new \LogicException(sprintf(

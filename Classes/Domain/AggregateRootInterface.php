@@ -24,7 +24,7 @@ interface AggregateRootInterface
      * @param EventInterface $event
      * @return void
      */
-    public function apply(EventInterface $event);
+    public function recordThat(EventInterface $event);
 
     /**
      * @return array
