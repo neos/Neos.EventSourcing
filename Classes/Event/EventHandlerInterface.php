@@ -14,5 +14,5 @@ use TYPO3\Flow\Annotations as Flow;
  */
 interface EventHandlerInterface
 {
-    public function handle(EventInterface $event);
+    public function handle(EventTransport $transport);
 }

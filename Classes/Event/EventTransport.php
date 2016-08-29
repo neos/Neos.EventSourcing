@@ -55,6 +55,14 @@ class EventTransport
     }
 
     /**
+     * @return MessageMetadata
+     */
+    public function getMetaData(): MessageMetadata
+    {
+        return $this->metaData;
+    }
+
+    /**
      * @return string
      */
     public function getAggregateName(): string

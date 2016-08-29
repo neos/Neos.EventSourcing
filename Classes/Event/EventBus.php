@@ -23,22 +23,22 @@ class EventBus implements EventBusInterface
     protected $locator;
 
     /**
-     * @param EventInterface|FaultInterface $message
+     * @param EventTransport $transport
      * @return void
      */
-    public function handle(EventInterface $message)
+    public function handle(EventTransport $transport)
     {
         /** @var EventHandlerInterface[] $handlers */
-        $handlers = $this->locator->getHandlers($message);
+        $handlers = $this->locator->getHandlers($transport->getEvent());
 
         foreach ($handlers as $handler) {
             try {
-                $handler->handle($message);
+                $handler->handle($transport);
             } catch (\Exception $exception) {
-                if ($message instanceof FaultInterface) {
+                if ($transport instanceof FaultInterface) {
                     return;
                 }
-                $this->handle(new GenericFault($message, $handler, $exception));
+                $this->handle(new GenericFault($transport, $handler, $exception));
             }
         }
     }

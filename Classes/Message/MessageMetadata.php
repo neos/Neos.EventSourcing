@@ -31,6 +31,11 @@ class MessageMetadata
     protected $timestamp;
 
     /**
+     * @var array
+     */
+    protected $propertyBag = [];
+
+    /**
      * @param string $aggregateName
      * @param string $aggregateIdentifier
      * @param \DateTime $timestamp
@@ -64,5 +69,31 @@ class MessageMetadata
     public function getTimestamp(): \DateTime
     {
         return $this->timestamp;
+    }
+
+    /**
+     * @param string $name
+     * @param mixed $value
+     */
+    public function add(string $name, $value)
+    {
+        $this->propertyBag[$name] = $value;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function remove(string $name)
+    {
+        unset($this->propertyBag[$name]);
+    }
+
+    /**
+     * @param string $name
+     * @return boolean
+     */
+    public function has(string $name): bool
+    {
+        return isset($this->propertyBag[$name]) && $this->propertyBag[$name] !== null;
     }
 }

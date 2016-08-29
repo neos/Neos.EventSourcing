@@ -65,8 +65,7 @@ trait AggregateRootTrait
     public function apply(EventInterface $event)
     {
         $this->executeEvent($event);
-        $transport = new EventTransport($event, new MessageMetadata($this->getAggregateIdentifier(), TypeHandling::getTypeForValue($this)));
-        $this->events[] = $transport;
+        $this->events[] = new EventTransport($event, new MessageMetadata($this->getAggregateIdentifier(), TypeHandling::getTypeForValue($this)));
     }
 
     /**

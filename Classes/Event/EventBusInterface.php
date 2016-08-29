@@ -7,7 +7,6 @@ namespace Ttree\Cqrs\Event;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Message\MessageBusInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -16,8 +15,8 @@ use TYPO3\Flow\Annotations as Flow;
 interface EventBusInterface
 {
     /**
-     * @param EventInterface $message
+     * @param EventTransport $transport
      * @return void
      */
-    public function handle(EventInterface $message);
+    public function handle(EventTransport $transport);
 }
