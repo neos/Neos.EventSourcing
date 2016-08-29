@@ -37,7 +37,7 @@ class QueryBus implements QueryBusInterface
      * @param MessageInterface|QueryInterface $query
      * @return MessageResultInterface
      */
-    public function handle(MessageInterface $query)
+    public function handle(QueryInterface $query)
     {
         return $this->getHandler($query)
             ->handle($query);

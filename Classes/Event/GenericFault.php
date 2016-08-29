@@ -7,11 +7,7 @@ namespace Ttree\Cqrs\Event;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Domain\Timestamp;
-use Ttree\Cqrs\Exception;
 use Ttree\Cqrs\Message\MessageInterface;
-use Ttree\Cqrs\Message\MessageMetadata;
-use Ttree\Cqrs\Message\MessageTrait;
 use TYPO3\Flow\Annotations as Flow;
 
 /**

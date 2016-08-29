@@ -8,11 +8,17 @@ namespace Ttree\Cqrs\Query;
  */
 
 use Ttree\Cqrs\Message\MessageBusInterface;
+use Ttree\Cqrs\Message\MessageResultInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
  * QueryBusInterface
  */
-interface QueryBusInterface extends MessageBusInterface
+interface QueryBusInterface
 {
+    /**
+     * @param QueryInterface $message
+     * @return MessageResultInterface
+     */
+    public function handle(QueryInterface $message);
 }
