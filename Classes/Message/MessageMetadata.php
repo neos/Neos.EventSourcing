@@ -36,14 +36,14 @@ class MessageMetadata
     protected $propertyBag = [];
 
     /**
-     * @param string $aggregateName
      * @param string $aggregateIdentifier
+     * @param string $aggregateName
      * @param \DateTime $timestamp
      */
-    public function __construct(string $aggregateName, string $aggregateIdentifier, \DateTime $timestamp = null)
+    public function __construct(string $aggregateIdentifier, string $aggregateName, \DateTime $timestamp = null)
     {
-        $this->aggregateName = $aggregateName;
         $this->aggregateIdentifier = $aggregateIdentifier;
+        $this->aggregateName = $aggregateName;
         $this->timestamp = $timestamp ?: Timestamp::create();
     }
 
