@@ -6,6 +6,12 @@ This package is inspired by [LiteCQRS](https://github.com/beberlei/litecqrs-php)
 
 The goal of the project is to provide infrastructure to support CQRS/ES project based on Flow Framework
 
+# Requirements
+
+* PHP 7
+* MySQL 5.7.8 (require native JSON support)
+* Flow 3.3 LTS
+
 # Packages
 
 The features are splitted in differents packages:
