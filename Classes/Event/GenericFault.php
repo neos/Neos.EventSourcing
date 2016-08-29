@@ -21,9 +21,9 @@ class GenericFault implements FaultInterface
     protected $event;
 
     /**
-     * @var EventHandlerInterface
+     * @var EventListenerInterface
      */
-    protected $handler;
+    protected $listener;
 
     /**
      * @var \Exception
@@ -32,13 +32,13 @@ class GenericFault implements FaultInterface
 
     /**
      * @param EventInterface|MessageInterface $event
-     * @param EventHandlerInterface $handler
+     * @param EventListenerInterface $listener
      * @param \Exception $exception
      */
-    public function __construct(MessageInterface $event, EventHandlerInterface $handler, \Exception $exception)
+    public function __construct(MessageInterface $event, EventListenerInterface $listener, \Exception $exception)
     {
         $this->event = $event;
-        $this->handler = $handler;
+        $this->listener = $listener;
         $this->exception = $exception;
     }
 }
