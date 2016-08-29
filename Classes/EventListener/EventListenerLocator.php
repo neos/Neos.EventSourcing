@@ -66,6 +66,7 @@ class EventListenerLocator implements EventListenerLocatorInterface
      * @return array
      * @throws Exception
      * @Flow\CompileStatic
+     * @todo be sure that projector are called after all the other event listeners !!!
      */
     public static function detectListeners(ObjectManagerInterface $objectManager)
     {
