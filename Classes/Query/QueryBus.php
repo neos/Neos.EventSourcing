@@ -9,8 +9,8 @@ namespace Ttree\Cqrs\Query;
 
 use Ttree\Cqrs\Message\MessageInterface;
 use Ttree\Cqrs\Message\MessageResultInterface;
-use Ttree\Cqrs\Message\Resolver\ResolverInterface;
 use Ttree\Cqrs\Query\Exception\QueryBusException;
+use Ttree\Cqrs\Query\Resolver\ResolverInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 

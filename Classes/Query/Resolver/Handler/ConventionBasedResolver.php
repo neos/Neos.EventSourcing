@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Message\Resolver\Handler;
+namespace Ttree\Cqrs\Query\Resolver\Handler;
 
 /*
  * This file is part of the Ttree.Cqrs package.
@@ -7,7 +7,7 @@ namespace Ttree\Cqrs\Message\Resolver\Handler;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Message\Resolver\ResolverInterface;
+use Ttree\Cqrs\Query\Resolver\ResolverInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -15,7 +15,7 @@ use TYPO3\Flow\Annotations as Flow;
  *
  * @Flow\Scope("singleton")
  */
-class AutoResolver implements ResolverInterface
+class ConventionBasedResolver implements ResolverInterface
 {
     /**
      * @param  string $messageName

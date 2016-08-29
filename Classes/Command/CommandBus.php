@@ -8,8 +8,8 @@ namespace Ttree\Cqrs\Command;
  */
 
 use Ttree\Cqrs\Command\Exception\CommandBusException;
+use Ttree\Cqrs\Command\Resolver\ResolverInterface;
 use Ttree\Cqrs\Event\EventType;
-use Ttree\Cqrs\Message\Resolver\ResolverInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 

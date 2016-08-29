@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Message\Resolver;
+namespace Ttree\Cqrs\Command\Resolver;
 
 /*
  * This file is part of the Ttree.Cqrs package.
