@@ -11,6 +11,7 @@ use Ttree\Cqrs\Event\EventInterface;
 use Ttree\Cqrs\Event\EventTransport;
 use Ttree\Cqrs\Event\EventType;
 use Ttree\Cqrs\Exception;
+use Ttree\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Reflection\ReflectionService;
@@ -63,15 +64,15 @@ class EventListenerLocator implements EventListenerLocatorInterface
     /**
      * @param ObjectManagerInterface $objectManager
      * @return array
+     * @throws Exception
      * @Flow\CompileStatic
      */
-    protected static function detectListeners(ObjectManagerInterface $objectManager)
+    public static function detectListeners(ObjectManagerInterface $objectManager)
     {
         $listeners = [];
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listener) {
-            $eventNamespaceSuffix = implode(array_merge(array_slice(explode('\\', $listener), 0, -2), ['Event\\']), '\\');
             foreach (get_class_methods($listener) as $method) {
                 preg_match('/^on[AB]?.*$/', $method, $matches);
                 if (!isset($matches[0])) {
@@ -83,14 +84,20 @@ class EventListenerLocator implements EventListenerLocatorInterface
                 switch (true) {
                     case count($parameters) === 1:
                         $eventType = $parameters[0]['class'];
+                        if (!$reflectionService->isClassImplementationOf($eventType, EventInterface::class)) {
+                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should by casted to an implementation of EventInterface', $listener, $method), 1472504443);
+                        }
                         $metaDataType = null;
                         break;
                     case count($parameters) > 1:
                         $eventType = $parameters[0]['class'];
                         $metaDataType = $parameters[1]['class'];
+                        if ($metaDataType !== MessageMetadata::class) {
+                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should by casted to MessageMetaData', $listener, $method), 1472504303);
+                        }
                         break;
                 }
-                if ($eventType === null) {
+                if (trim($eventType) === '') {
                     throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accent an EventInterface and optionnaly a MessageMetaData', $listener, $method), 1472500228);
                 }
                 $eventTypeParts = explode('\\', $eventType);
