@@ -218,12 +218,14 @@ Your must implement the ```EventListenerInterface```:
         }
     }
     
+The event handler locator can throw exception is something wrong with your command handler definition, please check your 
+system log to have more informations.
+
 All the wiring between event is done automatically, if you respect the following convention:
 
 * Method name must be on[ShortEventName]
 * The first parameter must be casted with your ```Event```
 * The second parameter is optional, but should be casted to ```MessageMetadata```
-* Listener can only listen to event inside the current model
 
 ## EventStore
 
