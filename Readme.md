@@ -34,25 +34,24 @@ This is a PSR4 package structure:
         Service/
       
       CommandHandler/
-      EventListener/
       
       Domain/
         Service/
         Aggregate/
-          YourAggregate/
+          [YourAggregate]/
             Command/
             Event/
             Service/
             YourAggregate.php
             YourAggregateRepository.php
+      
+      EventListener/
           
       Query/
-        Projection/
+        [WhatYouNeed]/
             [WhatYouNeed]Projection.php
-            
-        Model/
-            YourModel.php
-            YourModelFinder.php
+            [WhatYouNeed]ReadModel.php
+            [WhatYouNeed]Finder.php
 
 # Components
 
