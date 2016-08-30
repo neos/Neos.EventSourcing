@@ -7,7 +7,7 @@ namespace Ttree\Cqrs;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Projection\DoctrineProjectionRegistry;
+use Ttree\Cqrs\Projection\ReadModelRegistry;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Core\Bootstrap;
 use TYPO3\Flow\Package\Package as BasePackage;
@@ -29,6 +29,6 @@ class Package extends BasePackage
     public function boot(Bootstrap $bootstrap)
     {
         $dispatcher = $bootstrap->getSignalSlotDispatcher();
-        $dispatcher->connect(Bootstrap::class, 'finishedRuntimeRun', DoctrineProjectionRegistry::class, 'flush');
+        $dispatcher->connect(Bootstrap::class, 'finishedRuntimeRun', ReadModelRegistry::class, 'flush');
     }
 }

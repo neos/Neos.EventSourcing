@@ -53,10 +53,34 @@ class EventListenerLocator implements EventListenerLocatorInterface
             return [];
         }
         return array_map(function ($listener) {
-            return function (EventTransport $eventTransport) use ($listener) {
-                list($class, $method) = $listener;
-                $handler = $this->objectManager->get($class);
-                $handler->$method($eventTransport->getEvent(), $eventTransport->getMetaData());
+            return new class($listener, $this->objectManager) {
+                /** @var string */
+                protected $listener;
+                /** @var  ObjectManagerInterface */
+                protected $objectManager;
+
+                public function __construct($listener, $objectManager)
+                {
+                    $this->listener = $listener;
+                    $this->objectManager = $objectManager;
+                }
+
+                public function getListenerClass()
+                {
+                    return $this->listener[0];
+                }
+
+                public function getListenerMethod()
+                {
+                    return $this->listener[1];
+                }
+
+                public function handle(EventTransport $eventTransport)
+                {
+                    list($class, $method) = $this->listener;
+                    $handler = $this->objectManager->get($class);
+                    $handler->$method($eventTransport->getEvent(), $eventTransport->getMetaData());
+                }
             };
         }, $this->map[$eventType]);
     }

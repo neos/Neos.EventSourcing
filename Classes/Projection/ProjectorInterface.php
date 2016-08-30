@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Projector;
+namespace Ttree\Cqrs\Projection;
 
 /*
  * This file is part of the Ttree.Cqrs package.
