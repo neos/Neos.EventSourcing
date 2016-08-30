@@ -17,9 +17,9 @@ use TYPO3\Flow\Log\SystemLoggerInterface;
 use TYPO3\Flow\Persistence\PersistenceManagerInterface;
 
 /**
- * ProjectorInterface
+ * ProjectionInterface
  */
-abstract class AbstractDoctrineProjector implements ProjectorInterface
+abstract class AbstractDoctrineProjection implements ProjectionInterface
 {
     /**
      * @var ReadModelRegistry

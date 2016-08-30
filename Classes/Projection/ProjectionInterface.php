@@ -14,8 +14,8 @@ namespace Ttree\Cqrs\Projection;
 use Ttree\Cqrs\EventListener\EventListenerInterface;
 
 /**
- * ProjectorInterface
+ * ProjectionInterface
  */
-interface ProjectorInterface extends EventListenerInterface
+interface ProjectionInterface extends EventListenerInterface
 {
 }
