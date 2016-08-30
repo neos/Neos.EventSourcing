@@ -46,25 +46,13 @@ abstract class AbstractDoctrineProjection implements ProjectionInterface
     protected $entityManager;
 
     /**
-     * @var string
-     */
-    protected $targetReadModel;
-
-    /**
-     * Setup the projector
-     */
-    public function initializeObject()
-    {
-        $this->targetReadModel = str_replace(['\\Projection\\'], ['\\ReadModel\\'], get_class($this));
-    }
-
-    /**
      * @param string $identifier
+     * @param string $type
      * @param object $object
      */
-    public function persist(string $identifier, $object)
+    public function persist(string $identifier, string $type, $object)
     {
-        $hash = md5($identifier, $this->targetReadModel);
+        $hash = md5($identifier, $type);
         $this->registry->set($hash, $object);
         $this->registry->persist($hash, function () use ($object) {
             $this->flush($object);
@@ -73,15 +61,16 @@ abstract class AbstractDoctrineProjection implements ProjectionInterface
 
     /**
      * @param string $identifier
+     * @param string $type
      * @return object
      */
-    public function findByIdentifier(string $identifier)
+    public function findByIdentifier(string $identifier, string $type)
     {
-        $hash = md5($identifier . $this->targetReadModel);
+        $hash = md5($identifier . $type);
         if ($this->registry->has($hash)) {
             return $this->registry->get($hash);
         }
-        $object = $this->persistenceManager->getObjectByIdentifier($identifier, $this->targetReadModel);
+        $object = $this->persistenceManager->getObjectByIdentifier($identifier, $type);
         if ($object === null) {
             return null;
         }
