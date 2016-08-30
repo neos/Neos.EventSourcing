@@ -9,7 +9,6 @@ namespace Ttree\Cqrs\Event;
 
 use Ttree\Cqrs\Message\MessageInterface;
 use Ttree\Cqrs\Message\MessageMetadata;
-use TYPO3\Flow\Annotations as Flow;
 
 /**
  * EventTransport

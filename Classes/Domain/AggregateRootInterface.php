@@ -8,7 +8,6 @@ namespace Ttree\Cqrs\Domain;
  */
 
 use Ttree\Cqrs\Event\EventInterface;
-use TYPO3\Flow\Annotations as Flow;
 
 /**
  * AggregateRootInterface

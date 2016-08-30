@@ -8,7 +8,6 @@ namespace Ttree\Cqrs\Query\Exception;
  */
 
 use Ttree\Cqrs\Message\Resolver\Exception\MessageHandlerException;
-use TYPO3\Flow\Annotations as Flow;
 
 /**
  * QueryHandlerException

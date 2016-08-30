@@ -7,8 +7,6 @@ namespace Ttree\Cqrs\Event;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use TYPO3\Flow\Annotations as Flow;
-
 /**
  * EventType
  * @todo maybe move this to a service, nightmare to test

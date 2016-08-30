@@ -8,7 +8,6 @@ namespace Ttree\Cqrs;
  */
 
 use Ttree\Cqrs\Projection\ReadModelRegistry;
-use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Core\Bootstrap;
 use TYPO3\Flow\Package\Package as BasePackage;
 

@@ -8,10 +8,9 @@ namespace Ttree\Cqrs\Domain;
  */
 
 use Ttree\Cqrs\Event\EventInterface;
-use Ttree\Cqrs\Event\EventType;
 use Ttree\Cqrs\Event\EventTransport;
+use Ttree\Cqrs\Event\EventType;
 use Ttree\Cqrs\Message\MessageMetadata;
-use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Utility\Arrays;
 use TYPO3\Flow\Utility\TypeHandling;
 

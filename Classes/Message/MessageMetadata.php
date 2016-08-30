@@ -8,7 +8,6 @@ namespace Ttree\Cqrs\Message;
  */
 
 use Ttree\Cqrs\Domain\Timestamp;
-use TYPO3\Flow\Annotations as Flow;
 
 /**
  * MessageMetadata

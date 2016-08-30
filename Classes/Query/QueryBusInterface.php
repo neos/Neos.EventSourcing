@@ -7,9 +7,7 @@ namespace Ttree\Cqrs\Query;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Message\MessageBusInterface;
 use Ttree\Cqrs\Message\MessageResultInterface;
-use TYPO3\Flow\Annotations as Flow;
 
 /**
  * QueryBusInterface

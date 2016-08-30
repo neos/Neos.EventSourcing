@@ -8,12 +8,10 @@ namespace Ttree\Cqrs\Projection;
  */
 
 use Ttree\Cqrs\EventListener\EventListenerInterface;
-use TYPO3\Flow\Annotations as Flow;
 
 /**
  * ProjectorInterface
  */
 interface ProjectorInterface extends EventListenerInterface
 {
-
 }

@@ -8,7 +8,6 @@ namespace Ttree\Cqrs\Projection;
  */
 
 use Doctrine\Common\Persistence\ObjectManager;
-use Ttree\Cqrs\Projection\ReadModelRegistry;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Log\SystemLoggerInterface;
 use TYPO3\Flow\Persistence\PersistenceManagerInterface;

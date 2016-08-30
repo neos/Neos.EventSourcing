@@ -7,7 +7,6 @@ namespace Ttree\Cqrs\Command;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Command\Exception\CommandHandlerNotFoundException;
 use Ttree\Cqrs\Event\EventType;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
@@ -68,7 +67,6 @@ class CommandBus implements CommandBusInterface
     /**
      * @param CommandInterface $message
      * @return \Closure
-     * @todo Use CompileStatic to build a mapping between command and command handler during compilation
      */
     protected function getHandler(CommandInterface $message)
     {

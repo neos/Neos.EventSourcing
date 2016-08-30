@@ -7,8 +7,6 @@ namespace Ttree\Cqrs\Command;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use TYPO3\Flow\Annotations as Flow;
-
 /**
  * CommandBusInterface
  */
@@ -16,7 +14,7 @@ interface CommandBusInterface
 {
     /**
      * @param CommandInterface $command
-     * @return void|MessageResultInterface
+     * @return void
      */
     public function handle(CommandInterface $command);
 }

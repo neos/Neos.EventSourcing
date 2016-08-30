@@ -8,7 +8,6 @@ namespace Ttree\Cqrs\EventListener;
  */
 
 use Ttree\Cqrs\Event\EventInterface;
-use TYPO3\Flow\Annotations as Flow;
 
 /**
  * EventListenerLocatorInterface

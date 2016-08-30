@@ -8,7 +8,6 @@ namespace Ttree\Cqrs\Query;
  */
 
 use Ttree\Cqrs\Message\MessageResultInterface;
-use TYPO3\Flow\Annotations as Flow;
 
 /**
  * QueryInterface
