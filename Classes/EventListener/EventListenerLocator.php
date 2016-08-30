@@ -99,7 +99,7 @@ class EventListenerLocator implements EventListenerLocatorInterface
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listener) {
             foreach (get_class_methods($listener) as $method) {
-                preg_match('/^on[AB]?.*$/', $method, $matches);
+                preg_match('/^on.*$/', $method, $matches);
                 if (!isset($matches[0])) {
                     continue;
                 }

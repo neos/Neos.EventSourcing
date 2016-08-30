@@ -70,7 +70,7 @@ class CommandHandlerLocator implements LocatorInterface
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(CommandHandlerInterface::class) as $handler) {
             foreach (get_class_methods($handler) as $method) {
-                preg_match('/^handle[AB]?.*$/', $method, $matches);
+                preg_match('/^handle.*$/', $method, $matches);
                 if (!isset($matches[0])) {
                     continue;
                 }
