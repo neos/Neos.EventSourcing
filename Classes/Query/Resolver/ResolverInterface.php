@@ -10,7 +10,7 @@ namespace Ttree\Cqrs\Query\Resolver;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * ResolverInterface
+ * LocatorInterface
  */
 interface ResolverInterface
 {
