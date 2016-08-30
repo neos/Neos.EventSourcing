@@ -123,7 +123,7 @@ class EventListenerLocator implements EventListenerLocatorInterface
                         break;
                 }
                 if (trim($eventType) === '') {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accent an EventInterface and optionnaly a MessageMetaData', $listener, $method), 1472500228);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionnaly a MessageMetaData', $listener, $method), 1472500228);
                 }
                 $eventTypeParts = explode('\\', $eventType);
                 $expectedMethod = 'on' . end($eventTypeParts);
