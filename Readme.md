@@ -101,6 +101,31 @@ Your command must simply implement the ```CommandInterface```.
 
 * [x] **CommandHandler**: implement your own based on ```CommandHandlerInterface```
 
+Your command must simply implement the ```CommandHandlerInterface```.
+
+    class ButtonCommandHandler implements CommandHandlerInterface
+    {
+        /**
+         * @var ButtonRepository
+         * @Flow\Inject
+         */
+        protected $buttonRepository;
+    
+        /**
+         * @param CreateButton $command
+         */
+        public function handleCreateButton(CreateButton $command)
+        {
+            $button = new Button($command->getAggregateIdentifier(), $command->getPublicIdentifier());
+            $button->changeLabel($command->getLabel());
+    
+            $this->buttonRepository->save($button);
+        }
+    
+    }
+    
+The command handler locator can throw exception is something wrong with your command handler definition, please check your 
+system log to have more informations.
 
 ### Monitoring
 
