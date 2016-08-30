@@ -10,6 +10,7 @@ namespace Ttree\Cqrs\Event;
 use Ttree\Cqrs\EventListener\EventListenerInterface;
 use Ttree\Cqrs\EventListener\EventListenerLocatorInterface;
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Log\SystemLoggerInterface;
 
 /**
  * EventBus
@@ -25,23 +26,26 @@ class EventBus implements EventBusInterface
     protected $locator;
 
     /**
+     * @var SystemLoggerInterface
+     * @Flow\Inject
+     */
+    protected $logger;
+
+    /**
      * @param EventTransport $transport
-     * @return void
+     * @throws \Exception
      */
     public function handle(EventTransport $transport)
     {
         /** @var EventListenerInterface[] $handlers */
         $handlers = $this->locator->getListeners($transport->getEvent());
 
-        /** @var \Closure $handler */
         foreach ($handlers as $handler) {
             try {
-                $handler($transport);
+                $handler->handle($transport);
             } catch (\Exception $exception) {
-                if ($transport instanceof FaultInterface) {
-                    return;
-                }
-                $this->handle(new GenericFault($transport, $handler, $exception));
+                $this->logger->logException($exception);
+                throw $exception;
             }
         }
     }
