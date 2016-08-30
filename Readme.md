@@ -45,7 +45,7 @@ This is a PSR4 package structure:
             Event/
             Service/
             YourAggregate.php
-              YourAggregateRepository.php
+            YourAggregateRepository.php
           
       Query/
         Projection/
