@@ -9,7 +9,6 @@ The goal of the project is to provide infrastructure to support CQRS/ES project 
 # Requirements
 
 * PHP 7
-* MySQL 5.7.8 (require native JSON support)
 * Flow 3.3 LTS
 
 # Packages
