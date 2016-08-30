@@ -26,38 +26,34 @@ More storage can be added later (Redis, ...).
 
 # Folder Structure
 
-This is a PSR4 package structure, you need to respect the directory structure in the ```Domain```directory:
+This is a PSR4 package structure:
  
     Your.Package/
       Application/
         Controller/
-          ...
         Command/
-          ...
+        Service/
+      
+      CommandHandler/
+      EventListener/
+      
       Domain/
-        YourModel/
-          Command/
-          ...
-          CommandHandler/
-          ...
-          Event/
-          ...
-          EventListener/
-          ...
-          ...
-          Model/
-          ...
-          ...
-          Repository/
-          ...
-          ...
-          Service/
-          ...
-
-# Conventions
-
-* ```CommandHandler``` **must** be in the same domain model that the related ```Command```
-* ```EventListener``` **can** only listen to ```Event``` from the current model
+        Service/
+        Aggregate/
+          YourAggregate/
+            Command/
+            Event/
+            Service/
+            YourAggregate.php
+              YourAggregateRepository.php
+          
+      Query/
+        Projection/
+            [WhatYouNeed]Projection.php
+            
+        Model/
+            YourModel.php
+            YourModelFinder.php
 
 # Components
 
