@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Command\Resolver;
+namespace Ttree\Cqrs\Command;
 
 /*
  * This file is part of the Ttree.Cqrs package.
@@ -10,13 +10,13 @@ namespace Ttree\Cqrs\Command\Resolver;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * ResolverInterface
+ * LocatorInterface
  */
-interface ResolverInterface
+interface LocatorInterface
 {
     /**
      * @param  string $messageName
-     * @return string
+     * @return \Closure
      */
-    public function resolve($messageName): string;
+    public function resolve($messageName): \Closure;
 }

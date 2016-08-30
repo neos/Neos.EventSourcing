@@ -14,8 +14,4 @@ use TYPO3\Flow\Annotations as Flow;
  */
 interface CommandHandlerInterface
 {
-    /**
-     * @param CommandInterface $command
-     */
-    public function handle(CommandInterface $command);
 }

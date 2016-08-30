@@ -61,7 +61,7 @@ class CommandBusTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Ttree\Cqrs\Command\Exception\CommandBusException
+     * @expectedException \Ttree\Cqrs\Command\Exception\CommandHandlerNotFoundException
      */
     public function handleCommandWithoutHandlerThrowException()
     {
@@ -72,7 +72,7 @@ class CommandBusTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Ttree\Cqrs\Command\Exception\CommandBusException
+     * @expectedException \Ttree\Cqrs\Command\Exception\CommandHandlerNotFoundException
      */
     public function handleCommandWithUnregistredHandlerThrowException()
     {

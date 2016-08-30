@@ -11,8 +11,8 @@ use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Exception;
 
 /**
- * CommandBusException
+ * CommandHandlerNotFoundException
  */
-class CommandBusException extends Exception
+class CommandHandlerNotFoundException extends Exception
 {
 }

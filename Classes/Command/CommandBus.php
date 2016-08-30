@@ -7,8 +7,7 @@ namespace Ttree\Cqrs\Command;
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Command\Exception\CommandBusException;
-use Ttree\Cqrs\Command\Resolver\ResolverInterface;
+use Ttree\Cqrs\Command\Exception\CommandHandlerNotFoundException;
 use Ttree\Cqrs\Event\EventType;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
@@ -27,7 +26,7 @@ class CommandBus implements CommandBusInterface
     protected $objectManager;
 
     /**
-     * @var ResolverInterface
+     * @var LocatorInterface
      * @Flow\Inject
      */
     protected $resolver;
@@ -58,7 +57,8 @@ class CommandBus implements CommandBusInterface
 
         try {
             while ($command = array_shift($this->queue)) {
-                $this->getHandler($command)->handle($command);
+                $handler = $this->getHandler($command);
+                $handler($command);
             }
         } finally {
             $this->isHandling = false;
@@ -67,39 +67,12 @@ class CommandBus implements CommandBusInterface
 
     /**
      * @param CommandInterface $message
-     * @return CommandHandlerInterface
-     * @throws CommandBusException
+     * @return \Closure
      * @todo Use CompileStatic to build a mapping between command and command handler during compilation
      */
     protected function getHandler(CommandInterface $message)
     {
         $messageName = EventType::get($message);
-
-        $handlerClassName = $this->resolver->resolve($messageName);
-
-        if (!$this->objectManager->isRegistered($handlerClassName)) {
-            throw new CommandBusException(
-                sprintf(
-                    "Missing handler '%s' for command '%s'",
-                    $handlerClassName,
-                    $messageName
-                )
-            );
-        }
-
-        /** @var CommandHandlerInterface $handler */
-        $handler = $this->objectManager->get($handlerClassName);
-
-        if (!$handler instanceof CommandHandlerInterface) {
-            throw new CommandBusException(
-                sprintf(
-                    "Handler '%s' returned by locator for command '%s' should implement CommandHandlerInterface",
-                    $handlerClassName,
-                    $messageName
-                )
-            );
-        }
-
-        return $handler;
+        return $this->resolver->resolve($messageName);
     }
 }
