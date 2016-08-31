@@ -2,8 +2,6 @@
 
 _This package is currently under development and not fully working, please don't use it in production._
 
-This package is inspired by [LiteCQRS](https://github.com/beberlei/litecqrs-php) and [Broadway](https://github.com/qandidate-labs/broadway).
-
 The goal of the project is to provide infrastructure to support CQRS/ES project based on Flow Framework
 
 # Requirements
@@ -15,11 +13,11 @@ The goal of the project is to provide infrastructure to support CQRS/ES project 
 
 The features are splitted in differents packages:
 
-* **[Neos.Cqrs](https://github.com/dfeyer/Neos.Cqrs)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
-* **[Neos.Cqrs.MonitoringHelper](https://github.com/dfeyer/Neos.Cqrs.MonitoringHelper)**: aspect to monitor performance of the ```Neos.Cqrs``` infrastructure
-* **[Neos.EventStore](https://github.com/dfeyer/Neos.EventStore)**: event store to support event sourcing
-* **[Neos.EventStore.InMemoryStorageAdapter](https://github.com/dfeyer/Neos.EventStore.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
-* **[Neos.EventStore.DatabaseStorageAdapter](https://github.com/dfeyer/Neos.EventStore.DatabaseStorageAdapter)**: doctrine dbal based event storage
+* **[Neos.Cqrs](https://github.com/neos/Neos.Cqrs)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
+* **[Neos.Cqrs.MonitoringHelper](https://github.com/neos/Neos.Cqrs.MonitoringHelper)**: aspect to monitor performance of the ```Neos.Cqrs``` infrastructure
+* **[Neos.EventStore](https://github.com/neos/Neos.EventStore)**: event store to support event sourcing
+* **[Neos.EventStore.InMemoryStorageAdapter](https://github.com/neos/Neos.EventStore.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
+* **[Neos.EventStore.DatabaseStorageAdapter](https://github.com/neos/Neos.EventStore.DatabaseStorageAdapter)**: doctrine dbal based event storage
 
 More storage can be added later (Redis, ...).
 
