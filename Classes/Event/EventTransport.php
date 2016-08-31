@@ -13,9 +13,12 @@ namespace Neos\Cqrs\Event;
 
 use Neos\Cqrs\Message\MessageInterface;
 use Neos\Cqrs\Message\MessageMetadata;
+use TYPO3\Flow\Annotations as Flow;
 
 /**
  * EventTransport
+ *
+ * @Flow\Proxy(false)
  */
 class EventTransport
 {

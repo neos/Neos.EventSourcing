@@ -1,5 +1,5 @@
 <?php
-namespace Neos\Cqrs\Event;
+namespace Neos\Cqrs\EventListener;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,11 +11,14 @@ namespace Neos\Cqrs\Event;
  * source code.
  */
 
+use Neos\Cqrs\Event\EventTransport;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 
 /**
  * EventTransport
+ *
+ * @Flow\Proxy(false)
  */
 class EventListenerContainer
 {
@@ -26,15 +29,15 @@ class EventListenerContainer
 
     /**
      * @var ObjectManagerInterface
-     * @Flow\Inject
      */
     protected $objectManager;
 
     /**
      * @param array $listener
      */
-    public function __construct(array $listener)
+    public function __construct(array $listener, ObjectManagerInterface $objectManager)
     {
+        $this->objectManager = $objectManager;
         $this->listener = $listener;
     }
 
@@ -57,7 +60,7 @@ class EventListenerContainer
     /**
      * @param EventTransport $eventTransport
      */
-    public function handle(EventTransport $eventTransport)
+    public function when(EventTransport $eventTransport)
     {
         list($class, $method) = $this->listener;
         $handler = $this->objectManager->get($class);

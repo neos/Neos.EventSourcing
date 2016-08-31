@@ -11,7 +11,8 @@ namespace Neos\Cqrs\Event;
  * source code.
  */
 
-use Neos\Cqrs\EventListener\EventListenerInterface;
+use Neos\Cqrs\Event\Exception\EventBusException;
+use Neos\Cqrs\EventListener\EventListenerContainer;
 use Neos\Cqrs\EventListener\EventListenerLocatorInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Log\SystemLoggerInterface;
@@ -41,15 +42,19 @@ class EventBus implements EventBusInterface
      */
     public function handle(EventTransport $transport)
     {
-        /** @var EventListenerInterface[] $handlers */
-        $handlers = $this->locator->getListeners($transport->getEvent());
+        $listeners = $this->locator->getListeners($transport->getEvent());
 
-        foreach ($handlers as $handler) {
+        if ($listeners === null) {
+            return;
+        }
+
+        /** @var EventListenerContainer $listener */
+        foreach ($listeners as $listener) {
             try {
-                $handler->handle($transport);
+                $listener->when($transport);
             } catch (\Exception $exception) {
                 $this->logger->logException($exception);
-                throw $exception;
+                throw new EventBusException('Handler %s throw an exception', 1472675781, $exception);
             }
         }
     }

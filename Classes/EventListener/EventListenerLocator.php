@@ -12,7 +12,6 @@ namespace Neos\Cqrs\EventListener;
  */
 
 use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\Event\EventListenerContainer;
 use Neos\Cqrs\Event\EventType;
 use Neos\Cqrs\Exception;
 use Neos\Cqrs\Message\MessageMetadata;
@@ -53,9 +52,9 @@ class EventListenerLocator implements EventListenerLocatorInterface
     public function getListeners(EventInterface $message): \Generator
     {
         $eventType = EventType::get($message);
-        if (!isset($this->map[$eventType])) {
+        if (isset($this->map[$eventType])) {
             foreach ($this->map[$eventType] as $listener) {
-                yield new EventListenerContainer($listener);
+                yield new EventListenerContainer($listener, $this->objectManager);
             }
         }
     }

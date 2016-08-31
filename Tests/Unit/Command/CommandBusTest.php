@@ -8,10 +8,8 @@ namespace Neos\Cqrs\Tests\Unit\Command;
  */
 
 use Neos\Cqrs\Command\CommandBus;
-use Neos\Cqrs\Command\CommandHandlerInterface;
 use Neos\Cqrs\Command\CommandInterface;
 use Neos\Cqrs\Command\LocatorInterface;
-use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Tests\UnitTestCase;
 
 /**
@@ -58,7 +56,8 @@ class CommandBusTest extends UnitTestCase
             ->expects($this->once())
             ->method('resolve')
             ->with(self::TEST_COMMAND_SHORTNAME)
-            ->willReturn(function() {});
+            ->willReturn(function () {
+            });
 
         $this->commandBus->handle($this->mockCommand);
     }
