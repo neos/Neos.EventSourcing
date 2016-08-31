@@ -6,6 +6,9 @@
         "php": ">=7.0.1",
         "typo3/flow": ">=2.3"
     },
+    "suggest": {
+        "php-uuid": "For fast generation of UUIDs used in the persistence."
+    },
     "autoload": {
         "psr-4": {
             "Neos\\Cqrs\\": "Classes"
