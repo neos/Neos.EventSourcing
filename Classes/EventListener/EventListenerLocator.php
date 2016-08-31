@@ -12,7 +12,7 @@ namespace Neos\Cqrs\EventListener;
  */
 
 use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\Event\EventTransport;
+use Neos\Cqrs\Event\EventListenerContainer;
 use Neos\Cqrs\Event\EventType;
 use Neos\Cqrs\Exception;
 use Neos\Cqrs\Message\MessageMetadata;
@@ -48,45 +48,16 @@ class EventListenerLocator implements EventListenerLocatorInterface
 
     /**
      * @param EventInterface $message
-     * @return EventListenerInterface[]
+     * @return \Generator
      */
-    public function getListeners(EventInterface $message)
+    public function getListeners(EventInterface $message): \Generator
     {
         $eventType = EventType::get($message);
         if (!isset($this->map[$eventType])) {
-            return [];
+            foreach ($this->map[$eventType] as $listener) {
+                yield new EventListenerContainer($listener);
+            }
         }
-        return array_map(function ($listener) {
-            return new class($listener, $this->objectManager) {
-                /** @var string */
-                protected $listener;
-                /** @var  ObjectManagerInterface */
-                protected $objectManager;
-
-                public function __construct($listener, $objectManager)
-                {
-                    $this->listener = $listener;
-                    $this->objectManager = $objectManager;
-                }
-
-                public function getListenerClass()
-                {
-                    return $this->listener[0];
-                }
-
-                public function getListenerMethod()
-                {
-                    return $this->listener[1];
-                }
-
-                public function handle(EventTransport $eventTransport)
-                {
-                    list($class, $method) = $this->listener;
-                    $handler = $this->objectManager->get($class);
-                    $handler->$method($eventTransport->getEvent(), $eventTransport->getMetaData());
-                }
-            };
-        }, $this->map[$eventType]);
     }
 
     /**

@@ -20,7 +20,7 @@ interface EventListenerLocatorInterface
 {
     /**
      * @param EventInterface $message
-     * @return EventListenerInterface[]
+     * @return \Generator
      */
-    public function getListeners(EventInterface $message);
+    public function getListeners(EventInterface $message): \Generator;
 }
