@@ -1,5 +1,5 @@
 <?php
-namespace Neos\Cqrs\Tests\Unit;
+namespace Neos\Cqrs\Tests\Unit\Command;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -10,13 +10,12 @@ namespace Neos\Cqrs\Tests\Unit;
 use Neos\Cqrs\Command\CommandBus;
 use Neos\Cqrs\Command\CommandHandlerInterface;
 use Neos\Cqrs\Command\CommandInterface;
-use Neos\Cqrs\Message\Resolver\ResolverInterface;
+use Neos\Cqrs\Command\LocatorInterface;
 use TYPO3\Flow\Object\ObjectManagerInterface;
-use TYPO3\Flow\Reflection\ObjectAccess;
 use TYPO3\Flow\Tests\UnitTestCase;
 
 /**
- * Eel context test
+ * CommandBusTest
  */
 class CommandBusTest extends UnitTestCase
 {
@@ -24,29 +23,29 @@ class CommandBusTest extends UnitTestCase
     const TEST_COMMANDHANDLER_CLASSNAME = 'TestCommandHandler';
 
     /**
+     * @var CommandBus
+     */
+    protected $commandBus;
+
+    /**
      * @var ObjectManagerInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $mockObjectManager;
 
     /**
-     * @var ResolverInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var LocatorInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $mockResolver;
 
-    /**
-     * @return CommandBus
-     */
-    public function createCommandBus()
+    public function setUp()
     {
-        $commandBus = new CommandBus();
+        $this->commandBus = new CommandBus();
 
         $this->mockObjectManager = $this->createMock(ObjectManagerInterface::class);
-        ObjectAccess::setProperty($commandBus, 'objectManager', $this->mockObjectManager, true);
+        $this->inject($this->commandBus, 'objectManager', $this->mockObjectManager);
 
-        $this->mockResolver = $this->createMock(ResolverInterface::class);
-        ObjectAccess::setProperty($commandBus, 'resolver', $this->mockResolver, true);
-
-        return $commandBus;
+        $this->mockResolver = $this->createMock(LocatorInterface::class);
+        $this->inject($this->commandBus, 'resolver', $this->mockResolver);
     }
 
     /**
@@ -61,43 +60,13 @@ class CommandBusTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Neos\Cqrs\Command\Exception\CommandHandlerNotFoundException
-     */
-    public function handleCommandWithoutHandlerThrowException()
-    {
-        $commandBus = $this->createCommandBus();
-
-        $commandBus->handle($this->createMockCommand());
-    }
-
-    /**
-     * @test
-     * @expectedException \Neos\Cqrs\Command\Exception\CommandHandlerNotFoundException
-     */
-    public function handleCommandWithUnregistredHandlerThrowException()
-    {
-        $commandBus = $this->createCommandBus();
-        $this->mockResolver
-            ->expects($this->once())
-            ->method('resolve')
-            ->with(self::TEST_COMMAND_CLASSNAME)
-            ->willReturn(self::TEST_COMMANDHANDLER_CLASSNAME);
-
-        $mockCommand = $this->createMockCommand();
-
-        $commandBus->handle($mockCommand);
-    }
-
-    /**
-     * @test
      */
     public function handleCommandWithExistingHandler()
     {
-        $commandBus = $this->createCommandBus();
-
         $mockCommand = $this->createMockCommand();
 
         $mockCommandHandler = $this->createMock(CommandHandlerInterface::class);
+
         $mockCommandHandler
             ->expects($this->once())
             ->method('handle')
@@ -114,12 +83,13 @@ class CommandBusTest extends UnitTestCase
             ->method('get')
             ->with(self::TEST_COMMANDHANDLER_CLASSNAME)
             ->willReturn($mockCommandHandler);
+
         $this->mockResolver
             ->expects($this->once())
             ->method('resolve')
             ->with(self::TEST_COMMAND_CLASSNAME)
             ->willReturn(self::TEST_COMMANDHANDLER_CLASSNAME);
 
-        $commandBus->handle($mockCommand);
+        $this->commandBus->handle($mockCommand);
     }
 }
