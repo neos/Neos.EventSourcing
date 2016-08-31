@@ -15,11 +15,11 @@ The goal of the project is to provide infrastructure to support CQRS/ES project 
 
 The features are splitted in differents packages:
 
-* **[Ttree.Cqrs](https://github.com/dfeyer/Ttree.Cqrs)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
-* **[Ttree.Cqrs.MonitoringHelper](https://github.com/dfeyer/Ttree.Cqrs.MonitoringHelper)**: aspect to monitor performance of the ```Ttree.Cqrs``` infrastructure
-* **[Ttree.EventStore](https://github.com/dfeyer/Ttree.EventStore)**: event store to support event sourcing
-* **[Ttree.EventStore.InMemoryStorageAdapter](https://github.com/dfeyer/Ttree.EventStore.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
-* **[Ttree.EventStore.DatabaseStorageAdapter](https://github.com/dfeyer/Ttree.EventStore.DatabaseStorageAdapter)**: doctrine dbal based event storage
+* **[Neos.Cqrs](https://github.com/dfeyer/Neos.Cqrs)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
+* **[Neos.Cqrs.MonitoringHelper](https://github.com/dfeyer/Neos.Cqrs.MonitoringHelper)**: aspect to monitor performance of the ```Neos.Cqrs``` infrastructure
+* **[Neos.EventStore](https://github.com/dfeyer/Neos.EventStore)**: event store to support event sourcing
+* **[Neos.EventStore.InMemoryStorageAdapter](https://github.com/dfeyer/Neos.EventStore.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
+* **[Neos.EventStore.DatabaseStorageAdapter](https://github.com/dfeyer/Neos.EventStore.DatabaseStorageAdapter)**: doctrine dbal based event storage
 
 More storage can be added later (Redis, ...).
 
@@ -55,7 +55,7 @@ This is a PSR4 package structure:
 
 # Components
 
-Currently most components are included in the ```Ttree.Cqrs``` package. In the future some component can be splitted 
+Currently most components are included in the ```Neos.Cqrs``` package. In the future some component can be splitted 
 in distinct package for more flexibility. 
 
 ## Command
@@ -228,7 +228,7 @@ All the wiring between event is done automatically, if you respect the following
 
 ## EventStore
 
-See package **Ttree.EventStore**.
+See package **Neos.EventStore**.
 
 ## Message
 
@@ -237,13 +237,6 @@ Messaging infrastructure, base class/traits to build your own Events.
 ## Query
 
 [not documented, work in progress]
-
-Acknowledgments
----------------
-
-Development sponsored by [ttree ltd - neos solution provider](http://ttree.ch).
-
-We try our best to craft this package with a lots of love, we are open to sponsoring, support request, ... just contact us.
 
 License
 -------

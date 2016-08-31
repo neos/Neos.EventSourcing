@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Message;
+namespace Neos\Cqrs\Message;
 
 /*
  * This file is part of the Neos.Cqrs package.

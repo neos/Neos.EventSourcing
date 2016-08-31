@@ -1,16 +1,16 @@
 <?php
-namespace Ttree\Cqrs\Tests\Unit;
+namespace Neos\Cqrs\Tests\Unit;
 
 /*
- * This file is part of the Ttree.Cqrs package.
+ * This file is part of the Neos.Cqrs package.
  *
  * (c) Hand crafted with love in each details by medialib.tv
  */
 
-use Ttree\Cqrs\Command\CommandBus;
-use Ttree\Cqrs\Command\CommandHandlerInterface;
-use Ttree\Cqrs\Command\CommandInterface;
-use Ttree\Cqrs\Message\Resolver\ResolverInterface;
+use Neos\Cqrs\Command\CommandBus;
+use Neos\Cqrs\Command\CommandHandlerInterface;
+use Neos\Cqrs\Command\CommandInterface;
+use Neos\Cqrs\Message\Resolver\ResolverInterface;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Reflection\ObjectAccess;
 use TYPO3\Flow\Tests\UnitTestCase;
@@ -61,7 +61,7 @@ class CommandBusTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Ttree\Cqrs\Command\Exception\CommandHandlerNotFoundException
+     * @expectedException \Neos\Cqrs\Command\Exception\CommandHandlerNotFoundException
      */
     public function handleCommandWithoutHandlerThrowException()
     {
@@ -72,7 +72,7 @@ class CommandBusTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Ttree\Cqrs\Command\Exception\CommandHandlerNotFoundException
+     * @expectedException \Neos\Cqrs\Command\Exception\CommandHandlerNotFoundException
      */
     public function handleCommandWithUnregistredHandlerThrowException()
     {

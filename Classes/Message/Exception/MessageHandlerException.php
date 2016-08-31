@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Message\Resolver\Exception;
+namespace Neos\Cqrs\Message\Resolver\Exception;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,7 +11,7 @@ namespace Ttree\Cqrs\Message\Resolver\Exception;
  * source code.
  */
 
-use Ttree\Cqrs\Exception;
+use Neos\Cqrs\Exception;
 
 /**
  * MessageHandlerException

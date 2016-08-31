@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Event;
+namespace Neos\Cqrs\Event;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,8 +11,8 @@ namespace Ttree\Cqrs\Event;
  * source code.
  */
 
-use Ttree\Cqrs\EventListener\EventListenerInterface;
-use Ttree\Cqrs\EventListener\EventListenerLocatorInterface;
+use Neos\Cqrs\EventListener\EventListenerInterface;
+use Neos\Cqrs\EventListener\EventListenerLocatorInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Log\SystemLoggerInterface;
 

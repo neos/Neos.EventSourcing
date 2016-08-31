@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Message;
+namespace Neos\Cqrs\Message;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,7 +11,7 @@ namespace Ttree\Cqrs\Message;
  * source code.
  */
 
-use Ttree\Cqrs\Domain\Timestamp;
+use Neos\Cqrs\Domain\Timestamp;
 
 /**
  * MessageMetadata

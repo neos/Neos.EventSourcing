@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Command;
+namespace Neos\Cqrs\Command;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,7 +11,7 @@ namespace Ttree\Cqrs\Command;
  * source code.
  */
 
-use Ttree\Cqrs\Event\EventType;
+use Neos\Cqrs\Event\EventType;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 

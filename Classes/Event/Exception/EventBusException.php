@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Event\Exception;
+namespace Neos\Cqrs\Event\Exception;
 
 /*
  * This file is part of the Neos.Cqrs package.

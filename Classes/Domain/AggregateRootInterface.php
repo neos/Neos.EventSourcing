@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Domain;
+namespace Neos\Cqrs\Domain;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,7 +11,7 @@ namespace Ttree\Cqrs\Domain;
  * source code.
  */
 
-use Ttree\Cqrs\Event\EventInterface;
+use Neos\Cqrs\Event\EventInterface;
 
 /**
  * AggregateRootInterface

@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Event;
+namespace Neos\Cqrs\Event;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,8 +11,8 @@ namespace Ttree\Cqrs\Event;
  * source code.
  */
 
-use Ttree\Cqrs\Message\MessageInterface;
-use Ttree\Cqrs\Message\MessageMetadata;
+use Neos\Cqrs\Message\MessageInterface;
+use Neos\Cqrs\Message\MessageMetadata;
 
 /**
  * EventTransport

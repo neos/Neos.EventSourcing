@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\EventListener;
+namespace Neos\Cqrs\EventListener;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,7 +11,7 @@ namespace Ttree\Cqrs\EventListener;
  * source code.
  */
 
-use Ttree\Cqrs\Event\EventInterface;
+use Neos\Cqrs\Event\EventInterface;
 
 /**
  * EventListenerLocatorInterface

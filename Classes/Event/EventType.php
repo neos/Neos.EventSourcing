@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Event;
+namespace Neos\Cqrs\Event;
 
 /*
  * This file is part of the Neos.Cqrs package.

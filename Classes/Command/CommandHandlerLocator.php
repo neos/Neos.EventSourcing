@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Command;
+namespace Neos\Cqrs\Command;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,8 +11,8 @@ namespace Ttree\Cqrs\Command;
  * source code.
  */
 
-use Ttree\Cqrs\Command\Exception\CommandHandlerNotFoundException;
-use Ttree\Cqrs\Exception;
+use Neos\Cqrs\Command\Exception\CommandHandlerNotFoundException;
+use Neos\Cqrs\Exception;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Reflection\ReflectionService;

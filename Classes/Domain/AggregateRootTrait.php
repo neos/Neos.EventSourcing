@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Domain;
+namespace Neos\Cqrs\Domain;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,10 +11,10 @@ namespace Ttree\Cqrs\Domain;
  * source code.
  */
 
-use Ttree\Cqrs\Event\EventInterface;
-use Ttree\Cqrs\Event\EventTransport;
-use Ttree\Cqrs\Event\EventType;
-use Ttree\Cqrs\Message\MessageMetadata;
+use Neos\Cqrs\Event\EventInterface;
+use Neos\Cqrs\Event\EventTransport;
+use Neos\Cqrs\Event\EventType;
+use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Utility\Arrays;
 use TYPO3\Flow\Utility\TypeHandling;
 

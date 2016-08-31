@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs;
+namespace Neos\Cqrs;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,12 +11,12 @@ namespace Ttree\Cqrs;
  * source code.
  */
 
-use Ttree\Cqrs\Projection\ReadModelRegistry;
+use Neos\Cqrs\Projection\ReadModelRegistry;
 use TYPO3\Flow\Core\Bootstrap;
 use TYPO3\Flow\Package\Package as BasePackage;
 
 /**
- * The Ttree.Cqrs Package
+ * The Neos.Cqrs Package
  */
 class Package extends BasePackage
 {

@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Domain;
+namespace Neos\Cqrs\Domain;
 
 /*
  * This file is part of the Neos.Cqrs package.

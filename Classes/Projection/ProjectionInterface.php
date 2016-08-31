@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Projection;
+namespace Neos\Cqrs\Projection;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,7 +11,7 @@ namespace Ttree\Cqrs\Projection;
  * source code.
  */
 
-use Ttree\Cqrs\EventListener\EventListenerInterface;
+use Neos\Cqrs\EventListener\EventListenerInterface;
 
 /**
  * ProjectionInterface

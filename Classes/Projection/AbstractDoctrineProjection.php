@@ -1,5 +1,5 @@
 <?php
-namespace Ttree\Cqrs\Projection;
+namespace Neos\Cqrs\Projection;
 
 /*
  * This file is part of the Neos.Cqrs package.
