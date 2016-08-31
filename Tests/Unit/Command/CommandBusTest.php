@@ -19,8 +19,8 @@ use TYPO3\Flow\Tests\UnitTestCase;
  */
 class CommandBusTest extends UnitTestCase
 {
-    const TEST_COMMAND_CLASSNAME = 'TestCommand';
-    const TEST_COMMANDHANDLER_CLASSNAME = 'TestCommandHandler';
+    const TEST_COMMAND_SHORTNAME = 'TestCommand';
+    const TEST_COMMANDHANDLER_SHORTNAME = 'TestCommandHandler';
 
     /**
      * @var CommandBus
@@ -37,8 +37,17 @@ class CommandBusTest extends UnitTestCase
      */
     protected $mockResolver;
 
+    /**
+     * @var CommandInterface
+     */
+    protected $mockCommand;
+
     public function setUp()
     {
+        $this->mockCommand = $this->getMockBuilder(CommandInterface::class)
+            ->setMockClassName(self::TEST_COMMAND_SHORTNAME)
+            ->getMock();
+
         $this->commandBus = new CommandBus();
 
         $this->mockObjectManager = $this->createMock(ObjectManagerInterface::class);
@@ -49,47 +58,16 @@ class CommandBusTest extends UnitTestCase
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject
-     */
-    public function createMockCommand()
-    {
-        return $this->getMockBuilder(CommandInterface::class)
-            ->setMockClassName(self::TEST_COMMAND_CLASSNAME)
-            ->getMock();
-    }
-
-    /**
      * @test
      */
     public function handleCommandWithExistingHandler()
     {
-        $mockCommand = $this->createMockCommand();
-
-        $mockCommandHandler = $this->createMock(CommandHandlerInterface::class);
-
-        $mockCommandHandler
-            ->expects($this->once())
-            ->method('handle')
-            ->with($mockCommand);
-
-        $this->mockObjectManager
-            ->expects($this->once())
-            ->method('isRegistered')
-            ->with(self::TEST_COMMANDHANDLER_CLASSNAME)
-            ->willReturn(true);
-
-        $this->mockObjectManager
-            ->expects($this->once())
-            ->method('get')
-            ->with(self::TEST_COMMANDHANDLER_CLASSNAME)
-            ->willReturn($mockCommandHandler);
-
         $this->mockResolver
             ->expects($this->once())
             ->method('resolve')
-            ->with(self::TEST_COMMAND_CLASSNAME)
-            ->willReturn(self::TEST_COMMANDHANDLER_CLASSNAME);
+            ->with(self::TEST_COMMAND_SHORTNAME)
+            ->willReturn(function() {});
 
-        $this->commandBus->handle($mockCommand);
+        $this->commandBus->handle($this->mockCommand);
     }
 }
