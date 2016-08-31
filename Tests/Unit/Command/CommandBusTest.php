@@ -28,11 +28,6 @@ class CommandBusTest extends UnitTestCase
     protected $commandBus;
 
     /**
-     * @var ObjectManagerInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $mockObjectManager;
-
-    /**
      * @var LocatorInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $mockResolver;
@@ -49,9 +44,6 @@ class CommandBusTest extends UnitTestCase
             ->getMock();
 
         $this->commandBus = new CommandBus();
-
-        $this->mockObjectManager = $this->createMock(ObjectManagerInterface::class);
-        $this->inject($this->commandBus, 'objectManager', $this->mockObjectManager);
 
         $this->mockResolver = $this->createMock(LocatorInterface::class);
         $this->inject($this->commandBus, 'resolver', $this->mockResolver);
