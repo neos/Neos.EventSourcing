@@ -77,18 +77,22 @@ class MessageMetadata
     /**
      * @param string $name
      * @param mixed $value
+     * @return MessageMetadata
      */
     public function add(string $name, $value)
     {
         $this->propertyBag[$name] = $value;
+        return $this;
     }
 
     /**
      * @param string $name
+     * @return MessageMetadata
      */
     public function remove(string $name)
     {
         unset($this->propertyBag[$name]);
+        return $this;
     }
 
     /**
