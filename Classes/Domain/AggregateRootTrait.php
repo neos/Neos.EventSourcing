@@ -50,7 +50,7 @@ trait AggregateRootTrait
     /**
      * @return string
      */
-    final public function getAggregateIdentifier(): string
+    public function getAggregateIdentifier(): string
     {
         return $this->aggregateIdentifier;
     }
