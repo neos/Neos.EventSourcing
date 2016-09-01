@@ -17,6 +17,7 @@ use Neos\Cqrs\Event\EventType;
 use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Utility\Arrays;
 use TYPO3\Flow\Utility\TypeHandling;
+use TYPO3\Flow\Annotations as Flow;
 
 /**
  * AggregateRootTrait
@@ -25,16 +26,19 @@ trait AggregateRootTrait
 {
     /**
      * @var string
+     * @Flow\Transient
      */
     protected $aggregateIdentifier;
 
     /**
      * @var string
+     * @Flow\Transient
      */
     protected $aggregateName;
 
     /**
      * @var EventTransport[]
+     * @Flow\Transient
      */
     protected $events = [];
 
