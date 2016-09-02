@@ -77,7 +77,7 @@ trait AggregateRootTrait
             $messageMetadata->add($name, $value);
         }
 
-        $this->apply($event, $messageMetadata);
+        $this->apply($event);
 
         $this->events[] = new EventTransport($event, $messageMetadata);
     }
@@ -96,7 +96,7 @@ trait AggregateRootTrait
      * @param  EventInterface $event
      * @return void
      */
-    protected function apply(EventInterface $event, MessageMetadata $metadata)
+    protected function apply(EventInterface $event)
     {
         $name = EventType::get($event);
 
@@ -114,6 +114,6 @@ trait AggregateRootTrait
             ));
         }
 
-        $this->$method($event, $metadata);
+        $this->$method($event);
     }
 }
