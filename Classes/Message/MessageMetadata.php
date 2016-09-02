@@ -12,6 +12,7 @@ namespace Neos\Cqrs\Message;
  */
 
 use Neos\Cqrs\Domain\Timestamp;
+use Neos\Cqrs\Message\Resolver\Exception\MessageMetadataException;
 
 /**
  * MessageMetadata
@@ -78,9 +79,13 @@ class MessageMetadata
      * @param string $name
      * @param mixed $value
      * @return MessageMetadata
+     * @throws MessageMetadataException
      */
     public function add(string $name, $value)
     {
+        if ($this->has($value)) {
+            throw new MessageMetadataException(sprintf('The given value "%s" exist and the metadata object is immutable'), 1472853526);
+        }
         $this->propertyBag[$name] = $value;
         return $this;
     }
