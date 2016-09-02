@@ -67,12 +67,19 @@ trait AggregateRootTrait
      * and name.
      *
      * @param  EventInterface $event
+     * @param  array $metadata
      * @return void
      */
-    public function recordThat(EventInterface $event)
+    public function recordThat(EventInterface $event, array $metadata = [])
     {
-        $this->executeEvent($event);
-        $this->events[] = new EventTransport($event, new MessageMetadata($this->getAggregateIdentifier(), TypeHandling::getTypeForValue($this)));
+        $messageMetadata = new MessageMetadata($this->getAggregateIdentifier(), TypeHandling::getTypeForValue($this));
+        foreach ($metadata as $name => $value) {
+            $messageMetadata->add($name, $value);
+        }
+
+        $this->apply($event, $messageMetadata);
+
+        $this->events[] = new EventTransport($event, $messageMetadata);
     }
 
     /**
@@ -89,7 +96,7 @@ trait AggregateRootTrait
      * @param  EventInterface $event
      * @return void
      */
-    protected function executeEvent(EventInterface $event)
+    protected function apply(EventInterface $event, MessageMetadata $metadata)
     {
         $name = EventType::get($event);
 
@@ -107,6 +114,6 @@ trait AggregateRootTrait
             ));
         }
 
-        $this->$method($event);
+        $this->$method($event, $metadata);
     }
 }

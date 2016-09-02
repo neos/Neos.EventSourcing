@@ -24,10 +24,10 @@ interface AggregateRootInterface
     public function getAggregateIdentifier(): string;
 
     /**
-     * @param EventInterface $event
-     * @return void
+     * @param  EventInterface $event
+     * @param  array $metadata
      */
-    public function recordThat(EventInterface $event);
+    public function recordThat(EventInterface $event, array $metadata = []);
 
     /**
      * @return array
