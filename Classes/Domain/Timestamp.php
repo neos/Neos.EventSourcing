@@ -16,14 +16,17 @@ namespace Neos\Cqrs\Domain;
  */
 class Timestamp
 {
+
     const OUTPUT_FORMAT = 'Y-m-d\TH:i:s.uO';
 
     /**
-     * @return \DateTime
+     * Create a new DateTimeImmutable object based on the current (micro-) time.
+     *
+     * @return \DateTimeImmutable
      */
     public static function create()
     {
-        return \DateTime::createFromFormat(
+        return \DateTimeImmutable::createFromFormat(
             'U.u', sprintf('%.f', microtime(true))
         );
     }
