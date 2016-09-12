@@ -85,9 +85,9 @@ class EventTransport
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTimeImmutable
      */
-    public function getTimestamp(): \DateTime
+    public function getTimestamp(): \DateTimeImmutable
     {
         return $this->metaData->getTimestamp();
     }
