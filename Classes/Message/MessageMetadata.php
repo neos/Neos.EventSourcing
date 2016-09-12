@@ -30,7 +30,7 @@ class MessageMetadata
     protected $aggregateIdentifier;
 
     /**
-     * @var \DateTime
+     * @var \DateTimeImmutable
      */
     protected $timestamp;
 
@@ -42,9 +42,9 @@ class MessageMetadata
     /**
      * @param string $aggregateIdentifier
      * @param string $aggregateName
-     * @param \DateTime $timestamp
+     * @param \DateTimeImmutable $timestamp
      */
-    public function __construct(string $aggregateIdentifier, string $aggregateName, \DateTime $timestamp = null)
+    public function __construct(string $aggregateIdentifier, string $aggregateName, \DateTimeImmutable $timestamp = null)
     {
         $this->aggregateIdentifier = $aggregateIdentifier;
         $this->aggregateName = $aggregateName;
@@ -68,9 +68,9 @@ class MessageMetadata
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTimeImmutable
      */
-    public function getTimestamp(): \DateTime
+    public function getTimestamp(): \DateTimeImmutable
     {
         return $this->timestamp;
     }
