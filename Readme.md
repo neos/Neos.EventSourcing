@@ -58,11 +58,6 @@ in distinct package for more flexibility.
 
 ## Command
 
-
-### CommandBus
-
-* [x] **CommandBus**: default implementation, implement your own based on ```CommandBusInterface```
-
 ### Command
 
 * [x] **Command**: implement your own based on ```CommandInterface```
@@ -100,6 +95,9 @@ Your command must simply implement the ```CommandInterface```.
 
 Your command must simply implement the ```CommandHandlerInterface```.
 
+    /**
+     * @Flow\Scope("singleton")
+     */
     class ButtonCommandHandler implements CommandHandlerInterface
     {
         /**
@@ -120,9 +118,6 @@ Your command must simply implement the ```CommandHandlerInterface```.
         }
     
     }
-    
-The command handler locator can throw exception is something wrong with your command handler definition, please check your 
-system log to have more informations.
 
 ### Monitoring
 
