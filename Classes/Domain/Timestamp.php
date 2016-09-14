@@ -16,7 +16,6 @@ namespace Neos\Cqrs\Domain;
  */
 class Timestamp
 {
-
     const OUTPUT_FORMAT = 'Y-m-d\TH:i:s.uO';
 
     /**

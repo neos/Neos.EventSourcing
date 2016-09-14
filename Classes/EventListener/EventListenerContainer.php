@@ -16,7 +16,7 @@ use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 
 /**
- * EventTransport
+ * EventListenerContainer
  *
  * @Flow\Proxy(false)
  */
@@ -34,6 +34,7 @@ class EventListenerContainer
 
     /**
      * @param array $listener
+     * @param ObjectManagerInterface $objectManager
      */
     public function __construct(array $listener, ObjectManagerInterface $objectManager)
     {

@@ -11,7 +11,6 @@ namespace Neos\Cqrs\Event;
  * source code.
  */
 
-use Neos\Cqrs\Message\MessageInterface;
 use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -53,7 +52,7 @@ class EventTransport
     }
 
     /**
-     * @return EventInterface|MessageInterface
+     * @return EventInterface
      */
     public function getEvent(): EventInterface
     {
