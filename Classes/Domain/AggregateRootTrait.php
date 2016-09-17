@@ -15,9 +15,8 @@ use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventTransport;
 use Neos\Cqrs\Event\EventType;
 use Neos\Cqrs\Message\MessageMetadata;
-use TYPO3\Flow\Utility\Arrays;
-use TYPO3\Flow\Utility\TypeHandling;
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Utility\Arrays;
 
 /**
  * AggregateRootTrait
