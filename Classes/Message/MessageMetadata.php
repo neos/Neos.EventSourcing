@@ -63,7 +63,7 @@ class MessageMetadata
      */
     public function add(string $name, $value)
     {
-        if ($this->has($value)) {
+        if ($this->contains($value)) {
             throw new MessageMetadataException(sprintf('The given value "%s" exist'), 1472853526);
         }
         $this->properties[$name] = $value;
@@ -84,7 +84,7 @@ class MessageMetadata
      * @param string $name
      * @return boolean
      */
-    public function has(string $name): bool
+    public function contains(string $name): bool
     {
         return isset($this->properties[$name]) && $this->properties[$name] !== null;
     }
