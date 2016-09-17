@@ -84,7 +84,7 @@ class MessageMetadata
     public function add(string $name, $value)
     {
         if ($this->has($value)) {
-            throw new MessageMetadataException(sprintf('The given value "%s" exist and the metadata object is immutable'), 1472853526);
+            throw new MessageMetadataException(sprintf('The given value "%s" exist'), 1472853526);
         }
         $this->propertyBag[$name] = $value;
         return $this;

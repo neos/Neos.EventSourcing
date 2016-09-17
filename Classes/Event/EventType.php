@@ -13,7 +13,6 @@ namespace Neos\Cqrs\Event;
 
 /**
  * EventType
- * @todo maybe move this to a service, nightmare to test
  */
 class EventType
 {

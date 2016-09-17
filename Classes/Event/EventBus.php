@@ -13,7 +13,7 @@ namespace Neos\Cqrs\Event;
 
 use Neos\Cqrs\Event\Exception\EventBusException;
 use Neos\Cqrs\EventListener\EventListenerContainer;
-use Neos\Cqrs\EventListener\EventListenerLocatorInterface;
+use Neos\Cqrs\EventListener\EventListenerLocator;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Log\SystemLoggerInterface;
 
@@ -22,10 +22,10 @@ use TYPO3\Flow\Log\SystemLoggerInterface;
  *
  * @Flow\Scope("singleton")
  */
-class EventBus implements EventBusInterface
+class EventBus
 {
     /**
-     * @var EventListenerLocatorInterface
+     * @var EventListenerLocator
      * @Flow\Inject
      */
     protected $locator;

@@ -24,7 +24,7 @@ use TYPO3\Flow\Reflection\ReflectionService;
  *
  * @Flow\Scope("singleton")
  */
-class EventListenerLocator implements EventListenerLocatorInterface
+class EventListenerLocator
 {
     /**
      * @var ObjectManagerInterface
@@ -114,4 +114,3 @@ class EventListenerLocator implements EventListenerLocatorInterface
         return $listeners;
     }
 }
-
