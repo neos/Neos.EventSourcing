@@ -20,16 +20,6 @@ use Neos\Cqrs\Message\Resolver\Exception\MessageMetadataException;
 class MessageMetadata
 {
     /**
-     * @var string
-     */
-    protected $aggregateName;
-
-    /**
-     * @var string
-     */
-    protected $aggregateIdentifier;
-
-    /**
      * @var \DateTimeImmutable
      */
     protected $timestamp;
@@ -37,34 +27,16 @@ class MessageMetadata
     /**
      * @var array
      */
-    protected $propertyBag = [];
+    protected $properties = [];
 
     /**
-     * @param string $aggregateIdentifier
-     * @param string $aggregateName
+     * @param array $properties
      * @param \DateTimeImmutable $timestamp
      */
-    public function __construct(string $aggregateIdentifier, string $aggregateName, \DateTimeImmutable $timestamp = null)
+    public function __construct(array $properties = [], \DateTimeImmutable $timestamp = null)
     {
-        $this->aggregateIdentifier = $aggregateIdentifier;
-        $this->aggregateName = $aggregateName;
+        $this->properties = $properties;
         $this->timestamp = $timestamp ?: Timestamp::create();
-    }
-
-    /**
-     * @return string
-     */
-    public function getAggregateName(): string
-    {
-        return $this->aggregateName;
-    }
-
-    /**
-     * @return string
-     */
-    public function getAggregateIdentifier(): string
-    {
-        return $this->aggregateIdentifier;
     }
 
     /**
@@ -73,6 +45,14 @@ class MessageMetadata
     public function getTimestamp(): \DateTimeImmutable
     {
         return $this->timestamp;
+    }
+
+    /**
+     * @return array
+     */
+    public function getProperties(): array
+    {
+        return $this->properties;
     }
 
     /**
@@ -86,7 +66,7 @@ class MessageMetadata
         if ($this->has($value)) {
             throw new MessageMetadataException(sprintf('The given value "%s" exist'), 1472853526);
         }
-        $this->propertyBag[$name] = $value;
+        $this->properties[$name] = $value;
         return $this;
     }
 
@@ -96,7 +76,7 @@ class MessageMetadata
      */
     public function remove(string $name)
     {
-        unset($this->propertyBag[$name]);
+        unset($this->properties[$name]);
         return $this;
     }
 
@@ -106,6 +86,6 @@ class MessageMetadata
      */
     public function has(string $name): bool
     {
-        return isset($this->propertyBag[$name]) && $this->propertyBag[$name] !== null;
+        return isset($this->properties[$name]) && $this->properties[$name] !== null;
     }
 }

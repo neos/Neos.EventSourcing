@@ -68,22 +68,6 @@ class EventTransport
     }
 
     /**
-     * @return string
-     */
-    public function getAggregateName(): string
-    {
-        return $this->metaData->getAggregateName();
-    }
-
-    /**
-     * @return string
-     */
-    public function getAggregateIdentifier(): string
-    {
-        return $this->metaData->getAggregateIdentifier();
-    }
-
-    /**
      * @return \DateTimeImmutable
      */
     public function getTimestamp(): \DateTimeImmutable
