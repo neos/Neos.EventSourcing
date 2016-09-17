@@ -23,7 +23,7 @@ class Timestamp
      *
      * @return \DateTimeImmutable
      */
-    public static function create()
+    public static function create(): \DateTimeImmutable
     {
         return \DateTimeImmutable::createFromFormat(
             'U.u', sprintf('%.f', microtime(true))
