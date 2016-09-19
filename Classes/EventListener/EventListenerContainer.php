@@ -65,6 +65,6 @@ class EventListenerContainer
     {
         list($class, $method) = $this->listener;
         $handler = $this->objectManager->get($class);
-        $handler->$method($eventTransport->getEvent(), $eventTransport->getMetaData());
+        $handler->$method($eventTransport->getEvent(), $eventTransport->getMetadata());
     }
 }

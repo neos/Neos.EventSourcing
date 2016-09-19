@@ -12,7 +12,6 @@ namespace Neos\Cqrs\Message;
  */
 
 use Neos\Cqrs\Domain\Timestamp;
-use Neos\Cqrs\Message\Resolver\Exception\MessageMetadataException;
 
 /**
  * MessageMetadata
@@ -59,25 +58,28 @@ class MessageMetadata
      * @param string $name
      * @param mixed $value
      * @return MessageMetadata
-     * @throws MessageMetadataException
      */
-    public function add(string $name, $value)
+    public function withProperty(string $name, $value)
     {
-        if ($this->contains($value)) {
-            throw new MessageMetadataException(sprintf('The given value "%s" exist'), 1472853526);
-        }
-        $this->properties[$name] = $value;
-        return $this;
+        return new static(array_merge($this->properties, [$name => $value]), $this->timestamp);
     }
 
     /**
-     * @param string $name
+     * @param array $properties
      * @return MessageMetadata
      */
-    public function remove(string $name)
+    public function withProperties(array $properties)
     {
-        unset($this->properties[$name]);
-        return $this;
+        return new static($properties, $this->timestamp);
+    }
+
+    /**
+     * @param array $properties
+     * @return MessageMetadata
+     */
+    public function andProperties(array $properties)
+    {
+        return new static(array_merge($this->properties, $properties), $this->timestamp);
     }
 
     /**

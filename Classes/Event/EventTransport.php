@@ -29,16 +29,16 @@ class EventTransport
     /**
      * @var MessageMetadata
      */
-    protected $metaData;
+    protected $metadata;
 
     /**
      * @param EventInterface $event
-     * @param MessageMetadata $metaData
+     * @param MessageMetadata $metadata
      */
-    public function __construct(EventInterface $event, MessageMetadata $metaData)
+    public function __construct(EventInterface $event, MessageMetadata $metadata)
     {
         $this->event = $event;
-        $this->metaData = $metaData;
+        $this->metadata = $metadata;
     }
 
     /**
@@ -62,9 +62,18 @@ class EventTransport
     /**
      * @return MessageMetadata
      */
-    public function getMetaData(): MessageMetadata
+    public function getMetadata(): MessageMetadata
     {
-        return $this->metaData;
+        return $this->metadata;
+    }
+
+    /**
+     * @param MessageMetadata $metadata
+     * @return EventTransport
+     */
+    public function withMetadata(MessageMetadata $metadata)
+    {
+        return new static($this->event, $metadata);
     }
 
     /**
@@ -72,6 +81,6 @@ class EventTransport
      */
     public function getTimestamp(): \DateTimeImmutable
     {
-        return $this->metaData->getTimestamp();
+        return $this->metadata->getTimestamp();
     }
 }

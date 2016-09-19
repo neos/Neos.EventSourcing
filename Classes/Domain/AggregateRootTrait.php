@@ -72,9 +72,6 @@ trait AggregateRootTrait
     public function recordThat(EventInterface $event, array $metadata = [])
     {
         $messageMetadata = new MessageMetadata($metadata);
-        foreach ($metadata as $name => $value) {
-            $messageMetadata->add($name, $value);
-        }
 
         $this->apply($event);
 
