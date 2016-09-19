@@ -46,12 +46,14 @@ class EventListenerLocator
     }
 
     /**
-     * @param EventInterface $message
+     * Returns event listeners for the given event (type)
+     *
+     * @param EventInterface $event
      * @return \Generator
      */
-    public function getListeners(EventInterface $message): \Generator
+    public function getListeners(EventInterface $event): \Generator
     {
-        $eventType = EventType::get($message);
+        $eventType = EventType::get($event);
         if (isset($this->map[$eventType])) {
             foreach ($this->map[$eventType] as $listener) {
                 yield new EventListenerContainer($listener, $this->objectManager);
@@ -60,20 +62,22 @@ class EventListenerLocator
     }
 
     /**
+     * Detects and collects all existing event listener classes
+     *
      * @param ObjectManagerInterface $objectManager
      * @return array
      * @throws Exception
      * @Flow\CompileStatic
      * @todo be sure that projector are called after all the other event listeners !!!
      */
-    public static function detectListeners(ObjectManagerInterface $objectManager)
+    protected static function detectListeners(ObjectManagerInterface $objectManager): array
     {
         $listeners = [];
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listener) {
             foreach (get_class_methods($listener) as $method) {
-                preg_match('/^on.*$/', $method, $matches);
+                preg_match('/^when.*$/', $method, $matches);
                 if (!isset($matches[0])) {
                     continue;
                 }
@@ -84,7 +88,7 @@ class EventListenerLocator
                     case count($parameters) === 1:
                         $eventType = $parameters[0]['class'];
                         if (!$reflectionService->isClassImplementationOf($eventType, EventInterface::class)) {
-                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should by casted to an implementation of EventInterface', $listener, $method), 1472504443);
+                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should by cast to an implementation of EventInterface', $listener, $method), 1472504443);
                         }
                         $metaDataType = null;
                         break;
@@ -92,17 +96,17 @@ class EventListenerLocator
                         $eventType = $parameters[0]['class'];
                         $metaDataType = $parameters[1]['class'];
                         if ($metaDataType !== MessageMetadata::class) {
-                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should by casted to MessageMetaData', $listener, $method), 1472504303);
+                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should by cast to MessageMetaData', $listener, $method), 1472504303);
                         }
                         break;
                 }
                 if (trim($eventType) === '') {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionnaly a MessageMetaData', $listener, $method), 1472500228);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionally a MessageMetaData', $listener, $method), 1472500228);
                 }
                 $eventTypeParts = explode('\\', $eventType);
-                $expectedMethod = 'on' . end($eventTypeParts);
+                $expectedMethod = 'when' . end($eventTypeParts);
                 if ($expectedMethod !== $method) {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method name is wrong, must be "%s"', $listener, $method, $expectedMethod), 1472500228);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method name is wrong, must be "%s"', $listener, $method, $expectedMethod), 1474298595796);
                 }
                 if (!isset($listeners[$eventType])) {
                     $listeners[$eventType] = [];
