@@ -59,7 +59,12 @@ abstract class AbstractBaseProjection implements ProjectionInterface
      * Sets the properties in a Read Model with corresponding properties of an event according to the given map of
      * event and read model property names.
      *
-     * You can pass the property names in four different ways:
+     * If no property names are specified, this method will try to map all accessible properties of the event to
+     * the same name properties in the read model:
+     *
+     * $this->mapEventToReadModel($someEvent, $someModel);
+     *
+     * If you want more control over the mapping, you can pass the property names in three different ways:
      *
      * 1. [ "eventPropertyName" => "readModelPropertyName", ... ]
      * 2. [ "propertyName", ...]
@@ -68,8 +73,6 @@ abstract class AbstractBaseProjection implements ProjectionInterface
      * Combinations of both are also possible:
      *
      * 3. [ "eventSomeFoo" => "readModelSomeFoo", "bar", "baz", "eventSomeQuux" => "readModelSomeQuux" ]
-     *
-     * 4. If the property map array is empty, this method will try to map all accessible properties of the event to the same name properties in the read model.
      *
      * For use in the concrete projection.
      *
@@ -94,5 +97,4 @@ abstract class AbstractBaseProjection implements ProjectionInterface
             }
         }
     }
-
 }

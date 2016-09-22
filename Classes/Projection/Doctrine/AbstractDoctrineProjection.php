@@ -164,5 +164,4 @@ abstract class AbstractDoctrineProjection extends AbstractBaseProjection
 
         trigger_error('Call to undefined method ' . get_class($this) . '::' . $method, E_USER_ERROR);
     }
-
 }
