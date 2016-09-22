@@ -104,15 +104,8 @@ trait AggregateRootTrait
 
         $method = sprintf('when%s', ucfirst($className));
 
-        if (!method_exists($this, $method)) {
-            throw new \LogicException(sprintf(
-                "AR '%s' does not contain method '%s' needed for event '%s' to be handled.",
-                get_called_class(),
-                $method,
-                $name
-            ));
+        if (method_exists($this, $method)) {
+            $this->$method($event);
         }
-
-        $this->$method($event);
     }
 }
