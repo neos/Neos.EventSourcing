@@ -11,7 +11,7 @@ namespace Neos\Cqrs;
  * source code.
  */
 
-use Neos\Cqrs\Projection\ReadModelRegistry;
+use Neos\Cqrs\Projection\Doctrine\DoctrineProjectionPersistenceManager;
 use TYPO3\Flow\Core\Bootstrap;
 use TYPO3\Flow\Package\Package as BasePackage;
 
@@ -32,6 +32,6 @@ class Package extends BasePackage
     public function boot(Bootstrap $bootstrap)
     {
         $dispatcher = $bootstrap->getSignalSlotDispatcher();
-        $dispatcher->connect(Bootstrap::class, 'finishedRuntimeRun', ReadModelRegistry::class, 'flush');
+        $dispatcher->connect(Bootstrap::class, 'finishedRuntimeRun', DoctrineProjectionPersistenceManager::class, 'persistAll');
     }
 }
