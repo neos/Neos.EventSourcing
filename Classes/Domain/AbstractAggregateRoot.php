@@ -19,9 +19,9 @@ use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Utility\Arrays;
 
 /**
- * AggregateRootTrait
+ * Base class for an aggregate root
  */
-trait AggregateRootTrait
+abstract class AbstractAggregateRoot implements AggregateRootInterface
 {
     /**
      * @var string
@@ -68,6 +68,7 @@ trait AggregateRootTrait
      * @param  EventInterface $event
      * @param  array $metadata
      * @return void
+     * @api
      */
     public function recordThat(EventInterface $event, array $metadata = [])
     {
@@ -82,6 +83,10 @@ trait AggregateRootTrait
     }
 
     /**
+     * Returns the events which have been recorded since the last call of this method.
+     *
+     * This method is used internally by the persistence layer (for example, the Event Store).
+     *
      * @return array
      */
     public function pullUncommittedEvents(): array
@@ -92,6 +97,8 @@ trait AggregateRootTrait
     }
 
     /**
+     * Apply the given event to this aggregate root.
+     *
      * @param  EventInterface $event
      * @return void
      */
