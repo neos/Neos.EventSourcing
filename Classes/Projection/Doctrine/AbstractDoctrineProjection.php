@@ -96,17 +96,6 @@ abstract class AbstractDoctrineProjection extends AbstractBaseProjection
     }
 
     /**
-     * Clears and rebuilds the projection persistence structure
-     *
-     * @return void
-     * @api
-     */
-    public function buildProjection()
-    {
-#        $this->projectionBuilder->build($this->readModelClassName);
-    }
-
-    /**
      * Finds all entities in the repository.
      *
      * @return \TYPO3\Flow\Persistence\QueryResultInterface The query result
