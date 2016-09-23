@@ -230,28 +230,34 @@ Messaging infrastructure, base class/traits to build your own Events.
 Because a projection is usually tailored to one or more views in an application, we recommend using the
 `Application\Projection\[ProjectionName]` namespace for the respective code.
 
-A projection usually consists of two classes: the Projection and the Read Model.
+A projection usually consists of three classes: the Projector, the Finder and the Read Model.
 
-### Projection
+### Projector
 
-The Projection class is a combination of a Repository and an Event Listener. By users it is used for querying the
-projection by using the well-known `findBy*()` and `findOneBy` methods. In contrast to a Repository though, users
-cannot add, update or remove objects from a Projection.
+The projection is generated and updated by the Projector. The Projector listens to events it is interested in and
+updates its projection accordingly.
 
 The `add()`, `update()` and `remove()` methods are *protected*. Instead of manually adding, updating or removing
-objects, these methods are called by event handler methods contained in the Projection.
+objects, these methods are called by event handler methods contained in the Projector.
+
+### Finder
+
+The Finder provides methods for querying and retrieving the state of the projection in the form of Read Models.
+It is typically used in controllers and other similar parts of the application for querying the projection by using the
+well-known `findBy*()` and `findOneBy` methods. In contrast to a Repository though, users cannot add, update or remove
+objects.
 
 ### Read Model
 
-A Read Model is a simple PHP class which is used for passing around the state of a Projection. It is also called a
-Data Transfer Object (DTO). The Projection will return its results as one or more Read Model instances.
+A Read Model is a simple PHP class which is used for passing around the state of a projection. It is also called a
+Data Transfer Object (DTO). The Finder will return its results as one or more Read Model instances.
 
 ### Doctrine-based projections
 
-The easiest way to implement a projection is to extend the `AbstractDoctrineProjection`. Apart from the projection
-itself, you also need a Read Model, which can be a plain PHP object.
+The easiest way to implement a projection is to extend the `AbstractDoctrineProjector` and `AbstractDoctrineFinder`
+classes. Apart from the Projector and Finder, you also need a Read Model, which can be a plain PHP object.
 
-The following Read Model is used for in a Projection for organizations. It has a few specialities which are explained
+The following Read Model is used for in a projection for organizations. It has a few specialities which are explained
 right after the code.
 
 ```php
@@ -328,8 +334,8 @@ Property types are detected by Flow's Class Schema implementation. You can overr
 `@ORM\Column` annotations.
 
 In general, properties are *public* for easier handling in code dealing with Read Models. Even if a user decides to
-modify a property, it won't be persisted, because the `update()` method in the Projection can only be called by the
-Projection itself. This Read Model provides a special getter for retrieving the `Asset` object of an organization's
+modify a property, it won't be persisted, because the `update()` method in the Projector can only be called by the
+Projector itself. This Read Model provides a special getter for retrieving the `Asset` object of an organization's
 logo.
 
 A common use case for Read Models are Fluid templates: simply access any of the properties (including `logo`) by
@@ -338,7 +344,7 @@ passing the Read Model instance as a variable.
 The database schema for these models / projections needs to be created with Flow's regular Doctrine migration mechanism.
 That means: `./flow doctrine:migrationgenerate`, adjust and `./flow doctrine:migrate`.
 
-The corresponding Projection class for this example projection could look like this:
+The corresponding Projector class for this example projection could look like this:
 
 ```php
 namespace Acme\Application\Projection\Organization;
@@ -346,25 +352,21 @@ namespace Acme\Application\Projection\Organization;
 use Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenCreated;
 use Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenDeleted;
 use Acme\Domain\Aggregate\Organization\Event\OrganizationLogoHasBeenChanged;
-use Neos\Cqrs\Projection\Doctrine\AbstractDoctrineProjection;
+use Neos\Cqrs\Projection\Doctrine\AbstractDoctrineProjector;
 use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Persistence\QueryInterface;
 
 /**
  * Organization Projector
  *
  * @Flow\Scope("singleton")
- *
- * @method Organization findOneByIdentifier(string $identifier)
- * @method Organization findOneByName(string $name)
- * @method Organization findOneBySlug(string $slug)
  */
-class OrganizationProjection extends AbstractDoctrineProjection
+class OrganizationProjector extends AbstractDoctrineProjector
 {
     /**
-     * @var array
+     * @Flow\Inject
+     * @var OrganizationFinder
      */
-    protected $defaultOrderings = [ 'name' => QueryInterface::ORDER_ASCENDING ];
+    protected $finder;
 
     /**
      * @param OrganizationHasBeenCreated $event
@@ -378,27 +380,54 @@ class OrganizationProjection extends AbstractDoctrineProjection
     }
 
     /**
-     * @param OrganizationHasBeenDeleted $event
+     * @param \Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenDeleted $event
      * @return void
      */
     public function whenOrganizationHasBeenDeleted(OrganizationHasBeenDeleted $event)
     {
-        $organization = $this->findOneByIdentifier($event->getIdentifier());
+        $organization = $this->finder->findOneByIdentifier($event->getIdentifier());
         $this->remove($organization);
     }
 
     /**
-     * @param OrganizationLogoHasBeenChanged $event
+     * @param \Acme\Domain\Aggregate\Organization\Event\OrganizationLogoHasBeenChanged $event
      * @return void
      */
     public function whenOrganizationLogoHasBeenChanged(OrganizationLogoHasBeenChanged $event)
     {
-        $organization = $this->findOneByIdentifier($event->getIdentifier());
+        $organization = $this->finder->findOneByIdentifier($event->getIdentifier());
         $organization->logoIdentifier = $event->getLogoIdentifier();
         $this->update($organization);
     }
 }
 ```
+
+The corresponding Finder class providing the query methods may look as simple as this:
+
+```php
+namespace Acme\Application\Projection\Organization;
+
+use Neos\Cqrs\Projection\Doctrine\AbstractDoctrineFinder;
+use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Persistence\QueryInterface;
+
+/**
+ * Organization Finder
+ *
+ * @Flow\Scope("singleton")
+ *
+ * @method Organization findOneByIdentifier(string $identifier)
+ * @method Organization findOneByName(string $name)
+ * @method Organization findOneBySlug(string $slug)
+ */
+class OrganizationFinder extends AbstractDoctrineFinder
+{
+    /**
+     * @var array
+     */
+    protected $defaultOrderings = [ 'name' => QueryInterface::ORDER_ASCENDING ];
+}
+``
 
 ... todo: more explanations
 

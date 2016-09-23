@@ -14,8 +14,8 @@ namespace Neos\Cqrs\Projection;
 use Neos\Cqrs\EventListener\EventListenerInterface;
 
 /**
- * ProjectionInterface
+ * ProjectorInterface
  */
-interface ProjectionInterface extends EventListenerInterface
+interface ProjectorInterface extends EventListenerInterface
 {
 }

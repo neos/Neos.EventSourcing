@@ -84,6 +84,17 @@ class DoctrineProjectionPersistenceManager
     }
 
     /**
+     * Removes all objects from a Doctrine-based projection with the given table name.
+     *
+     * @param string $tableName Name of the database table of the projection
+     * @return void
+     */
+    public function removeAll(string $tableName)
+    {
+        // TODO: Implement
+    }
+
+    /**
      * Commits new, updated or removed read model objects which have been registered with add(), update() or remove().
      *
      * @return void

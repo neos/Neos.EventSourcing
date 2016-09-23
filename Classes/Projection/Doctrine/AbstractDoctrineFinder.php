@@ -11,19 +11,17 @@ namespace Neos\Cqrs\Projection\Doctrine;
  * source code.
  */
 
-use Neos\Cqrs\Projection\AbstractBaseProjection;
+use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Persistence\Doctrine\Query;
 use TYPO3\Flow\Persistence\QueryResultInterface;
-use TYPO3\Flow\Annotations as Flow;
 
 /**
- * A base class for Doctrine-based projectors
+ * A base class for Doctrine-based Finders
  *
  * @api
  */
-abstract class AbstractDoctrineProjection extends AbstractBaseProjection
+abstract class AbstractDoctrineFinder
 {
-
     /**
      * @Flow\Inject
      * @var DoctrineProjectionPersistenceManager
@@ -42,63 +40,30 @@ abstract class AbstractDoctrineProjection extends AbstractBaseProjection
     protected $defaultOrderings = [];
 
     /**
-     * Adds an object to this repository.
-     * For use in the concrete projection.
+     * Concrete Finders may override this property for setting the class name of the Read Model to a non-conventional name
      *
-     * @param object $object The object to add
-     * @return void
+     * @var string
      * @api
      */
-    protected function add($object)
-    {
-        $this->projectionPersistenceManager->add($object);
-    }
+    protected $readModelClassName;
 
     /**
-     * Schedules a modified object for persistence.
-     * For use in the concrete projection.
-     *
-     * @param object $object The modified object
-     * @return void
-     * @throws \TYPO3\Flow\Persistence\Exception\IllegalObjectTypeException
-     * @api
-     */
-    protected function update($object)
-    {
-        $this->projectionPersistenceManager->update($object);
-    }
-
-    /**
-     * Removes an object from this repository.
-     * For use in the concrete projection.
-     *
-     * @param object $object The object to remove
-     * @return void
-     * @api
-     */
-    protected function remove($object)
-    {
-        $this->projectionPersistenceManager->remove($object);
-    }
-
-    /**
-     * Removes all objects of this repository as if remove() was called for all of them.
-     * For usage in the concrete projection.
+     * Initialize the Read Model class name
+     * Make sure to call this method as parent when overriding it in a concrete finder.
      *
      * @return void
-     * @api
      */
-    protected function removeAll()
+    protected function initializeObject()
     {
-        foreach ($this->findAll() as $object) {
-            $this->remove($object);
+        if ($this->readModelClassName === null && substr(get_class($this), -6, 6) === 'Finder') {
+            $this->readModelClassName = substr(get_class($this), 0, -6);
         }
     }
 
     /**
      * Finds all entities in the repository.
      *
-     * @return \TYPO3\Flow\Persistence\QueryResultInterface The query result
+     * @return QueryResultInterface The query result
      * @api
      */
     public function findAll(): QueryResultInterface

@@ -17,14 +17,14 @@ use TYPO3\Flow\Reflection\ObjectAccess;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * A base class for projections
+ * A base class for projectors
  *
- * Specialized projections may extend this class in order to use the convenience methods included. Alternatively, they
- * can as well just implement the ProjectionInterface and refrain from extending this base class.
+ * Specialized projectors may extend this class in order to use the convenience methods included. Alternatively, they
+ * can as well just implement the ProjectorInterface and refrain from extending this base class.
  *
  * @api
  */
-abstract class AbstractBaseProjection implements ProjectionInterface
+abstract class AbstractBaseProjector implements ProjectorInterface
 {
 
     /**
@@ -41,19 +41,6 @@ abstract class AbstractBaseProjection implements ProjectionInterface
      * @api
      */
     protected $readModelClassName;
-
-    /**
-     * Initialize the Read Model class name
-     * Make sure to call this method as parent when overriding it in a concrete projector.
-     *
-     * @return void
-     */
-    protected function initializeObject()
-    {
-        if ($this->readModelClassName === null && substr(get_class($this), -10, 10) === 'Projection') {
-            $this->readModelClassName = substr(get_class($this), 0, -10);
-        }
-    }
 
     /**
      * Sets the properties in a Read Model with corresponding properties of an event according to the given map of
