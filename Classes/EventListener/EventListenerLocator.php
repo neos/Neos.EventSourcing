@@ -100,7 +100,7 @@ class EventListenerLocator
                     throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionnaly a MessageMetaData', $listener, $method), 1472500228);
                 }
                 $eventTypeParts = explode('\\', $eventType);
-                $expectedMethod = 'on' . end($eventTypeParts);
+                $expectedMethod = 'when' . end($eventTypeParts);
                 if ($expectedMethod !== $method) {
                     throw new Exception(sprintf('Invalid listener in %s::%s the method name is wrong, must be "%s"', $listener, $method, $expectedMethod), 1472500228);
                 }
