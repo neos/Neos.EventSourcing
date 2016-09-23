@@ -12,9 +12,13 @@ namespace Neos\Cqrs\Message;
  */
 
 use Neos\Cqrs\Domain\Timestamp;
+use TYPO3\Flow\Annotations as Flow;
 
 /**
- * MessageMetadata
+ * The MessageMetadata is a container for arbitrary metadata for Commands and Events.
+ * This class is immutable.
+ *
+ * @Flow\Proxy(false)
  */
 class MessageMetadata
 {
@@ -29,8 +33,8 @@ class MessageMetadata
     protected $properties = [];
 
     /**
-     * @param array $properties
-     * @param \DateTimeImmutable $timestamp
+     * @param array $properties An associative array of properties that this MessageMetadata contains.
+     * @param \DateTimeImmutable $timestamp Optional. The timestamp when the Message was created. Defaults to the current timestamp.
      */
     public function __construct(array $properties = [], \DateTimeImmutable $timestamp = null)
     {
@@ -39,6 +43,8 @@ class MessageMetadata
     }
 
     /**
+     * The timestamp when the message was created.
+     *
      * @return \DateTimeImmutable
      */
     public function getTimestamp(): \DateTimeImmutable
@@ -47,6 +53,8 @@ class MessageMetadata
     }
 
     /**
+     * Returns the associative properties array containing the metadata.
+     *
      * @return array
      */
     public function getProperties(): array
@@ -55,36 +63,47 @@ class MessageMetadata
     }
 
     /**
-     * @param string $name
-     * @param mixed $value
+     * Return a new instance of the MessageMetadata with the property set to the value.
+     * Any existing property with that name will be overwritten.
+     *
+     * @param string $name The property name to set.
+     * @param mixed $value The value to set the property to.
      * @return MessageMetadata
      */
-    public function withProperty(string $name, $value)
+    public function withProperty(string $name, $value): MessageMetadata
     {
         return new static(array_merge($this->properties, [$name => $value]), $this->timestamp);
     }
 
     /**
-     * @param array $properties
+     * Return a new instance of this MessageMetadata with the given properties.
+     * All existing properties will be fully replaced.
+     *
+     * @param array $properties An associative array of properties to set.
      * @return MessageMetadata
      */
-    public function withProperties(array $properties)
+    public function withProperties(array $properties): MessageMetadata
     {
         return new static($properties, $this->timestamp);
     }
 
     /**
-     * @param array $properties
+     * Return a new instance of this MessageMetadata with the given properties merged.
+     * Any existing properties will be overwritten, other properties will stay untouched.
+     *
+     * @param array $properties An associative array of properties to merge.
      * @return MessageMetadata
      */
-    public function andProperties(array $properties)
+    public function andProperties(array $properties): MessageMetadata
     {
         return new static(array_merge($this->properties, $properties), $this->timestamp);
     }
 
     /**
-     * @param string $name
-     * @return boolean
+     * Check if this MessageMetadata contains the given property.
+     *
+     * @param string $name The property name to check for existence.
+     * @return boolean True if the property exists and is not null, false otherwise.
      */
     public function contains(string $name): bool
     {
