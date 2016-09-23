@@ -73,7 +73,7 @@ class EventListenerLocator
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listener) {
             foreach (get_class_methods($listener) as $method) {
-                preg_match('/^on.*$/', $method, $matches);
+                preg_match('/^when.*$/', $method, $matches);
                 if (!isset($matches[0])) {
                     continue;
                 }
@@ -100,7 +100,7 @@ class EventListenerLocator
                     throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionnaly a MessageMetaData', $listener, $method), 1472500228);
                 }
                 $eventTypeParts = explode('\\', $eventType);
-                $expectedMethod = 'on' . end($eventTypeParts);
+                $expectedMethod = 'when' . end($eventTypeParts);
                 if ($expectedMethod !== $method) {
                     throw new Exception(sprintf('Invalid listener in %s::%s the method name is wrong, must be "%s"', $listener, $method, $expectedMethod), 1472500228);
                 }
