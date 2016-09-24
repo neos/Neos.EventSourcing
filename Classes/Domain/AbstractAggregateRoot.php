@@ -13,10 +13,9 @@ namespace Neos\Cqrs\Domain;
 
 use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventTransport;
-use Neos\Cqrs\Event\EventType;
+use Neos\Cqrs\Event\EventTypeService;
 use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Utility\Arrays;
 
 /**
  * Base class for an aggregate root
@@ -24,22 +23,50 @@ use TYPO3\Flow\Utility\Arrays;
 abstract class AbstractAggregateRoot implements AggregateRootInterface
 {
     /**
+     * @var EventTypeService
+     * @Flow\Inject
+     */
+    protected $eventTypeService;
+
+    /**
      * @var string
-     * @Flow\Transient
      */
     protected $aggregateIdentifier;
 
     /**
      * @var string
-     * @Flow\Transient
      */
     protected $aggregateName;
 
     /**
      * @var EventTransport[]
-     * @Flow\Transient
      */
     protected $events = [];
+
+    /**
+     * When calling self::recordThatMethod in the contructor
+     * the object is not initialized so event are queued
+     *
+     * @var array
+     */
+    protected $pendingEvents = [];
+
+    /**
+     * @var bool
+     */
+    protected $initialized = false;
+
+    /**
+     * Register event listeners based on annotations
+     */
+    public function initializeObject()
+    {
+        $this->initialized = true;
+        foreach ($this->pendingEvents as $data) {
+            list($event, $metadata) = $data;
+            $this->recordThat($event, $metadata);
+        }
+    }
 
     /**
      * @param string $identifier
@@ -72,6 +99,12 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      */
     public function recordThat(EventInterface $event, array $metadata = [])
     {
+        if ($this->initialized === false) {
+            // When calling self::recordThatMethod in the contructor the object is not initialized so event are queued
+            $this->pendingEvents[] = [$event, $metadata];
+            return;
+        }
+
         $messageMetadata = new MessageMetadata($metadata);
         foreach ($metadata as $name => $value) {
             $messageMetadata->add($name, $value);
@@ -104,13 +137,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      */
     protected function apply(EventInterface $event)
     {
-        $name = EventType::get($event);
-
-        $nameParts = Arrays::trimExplode('\\', $name);
-        $className = array_pop($nameParts);
-
-        $method = sprintf('when%s', ucfirst($className));
-
+        $method = sprintf('when%s', $this->eventTypeService->getEventShortType($event));
         if (method_exists($this, $method)) {
             $this->$method($event);
         }

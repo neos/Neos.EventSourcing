@@ -12,7 +12,7 @@ namespace Neos\Cqrs\EventListener;
  */
 
 use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\Event\EventType;
+use Neos\Cqrs\Event\EventTypeService;
 use Neos\Cqrs\Exception;
 use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
@@ -33,27 +33,33 @@ class EventListenerLocator
     protected $objectManager;
 
     /**
+     * @var EventTypeService
+     * @Flow\Inject
+     */
+    protected $eventTypeService;
+
+    /**
      * @var array
      */
-    protected $map = [];
+    protected $mapping = [];
 
     /**
      * Register event listeners based on annotations
      */
     public function initializeObject()
     {
-        $this->map = self::detectListeners($this->objectManager);
+        $this->mapping = self::detectListeners($this->objectManager);
     }
 
     /**
-     * @param EventInterface $message
+     * @param EventInterface $event
      * @return \Generator
      */
-    public function getListeners(EventInterface $message): \Generator
+    public function getListeners(EventInterface $event): \Generator
     {
-        $eventType = EventType::get($message);
-        if (isset($this->map[$eventType])) {
-            foreach ($this->map[$eventType] as $listener) {
+        $eventType = $this->eventTypeService->getEventType($event);
+        if (isset($this->mapping[$eventType])) {
+            foreach ($this->mapping[$eventType] as $listener) {
                 yield new EventListenerContainer($listener, $this->objectManager);
             }
         }
@@ -64,7 +70,6 @@ class EventListenerLocator
      * @return array
      * @throws Exception
      * @Flow\CompileStatic
-     * @todo be sure that projector are called after all the other event listeners !!!
      */
     public static function detectListeners(ObjectManagerInterface $objectManager)
     {
