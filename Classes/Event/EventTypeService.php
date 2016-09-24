@@ -46,7 +46,7 @@ class EventTypeService
     public function initializeObject()
     {
         $this->mapping = self::eventTypeMapping($this->objectManager);
-        $this->reversedMapping = array_reverse($this->mapping);
+        $this->reversedMapping = array_flip($this->mapping);
     }
 
     /**
@@ -81,6 +81,7 @@ class EventTypeService
     /**
      * @param ObjectManagerInterface $objectManager
      * @return array
+     * @throws Exception
      * @Flow\CompileStatic
      */
     public static function eventTypeMapping(ObjectManagerInterface $objectManager)
