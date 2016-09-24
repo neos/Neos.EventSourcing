@@ -60,6 +60,15 @@ class EventTypeService
     }
 
     /**
+     * @param string $classname
+     * @return string
+     */
+    public function getEventTypeByImplementation(string $classname): string
+    {
+        return $this->mapping[$classname];
+    }
+
+    /**
      * @param EventInterface $event
      * @return string
      */
@@ -70,10 +79,20 @@ class EventTypeService
     }
 
     /**
+     * @param string $classname
+     * @return string
+     */
+    public function getEventShortTypeByImplementation(string $classname): string
+    {
+        $type = explode(':', $this->getEventTypeByImplementation($classname));
+        return end($type);
+    }
+
+    /**
      * @param $eventType
      * @return string
      */
-    public function getEventTypeImplementation($eventType):string
+    public function getEventImplementation($eventType):string
     {
         return $this->reversedMapping[$eventType];
     }
