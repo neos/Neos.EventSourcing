@@ -32,7 +32,8 @@ This is a PSR-4 package structure:
         Service/
         Projection/
             [ProjectionName]/
-                [ProjectionName]Projection.php
+                [ProjectionName]Finder.php
+                [ProjectionName]Projector.php
                 [ProjectionName].php
 
       CommandHandler/
@@ -208,8 +209,8 @@ Your must implement the ```EventListenerInterface```:
         }
     }
 
-The event handler locator can throw exception is something wrong with your command handler definition, please check your
-system log to have more information.
+The event handler locator can throw an exception if something is wrong with your command handler definition. In that
+case please check your system log for more information.
 
 All the wiring between event is done automatically, if you respect the following convention:
 
@@ -257,7 +258,7 @@ Data Transfer Object (DTO). The Finder will return its results as one or more Re
 The easiest way to implement a projection is to extend the `AbstractDoctrineProjector` and `AbstractDoctrineFinder`
 classes. Apart from the Projector and Finder, you also need a Read Model, which can be a plain PHP object.
 
-The following Read Model is used for in a projection for organizations. It has a few specialities which are explained
+The following Read Model is used in a projection for organizations. It has a few specialities which are explained
 right after the code.
 
 ```php
@@ -366,7 +367,7 @@ class OrganizationProjector extends AbstractDoctrineProjector
      * @Flow\Inject
      * @var OrganizationFinder
      */
-    protected $finder;
+    protected $organizationFinder;
 
     /**
      * @param OrganizationHasBeenCreated $event
@@ -385,7 +386,7 @@ class OrganizationProjector extends AbstractDoctrineProjector
      */
     public function whenOrganizationHasBeenDeleted(OrganizationHasBeenDeleted $event)
     {
-        $organization = $this->finder->findOneByIdentifier($event->getIdentifier());
+        $organization = $this->organizationFinder->findOneByIdentifier($event->getIdentifier());
         $this->remove($organization);
     }
 
@@ -395,7 +396,7 @@ class OrganizationProjector extends AbstractDoctrineProjector
      */
     public function whenOrganizationLogoHasBeenChanged(OrganizationLogoHasBeenChanged $event)
     {
-        $organization = $this->finder->findOneByIdentifier($event->getIdentifier());
+        $organization = $this->organizationFinder->findOneByIdentifier($event->getIdentifier());
         $organization->logoIdentifier = $event->getLogoIdentifier();
         $this->update($organization);
     }

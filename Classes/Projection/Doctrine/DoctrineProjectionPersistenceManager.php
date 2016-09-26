@@ -89,7 +89,7 @@ class DoctrineProjectionPersistenceManager
      * @param string $tableName Name of the database table of the projection
      * @return void
      */
-    public function removeAll(string $tableName)
+    public function drop(string $tableName)
     {
         // TODO: Implement
     }
