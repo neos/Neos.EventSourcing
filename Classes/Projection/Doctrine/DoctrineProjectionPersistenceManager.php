@@ -39,8 +39,7 @@ class DoctrineProjectionPersistenceManager
     protected $entityManager;
 
     /**
-     * Adds an object to this repository.
-     * For use in the concrete projection.
+     * Adds an object for persistence.
      *
      * @param object $object The object to add
      * @return void
@@ -51,7 +50,7 @@ class DoctrineProjectionPersistenceManager
     }
 
     /**
-     * Schedules a modified object for persistence. for use in the concrete projection.
+     * Schedules a modified object for persistence.
      *
      * @param object $object The modified object
      * @throws Exception
@@ -73,7 +72,6 @@ class DoctrineProjectionPersistenceManager
 
     /**
      * Removes an object from this repository.
-     * For use in the concrete projection.
      *
      * @param object $object The object to remove
      * @return void
@@ -84,14 +82,15 @@ class DoctrineProjectionPersistenceManager
     }
 
     /**
-     * Removes all objects from a Doctrine-based projection with the given table name.
+     * Removes all objects from a Doctrine-based projection.
      *
-     * @param string $tableName Name of the database table of the projection
-     * @return void
+     * @param string $readModelClassName Read Model class name of the projection
+     * @return int Number of records which have been deleted
      */
-    public function drop(string $tableName)
+    public function drop(string $readModelClassName): int
     {
-        // TODO: Implement
+        $query = $this->entityManager->createQuery('delete from ' . $readModelClassName . ' m where true');
+        return $query->execute();
     }
 
     /**

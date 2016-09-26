@@ -68,7 +68,7 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
     }
 
     /**
-     * Removes an object from this repository.
+     * Removes an object from the projector's persistence.
      * For use in the concrete projector.
      *
      * @param object $object The object to remove
@@ -89,6 +89,6 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
      */
     protected function drop()
     {
-        #$this->projectionPersistenceManager->drop($this->readModelClassName);
+        $this->projectionPersistenceManager->drop($this->getReadModelClassName());
     }
 }
