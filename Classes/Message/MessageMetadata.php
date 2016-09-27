@@ -18,7 +18,7 @@ use TYPO3\Flow\Annotations as Flow;
  * The MessageMetadata is a container for arbitrary metadata for Commands and Events.
  * This class is immutable.
  *
- * @Flow\Proxy(false)
+ * @api
  */
 class MessageMetadata
 {
@@ -46,6 +46,7 @@ class MessageMetadata
      * The timestamp when the message was created.
      *
      * @return \DateTimeImmutable
+     * @api
      */
     public function getTimestamp(): \DateTimeImmutable
     {
@@ -56,10 +57,23 @@ class MessageMetadata
      * Returns the associative properties array containing the metadata.
      *
      * @return array
+     * @api
      */
     public function getProperties(): array
     {
         return $this->properties;
+    }
+
+    /**
+     * Returns the value of the specified property
+     *
+     * @param string $propertyName Name of the property
+     * @return mixed
+     * @api
+     */
+    public function getProperty(string $propertyName)
+    {
+        return (isset($this->properties[$propertyName]) ? $this->properties[$propertyName] : null);
     }
 
     /**
@@ -69,6 +83,7 @@ class MessageMetadata
      * @param string $name The property name to set.
      * @param mixed $value The value to set the property to.
      * @return MessageMetadata
+     * @api
      */
     public function withProperty(string $name, $value): MessageMetadata
     {
@@ -81,6 +96,7 @@ class MessageMetadata
      *
      * @param array $properties An associative array of properties to set.
      * @return MessageMetadata
+     * @api
      */
     public function withProperties(array $properties): MessageMetadata
     {
@@ -93,6 +109,7 @@ class MessageMetadata
      *
      * @param array $properties An associative array of properties to merge.
      * @return MessageMetadata
+     * @api
      */
     public function andProperties(array $properties): MessageMetadata
     {
@@ -104,6 +121,7 @@ class MessageMetadata
      *
      * @param string $name The property name to check for existence.
      * @return boolean True if the property exists and is not null, false otherwise.
+     * @api
      */
     public function contains(string $name): bool
     {
