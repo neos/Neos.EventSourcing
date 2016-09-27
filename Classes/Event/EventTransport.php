@@ -15,7 +15,8 @@ use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * EventTransport
+ * The EventTransport is a wrapper container for a domain event that is enriched with metadata.
+ * This class is immutable, if the event contained is implemented immutable.
  *
  * @Flow\Proxy(false)
  */
@@ -29,16 +30,16 @@ class EventTransport
     /**
      * @var MessageMetadata
      */
-    protected $metaData;
+    protected $metadata;
 
     /**
      * @param EventInterface $event
-     * @param MessageMetadata $metaData
+     * @param MessageMetadata $metadata
      */
-    public function __construct(EventInterface $event, MessageMetadata $metaData)
+    public function __construct(EventInterface $event, MessageMetadata $metadata)
     {
         $this->event = $event;
-        $this->metaData = $metaData;
+        $this->metadata = $metadata;
     }
 
     /**
@@ -62,9 +63,20 @@ class EventTransport
     /**
      * @return MessageMetadata
      */
-    public function getMetaData(): MessageMetadata
+    public function getMetadata(): MessageMetadata
     {
-        return $this->metaData;
+        return $this->metadata;
+    }
+
+    /**
+     * Return a new instance of this EventTransport with the given Metadata object.
+     *
+     * @param MessageMetadata $metadata The metadata to use instead of the current.
+     * @return EventTransport
+     */
+    public function withMetadata(MessageMetadata $metadata): EventTransport
+    {
+        return new static($this->event, $metadata);
     }
 
     /**
@@ -72,6 +84,6 @@ class EventTransport
      */
     public function getTimestamp(): \DateTimeImmutable
     {
-        return $this->metaData->getTimestamp();
+        return $this->metadata->getTimestamp();
     }
 }
