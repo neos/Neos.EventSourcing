@@ -27,10 +27,4 @@ interface RepositoryInterface
      * @return void
      */
     public function save(AggregateRootInterface $aggregate);
-
-    /**
-     * @param string $identifier
-     * @return boolean
-     */
-    public function contains($identifier): bool;
 }

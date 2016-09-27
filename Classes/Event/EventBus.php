@@ -54,7 +54,7 @@ class EventBus
                 $listener->when($transport);
             } catch (\Exception $exception) {
                 $this->logger->logException($exception);
-                throw new EventBusException('Handler %s throw an exception', 1472675781, $exception);
+                throw new EventBusException(sprintf('Event handler %s->%s threw an exception: %s (%s)', $listener->getListenerClass(), $listener->getListenerMethod(), $exception->getMessage(), $exception->getCode()), 1472675781, $exception);
             }
         }
     }

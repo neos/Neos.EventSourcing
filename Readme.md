@@ -23,16 +23,21 @@ More storage can be added later (Redis, ...).
 
 # Folder Structure
 
-This is a PSR4 package structure:
- 
+This is a PSR-4 package structure:
+
     Your.Package/
       Application/
         Controller/
         Command/
         Service/
-      
+        Projection/
+            [ProjectionName]/
+                [ProjectionName]Finder.php
+                [ProjectionName]Projector.php
+                [ProjectionName].php
+
       CommandHandler/
-      
+
       Domain/
         Service/
         Aggregate/
@@ -42,19 +47,13 @@ This is a PSR4 package structure:
             Service/
             YourAggregate.php
             YourAggregateRepository.php
-      
+
       EventListener/
-          
-      Query/
-        [WhatYouNeed]/
-            [WhatYouNeed]Projection.php
-            [WhatYouNeed]ReadModel.php
-            [WhatYouNeed]Finder.php
 
 # Components
 
-Currently most components are included in the ```Neos.Cqrs``` package. In the future some component can be splitted 
-in distinct package for more flexibility. 
+Currently most components are included in the ```Neos.Cqrs``` package. In the future some components can be split into
+separate packages for more flexibility.
 
 ## Command
 
@@ -70,7 +69,7 @@ Your command must simply implement the ```CommandInterface```.
          * @var string
          */
         protected $aggregateIdentifier;
-    
+
         /**
          * @param string $aggregateIdentifier
          * @param float $duration
@@ -79,7 +78,7 @@ Your command must simply implement the ```CommandInterface```.
         {
             $this->aggregateIdentifier = $aggregateIdentifier;
         }
-    
+
         /**
          * @return string
          */
@@ -105,7 +104,7 @@ Your command must simply implement the ```CommandHandlerInterface```.
          * @Flow\Inject
          */
         protected $buttonRepository;
-    
+
         /**
          * @param CreateButton $command
          */
@@ -113,15 +112,15 @@ Your command must simply implement the ```CommandHandlerInterface```.
         {
             $button = new Button($command->getAggregateIdentifier(), $command->getPublicIdentifier());
             $button->changeLabel($command->getLabel());
-    
+
             $this->buttonRepository->save($button);
         }
-    
+
     }
 
 ### Monitoring
 
-You can disable (enabled by default) the command handler performance monitoring. The monitoring is implemented with AOP, 
+You can disable (enabled by default) the command handler performance monitoring. The monitoring is implemented with AOP,
 check ```Settings.yaml``` for the configuration.
 
 ## Domain
@@ -143,7 +142,7 @@ check ```Settings.yaml``` for the configuration.
 
 * [x] **Event**: implement your own based on ```EventInterface```
 
-This interface contains no methods, so you are free to focus on your domain. The interface is used by Flow to provide 
+This interface contains no methods, so you are free to focus on your domain. The interface is used by Flow to provide
 infrastructure helpers (monitoring, debugging, ...).
 
     class ProductedOrdered implements EventInterface
@@ -152,12 +151,12 @@ infrastructure helpers (monitoring, debugging, ...).
          * @var string
          */
         protected $productIdentifier;
-    
+
         /**
          * @var integer
          */
         protected $amount;
-    
+
         /**
          * @param string $publicIdentifier
          */
@@ -166,7 +165,7 @@ infrastructure helpers (monitoring, debugging, ...).
             $this->productIdentifier = $productIdentifier;
             $this->amount = $amount;
         }
-    
+
         /**
          * @return string
          */
@@ -174,7 +173,7 @@ infrastructure helpers (monitoring, debugging, ...).
         {
             return $this->productIdentifier;
         }
-    
+
         /**
          * @return string
          */
@@ -191,7 +190,7 @@ infrastructure helpers (monitoring, debugging, ...).
 ### How to implement you own event listener ?
 
 Your must implement the ```EventListenerInterface```:
- 
+
     class ConsoleOutputListener implements EventListenerInterface
     {
         /**
@@ -199,7 +198,7 @@ Your must implement the ```EventListenerInterface```:
          * @Flow\Inject
          */
         protected $systemLogger;
-    
+
         /**
          * @param ButtonTagged $event
          * @param MessageMetadata $metadata
@@ -209,9 +208,9 @@ Your must implement the ```EventListenerInterface```:
             $this->systemLogger->log('--- ConsoleOutputListener say something has been tagged ---');
         }
     }
-    
-The event handler locator can throw exception is something wrong with your command handler definition, please check your 
-system log to have more informations.
+
+The event handler locator can throw an exception if something is wrong with your command handler definition. In that
+case please check your system log for more information.
 
 All the wiring between event is done automatically, if you respect the following convention:
 
@@ -227,9 +226,211 @@ See package **Neos.EventStore**.
 
 Messaging infrastructure, base class/traits to build your own Events.
 
-## Query
+## Projections
 
-[not documented, work in progress]
+Because a projection is usually tailored to one or more views in an application, we recommend using the
+`Application\Projection\[ProjectionName]` namespace for the respective code.
+
+A projection usually consists of three classes: the Projector, the Finder and the Read Model.
+
+### Projector
+
+The projection is generated and updated by the Projector. The Projector listens to events it is interested in and
+updates its projection accordingly.
+
+The `add()`, `update()` and `remove()` methods are *protected*. Instead of manually adding, updating or removing
+objects, these methods are called by event handler methods contained in the Projector.
+
+### Finder
+
+The Finder provides methods for querying and retrieving the state of the projection in the form of Read Models.
+It is typically used in controllers and other similar parts of the application for querying the projection by using the
+well-known `findBy*()` and `findOneBy` methods. In contrast to a Repository though, users cannot add, update or remove
+objects.
+
+### Read Model
+
+A Read Model is a simple PHP class which is used for passing around the state of a projection. It is also called a
+Data Transfer Object (DTO). The Finder will return its results as one or more Read Model instances.
+
+### Doctrine-based projections
+
+The easiest way to implement a projection is to extend the `AbstractDoctrineProjector` and `AbstractDoctrineFinder`
+classes. Apart from the Projector and Finder, you also need a Read Model, which can be a plain PHP object.
+
+The following Read Model is used in a projection for organizations. It has a few specialities which are explained
+right after the code.
+
+```php
+namespace Acme\Application\Projection\Organization;
+
+use TYPO3\Media\Domain\Model\AssetInterface;
+use TYPO3\Media\Domain\Repository\AssetRepository;
+use TYPO3\Flow\Annotations as Flow;
+use Doctrine\ORM\Mapping as ORM;
+use Neos\Cqrs\Annotations as CQRS;
+
+/**
+ * General purpose Organization Read Model
+ *
+ * @Flow\Entity
+ * @ORM\Table(name="acme_projection_organization_v2")
+ */
+class Organization
+{
+
+    /**
+     * @Flow\Inject
+     * @var AssetRepository
+     */
+    protected $assetRepository;
+
+    /**
+     * @ORM\Id
+     * @var string
+     */
+    public $identifier;
+
+    /**
+     * @var string
+     */
+    public $name;
+
+    /**
+     * @ORM\Column(nullable=true)
+     * @var string
+     */
+    public $logoIdentifier;
+
+    /**
+     * @var array
+     */
+    public $projects = [];
+
+    /**
+     * @return AssetInterface|null
+     */
+    public function getLogo()
+    {
+        if ($this->logoIdentifier !== null) {
+            return $this->assetRepository->findByIdentifier($this->logoIdentifier);
+        }
+        return null;
+    }
+}
+```
+
+Read Models currently need to be annotated with `@Flow\Entity`. At a later point it is planned to introduce a specific
+annotation `@CQRS\ReadModel` for that, but that requires a core change in Flow.
+
+It is best practice to manually set the database table name via the `@ORM\Table` annotation.
+
+Like with Entities, injected properties or those marked with `@Flow\Transient` will be ignored by the persistence
+mechanism.
+
+You can define one or more properties which are used as the identifier (or a compound identifier) by using the
+`@ORM\Id` annotation.
+
+Property types are detected by Flow's Class Schema implementation. You can override this base configuration through
+`@ORM\Column` annotations.
+
+In general, properties are *public* for easier handling in code dealing with Read Models. Even if a user decides to
+modify a property, it won't be persisted, because the `update()` method in the Projector can only be called by the
+Projector itself. This Read Model provides a special getter for retrieving the `Asset` object of an organization's
+logo.
+
+A common use case for Read Models are Fluid templates: simply access any of the properties (including `logo`) by
+passing the Read Model instance as a variable.
+
+The database schema for these models / projections needs to be created with Flow's regular Doctrine migration mechanism.
+That means: `./flow doctrine:migrationgenerate`, adjust and `./flow doctrine:migrate`.
+
+The corresponding Projector class for this example projection could look like this:
+
+```php
+namespace Acme\Application\Projection\Organization;
+
+use Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenCreated;
+use Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenDeleted;
+use Acme\Domain\Aggregate\Organization\Event\OrganizationLogoHasBeenChanged;
+use Neos\Cqrs\Projection\Doctrine\AbstractDoctrineProjector;
+use TYPO3\Flow\Annotations as Flow;
+
+/**
+ * Organization Projector
+ *
+ * @Flow\Scope("singleton")
+ */
+class OrganizationProjector extends AbstractDoctrineProjector
+{
+    /**
+     * @Flow\Inject
+     * @var OrganizationFinder
+     */
+    protected $organizationFinder;
+
+    /**
+     * @param OrganizationHasBeenCreated $event
+     * @return void
+     */
+    public function whenOrganizationHasBeenCreated(OrganizationHasBeenCreated $event)
+    {
+        $organization = new Organization();
+        $this->mapEventToReadModel($event, $organization);
+        $this->add($organization);
+    }
+
+    /**
+     * @param \Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenDeleted $event
+     * @return void
+     */
+    public function whenOrganizationHasBeenDeleted(OrganizationHasBeenDeleted $event)
+    {
+        $organization = $this->organizationFinder->findOneByIdentifier($event->getIdentifier());
+        $this->remove($organization);
+    }
+
+    /**
+     * @param \Acme\Domain\Aggregate\Organization\Event\OrganizationLogoHasBeenChanged $event
+     * @return void
+     */
+    public function whenOrganizationLogoHasBeenChanged(OrganizationLogoHasBeenChanged $event)
+    {
+        $organization = $this->organizationFinder->findOneByIdentifier($event->getIdentifier());
+        $organization->logoIdentifier = $event->getLogoIdentifier();
+        $this->update($organization);
+    }
+}
+```
+
+The corresponding Finder class providing the query methods may look as simple as this:
+
+```php
+namespace Acme\Application\Projection\Organization;
+
+use Neos\Cqrs\Projection\Doctrine\AbstractDoctrineFinder;
+use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Persistence\QueryInterface;
+
+/**
+ * Organization Finder
+ *
+ * @Flow\Scope("singleton")
+ *
+ * @method Organization findOneByIdentifier(string $identifier)
+ * @method Organization findOneByName(string $name)
+ * @method Organization findOneBySlug(string $slug)
+ */
+class OrganizationFinder extends AbstractDoctrineFinder
+{
+    /**
+     * @var array
+     */
+    protected $defaultOrderings = [ 'name' => QueryInterface::ORDER_ASCENDING ];
+}
+``
+
+... todo: more explanations
 
 License
 -------
