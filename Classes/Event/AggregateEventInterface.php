@@ -1,0 +1,38 @@
+<?php
+namespace Neos\Cqrs\Event;
+
+/*
+ * This file is part of the Neos.Cqrs package.
+ *
+ * (c) Contributors of the Neos Project - www.neos.io
+ *
+ * This package is Open Source Software. For the full copyright and license
+ * information, please view the LICENSE file which was distributed with this
+ * source code.
+ */
+use Neos\Cqrs\Exception;
+
+/**
+ * Interface for events which are related to aggregates
+ */
+interface AggregateEventInterface extends EventInterface
+{
+    /**
+     * Returns the identifier of the aggregate the event is related to
+     *
+     * @return string
+     */
+    public function getAggregateIdentifier(): string;
+
+    /**
+     * Sets the aggregate identifier for this event.
+     *
+     * This method can only be called once per event instance. It is usually invoked by the recordThat() method in
+     * a concrete aggregate object.
+     *
+     * @param $aggregateIdentifier
+     * @return void
+     * @throws Exception
+     */
+    public function setAggregateIdentifier($aggregateIdentifier);
+}
