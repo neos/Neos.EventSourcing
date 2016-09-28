@@ -36,8 +36,10 @@ class EventHandlingService
     protected $eventBus;
 
     /**
-     * @param string $streamName
-     * @param EventStream $stream
+     * Publish the given EventStream
+     *
+     * @param string $streamName name of the stream in the event store
+     * @param EventStream $stream stream of event to store
      * @return int commited version number
      * @return int
      */

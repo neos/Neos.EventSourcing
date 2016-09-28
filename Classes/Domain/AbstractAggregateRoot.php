@@ -44,9 +44,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     protected $events = [];
 
     /**
-     * When calling self::recordThatMethod in the contructor
-     * the object is not initialized so event are queued
-     *
+     * Contains a list of events which have been recorded while the aggregate hasn't been initialized yet
      * @var array
      */
     protected $pendingEvents = [];
@@ -57,7 +55,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     protected $initialized = false;
 
     /**
-     * Register event listeners based on annotations
+     * Record pending events recorded before the object initialization
      */
     public function initializeObject()
     {

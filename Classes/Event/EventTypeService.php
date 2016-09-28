@@ -50,6 +50,8 @@ class EventTypeService
     }
 
     /**
+     * Return the event type for the given Event object
+     *
      * @param EventInterface $event
      * @return string
      */
@@ -60,6 +62,8 @@ class EventTypeService
     }
 
     /**
+     * Return the event type for the given Event classname
+     *
      * @param string $classname
      * @return string
      */
@@ -69,6 +73,8 @@ class EventTypeService
     }
 
     /**
+     * Return the event short name for the given Event object
+     *
      * @param EventInterface $event
      * @return string
      */
@@ -79,6 +85,8 @@ class EventTypeService
     }
 
     /**
+     * Return the event short name for the given Event classname
+     *
      * @param string $classname
      * @return string
      */
@@ -89,6 +97,8 @@ class EventTypeService
     }
 
     /**
+     * Return the event classname for the given event type
+     *
      * @param $eventType
      * @return string
      */
@@ -98,6 +108,8 @@ class EventTypeService
     }
 
     /**
+     * Create mapping between Event classname and Event type
+     *
      * @param ObjectManagerInterface $objectManager
      * @return array
      * @throws Exception

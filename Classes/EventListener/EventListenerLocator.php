@@ -79,44 +79,44 @@ class EventListenerLocator
         /** @var EventTypeService $reflectionService */
         $eventTypeService = $objectManager->get(EventTypeService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listener) {
-            foreach (get_class_methods($listener) as $method) {
-                preg_match('/^when.*$/', $method, $matches);
+            foreach (get_class_methods($listener) as $methodName) {
+                preg_match('/^when.*$/', $methodName, $matches);
                 if (!isset($matches[0])) {
                     continue;
                 }
-                $method = $matches[0];
-                $parameters = array_values($reflectionService->getMethodParameters($listener, $method));
-                $eventType = $eventClassname = null;
+                $methodName = $matches[0];
+                $parameters = array_values($reflectionService->getMethodParameters($listener, $methodName));
+                $eventType = $eventClassName = null;
                 switch (true) {
                     case isset($parameters[0]):
-                        $eventClassname = $parameters[0]['class'];
-                        if (!$reflectionService->isClassImplementationOf($eventClassname, EventInterface::class)) {
+                        $eventClassName = $parameters[0]['class'];
+                        if (!$reflectionService->isClassImplementationOf($eventClassName, EventInterface::class)) {
                             throw new Exception(
-                                sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should by casted to an implementation of EventInterface, currently "%s"', $listener, $method, $eventClassname), 1472504443
+                                sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should be cast to an implementation of EventInterface, currently "%s"', $listener, $methodName, $eventClassName), 1472504443
                             );
                         }
-                        $eventType = $eventTypeService->getEventTypeByImplementation($eventClassname);
+                        $eventType = $eventTypeService->getEventTypeByImplementation($eventClassName);
                         $metaDataType = null;
                         break;
                     case isset($parameters[1]):
                         $metaDataType = $parameters[1]['class'];
                         if ($metaDataType !== MessageMetadata::class) {
-                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should by casted to MessageMetaData, currently "%s"', $listener, $method, $metaDataType), 1472504303);
+                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to MessageMetaData, currently "%s"', $listener, $methodName, $metaDataType), 1472504303);
                         }
                         break;
                 }
                 if (trim($eventType) === '') {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionnaly a MessageMetaData', $listener, $method), 1472500228);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionnaly a MessageMetaData', $listener, $methodName), 1472500228);
                 }
-                $eventShortName = $eventTypeService->getEventShortTypeByImplementation($eventClassname);
-                $expectedMethod = 'when' . $eventShortName;
-                if ($expectedMethod !== $method) {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method name is wrong, must be "%s"', $listener, $method, $expectedMethod), 1472500228);
+                $eventShortName = $eventTypeService->getEventShortTypeByImplementation($eventClassName);
+                $expectedMethodName = 'when' . $eventShortName;
+                if ($expectedMethodName !== $methodName) {
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method name is wrong, must be "%s"', $listener, $methodName, $expectedMethodName), 1472500228);
                 }
                 if (!isset($listeners[$eventType])) {
                     $listeners[$eventType] = [];
                 }
-                $listeners[$eventType][] = [$listener, $method];
+                $listeners[$eventType][] = [$listener, $methodName];
             }
         }
         ksort($listeners);
