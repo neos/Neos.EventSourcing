@@ -1,4 +1,4 @@
-# CRQS for Flow Framework
+# CQRS for Flow Framework
 
 _This package is currently under development and not fully working, please don't use it in production._
 

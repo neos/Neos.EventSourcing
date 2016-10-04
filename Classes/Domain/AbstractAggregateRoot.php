@@ -11,6 +11,7 @@ namespace Neos\Cqrs\Domain;
  * source code.
  */
 
+use Neos\Cqrs\Event\AggregateEventInterface;
 use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventTransport;
 use Neos\Cqrs\Event\EventType;
@@ -62,16 +63,17 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      * Apply an event to the current aggregate root
      *
      * If the event aggregate identifier and name is not set the event
-     * if automatically updated with the current aggregate identifier
+     * is automatically set with the current aggregate identifier
      * and name.
      *
-     * @param  EventInterface $event
-     * @param  array $metadata
-     * @return void
+     * @param AggregateEventInterface $event
+     * @param array $metadata
      * @api
      */
-    public function recordThat(EventInterface $event, array $metadata = [])
+    public function recordThat(AggregateEventInterface $event, array $metadata = [])
     {
+        $event->setAggregateIdentifier($this->getAggregateIdentifier());
+
         $messageMetadata = new MessageMetadata($metadata);
 
         $this->apply($event);
