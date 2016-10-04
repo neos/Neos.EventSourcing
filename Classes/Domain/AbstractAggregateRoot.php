@@ -75,9 +75,6 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
         $event->setAggregateIdentifier($this->getAggregateIdentifier());
 
         $messageMetadata = new MessageMetadata($metadata);
-        foreach ($metadata as $name => $value) {
-            $messageMetadata->add($name, $value);
-        }
 
         $this->apply($event);
 
