@@ -11,11 +11,8 @@ namespace Neos\Cqrs\TypeConverter;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Property\PropertyMappingConfigurationInterface;
-use TYPO3\Flow\Property\TypeConverter\AbstractTypeConverter;
-use TYPO3\Flow\Reflection\ObjectAccess;
 use TYPO3\Flow\Utility\TypeHandling;
 
 /**
@@ -27,7 +24,7 @@ class MetadataToArrayConverter extends EventToArrayConverter
     /**
      * @var array<string>
      */
-    protected $sourceTypes = array(MessageMetadata::class);
+    protected $sourceTypes = [MessageMetadata::class];
 
     /**
      * @param mixed $source
@@ -36,7 +33,7 @@ class MetadataToArrayConverter extends EventToArrayConverter
      * @param PropertyMappingConfigurationInterface $configuration
      * @return array|\TYPO3\Flow\Error\Error
      */
-    public function convertFrom($source, $targetType, array $convertedChildProperties = array(), PropertyMappingConfigurationInterface $configuration = null)
+    public function convertFrom($source, $targetType, array $convertedChildProperties = [], PropertyMappingConfigurationInterface $configuration = null)
     {
         if (!$source instanceof MessageMetadata) {
             throw new \InvalidArgumentException('This converter only supports MessageMetadata sources', 1475843240);

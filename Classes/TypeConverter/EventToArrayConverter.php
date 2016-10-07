@@ -26,7 +26,7 @@ class EventToArrayConverter extends AbstractTypeConverter
     /**
      * @var array<string>
      */
-    protected $sourceTypes = array(EventInterface::class);
+    protected $sourceTypes = [EventInterface::class];
 
     /**
      * @var string
@@ -45,7 +45,7 @@ class EventToArrayConverter extends AbstractTypeConverter
      * @param PropertyMappingConfigurationInterface $configuration
      * @return array|\TYPO3\Flow\Error\Error
      */
-    public function convertFrom($source, $targetType, array $convertedChildProperties = array(), PropertyMappingConfigurationInterface $configuration = null)
+    public function convertFrom($source, $targetType, array $convertedChildProperties = [], PropertyMappingConfigurationInterface $configuration = null)
     {
         return $this->convertObject($source);
     }
