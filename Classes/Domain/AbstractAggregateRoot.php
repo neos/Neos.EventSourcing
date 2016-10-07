@@ -26,27 +26,19 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
 {
     /**
      * @var string
-     * @Flow\Transient
      */
-    protected $aggregateIdentifier;
-
-    /**
-     * @var string
-     * @Flow\Transient
-     */
-    protected $aggregateName;
+    private $aggregateIdentifier;
 
     /**
      * @var EventTransport[]
-     * @Flow\Transient
      */
-    protected $events = [];
+    private $events = [];
 
     /**
      * @param string $identifier
      * @return void
      */
-    protected function setAggregateIdentifier($identifier)
+    final protected function setAggregateIdentifier($identifier)
     {
         $this->aggregateIdentifier = $identifier;
     }
@@ -54,7 +46,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     /**
      * @return string
      */
-    public function getAggregateIdentifier(): string
+    final public function getAggregateIdentifier(): string
     {
         return $this->aggregateIdentifier;
     }
@@ -70,7 +62,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      * @param array $metadata
      * @api
      */
-    public function recordThat(AggregateEventInterface $event, array $metadata = [])
+    final public function recordThat(AggregateEventInterface $event, array $metadata = [])
     {
         $event->setAggregateIdentifier($this->getAggregateIdentifier());
 
@@ -88,11 +80,19 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      *
      * @return array
      */
-    public function pullUncommittedEvents(): array
+    final public function pullUncommittedEvents(): array
     {
         $events = $this->events;
         $this->events = [];
         return $events;
+    }
+
+    /**
+     * @return array
+     */
+    final protected function getEvents(): array
+    {
+        return $this->events;
     }
 
     /**
@@ -101,7 +101,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      * @param  EventInterface $event
      * @return void
      */
-    protected function apply(EventInterface $event)
+    final protected function apply(EventInterface $event)
     {
         $name = EventType::get($event);
 
