@@ -11,9 +11,8 @@ namespace Neos\Cqrs\Event;
  * source code.
  */
 
-use Neos\EventStore\Event\Metadata;
-use Neos\EventStore\EventStore;
-use Neos\EventStore\EventStream;
+use Neos\Cqrs\EventStore\EventStore;
+use Neos\Cqrs\EventStore\EventStream;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -46,8 +45,11 @@ class EventHandlingService
     public function publish(string $streamName, EventStream $stream) :int
     {
         return $this->eventStore->commit($streamName, $stream, function (EventTransport $eventTransport, int $version) {
-            $eventTransport->getMetaData()->add(Metadata::VERSION, $version);
-            $this->eventBus->handle($eventTransport);
+            $this->eventBus->handle(
+                $eventTransport->withMetadata(
+                    $eventTransport->getMetadata()->withProperty(Metadata::VERSION, $version)
+                )
+            );
         });
     }
 }
