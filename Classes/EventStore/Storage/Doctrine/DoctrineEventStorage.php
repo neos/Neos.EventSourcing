@@ -64,10 +64,10 @@ class DoctrineEventStorage implements EventStorageInterface
         $query = $queryBuilder
             ->select('type, event, metadata')
             ->from($this->connectionFactory->getStreamTableName())
-            ->andWhere('stream_name_hash = :stream_name_hash')
+            ->andWhere('stream_name = :stream_name')
             ->orderBy('commit_version', 'ASC')
             ->addOrderBy('event_version', 'ASC')
-            ->setParameter('stream_name_hash', md5($streamName));
+            ->setParameter('stream_name', $streamName);
 
         $data = $this->unserializeEvents($query);
 
@@ -105,7 +105,6 @@ class DoctrineEventStorage implements EventStorageInterface
             ->insert($this->connectionFactory->getStreamTableName())
             ->values([
                 'stream_name' => ':stream_name',
-                'stream_name_hash' => ':stream_name_hash',
                 'commit_version' => ':commit_version',
                 'event_version' => ':event_version',
                 'type' => ':type',
@@ -115,12 +114,10 @@ class DoctrineEventStorage implements EventStorageInterface
             ])
             ->setParameters([
                 'stream_name' => $streamName,
-                'stream_name_hash' => md5($streamName),
                 'commit_version' => $commitVersion,
                 'recorded_at' => $now,
             ], [
                 'stream_name' => \PDO::PARAM_STR,
-                'stream_name_hash' => \PDO::PARAM_STR,
                 'version' => \PDO::PARAM_INT,
                 'type' => \PDO::PARAM_STR,
                 'event' => \PDO::PARAM_STR,
@@ -170,11 +167,11 @@ class DoctrineEventStorage implements EventStorageInterface
         $query = $queryBuilder
             ->select('commit_version')
             ->from($this->connectionFactory->getStreamTableName())
-            ->andWhere('stream_name_hash = :stream_name_hash')
+            ->andWhere('stream_name = :stream_name')
             ->orderBy('commit_version', 'DESC')
             ->addOrderBy('event_version', 'DESC')
             ->setMaxResults(1)
-            ->setParameter('stream_name_hash', md5($streamName));
+            ->setParameter('stream_name', $streamName);
 
         $version = (integer)$query->execute()->fetchColumn();
         return $version ?: 0;
