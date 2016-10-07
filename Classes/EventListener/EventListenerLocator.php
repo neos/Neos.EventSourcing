@@ -84,20 +84,20 @@ class EventListenerLocator
         $eventTypeService = $objectManager->get(EventTypeService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listenerClassName) {
             foreach (get_class_methods($listenerClassName) as $methodName) {
+                $eventType = $eventClassName = null;
+
                 preg_match('/^when.*$/', $methodName, $matches);
                 if (!isset($matches[0])) {
                     continue;
                 }
                 $methodName = $matches[0];
                 $parameters = array_values($reflectionService->getMethodParameters($listenerClassName, $methodName));
-                $eventType = null;
 
-                $eventClassName = null;
                 switch (true) {
                     case count($parameters) === 1:
                         $eventClassName = $parameters[0]['class'];
                         if (!$reflectionService->isClassImplementationOf($eventType, EventInterface::class)) {
-                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should by cast to an implementation of EventInterface', $listenerClassName, $methodName), 1472504443);
+                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should be cast to an implementation of EventInterface', $listenerClassName, $methodName), 1472504443);
                         }
                         $eventType = $eventTypeService->getEventTypeByImplementation($eventClassName);
                         $metaDataType = null;
@@ -105,7 +105,7 @@ class EventListenerLocator
                     case isset($parameters[1]):
                         $metaDataType = $parameters[1]['class'];
                         if ($metaDataType !== MessageMetadata::class) {
-                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should by cast to MessageMetaData', $listenerClassName, $methodName), 1472504303);
+                            throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to MessageMetaData', $listenerClassName, $methodName), 1472504303);
                         }
                         break;
                 }
