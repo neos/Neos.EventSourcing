@@ -45,26 +45,18 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     protected $events = [];
 
     /**
-     * Contains a list of events which have been recorded while the aggregate hasn't been initialized yet
-     * @var array
+     * The constructor of the AggregateRoot must be protected and you must use static constructor to create your object
      */
-    protected $pendingEvents = [];
-
-    /**
-     * @var bool
-     */
-    protected $initialized = false;
-
-    /**
-     * Record pending events recorded before the object initialization
-     */
-    public function initializeObject()
+    protected function __construct()
     {
-        $this->initialized = true;
-        foreach ($this->pendingEvents as $data) {
-            list($event, $metadata) = $data;
-            $this->recordThat($event, $metadata);
-        }
+    }
+
+    /**
+     * @return static
+     */
+    public static function new()
+    {
+        return new static();
     }
 
     /**
@@ -93,15 +85,11 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      *
      * @param AggregateEventInterface $event
      * @param array $metadata
+     * @return void
      * @api
      */
     public function recordThat(AggregateEventInterface $event, array $metadata = [])
     {
-        if ($this->initialized === false) {
-            // Queue event before object initialization
-            $this->pendingEvents[] = [$event, $metadata];
-            return;
-        }
         $event->setAggregateIdentifier($this->getAggregateIdentifier());
 
         $messageMetadata = new MessageMetadata($metadata);
