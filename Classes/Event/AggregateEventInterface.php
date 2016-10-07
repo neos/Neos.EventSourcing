@@ -30,9 +30,9 @@ interface AggregateEventInterface extends EventInterface
      * This method can only be called once per event instance. It is usually invoked by the recordThat() method in
      * a concrete aggregate object.
      *
-     * @param $aggregateIdentifier
+     * @param string $aggregateIdentifier
      * @return void
      * @throws Exception
      */
-    public function setAggregateIdentifier($aggregateIdentifier);
+    public function setAggregateIdentifier(string $aggregateIdentifier);
 }
