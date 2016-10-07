@@ -188,11 +188,7 @@ class DoctrineEventStorage implements EventStorageInterface
     {
         $configuration = new PropertyMappingConfiguration();
         $configuration->allowAllProperties();
-        $configuration->setTypeConverterOption(
-            ObjectConverter::class,
-            ObjectConverter::CONFIGURATION_OVERRIDE_TARGET_TYPE_ALLOWED,
-            true
-        );
+        $configuration->forProperty('*')->allowAllProperties();
 
         $data = [];
         foreach ($query->execute()->fetchAll() as $stream) {
