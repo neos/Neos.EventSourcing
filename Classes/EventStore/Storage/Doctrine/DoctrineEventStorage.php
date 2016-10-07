@@ -62,7 +62,7 @@ class DoctrineEventStorage implements EventStorageInterface
         $conn = $this->connectionFactory->get();
         $queryBuilder = $conn->createQueryBuilder();
         $query = $queryBuilder
-            ->select('event, metadata')
+            ->select('type, event, metadata')
             ->from($this->connectionFactory->getStreamTableName())
             ->andWhere('stream_name_hash = :stream_name_hash')
             ->orderBy('commit_version', 'ASC')
@@ -108,6 +108,7 @@ class DoctrineEventStorage implements EventStorageInterface
                 'stream_name_hash' => ':stream_name_hash',
                 'commit_version' => ':commit_version',
                 'event_version' => ':event_version',
+                'type' => ':type',
                 'event' => ':event',
                 'metadata' => ':metadata',
                 'recorded_at' => ':recorded_at'
@@ -121,6 +122,7 @@ class DoctrineEventStorage implements EventStorageInterface
                 'stream_name' => \PDO::PARAM_STR,
                 'stream_name_hash' => \PDO::PARAM_STR,
                 'version' => \PDO::PARAM_INT,
+                'type' => \PDO::PARAM_STR,
                 'event' => \PDO::PARAM_STR,
                 'metadata' => \PDO::PARAM_STR,
                 'recorded_at' => DateTimeType::DATETIME_MICRO,
@@ -130,15 +132,16 @@ class DoctrineEventStorage implements EventStorageInterface
         array_map(function (EventTransport $eventTransport) use ($query, &$version) {
             $convertedEvent = $this->propertyMapper->convert($eventTransport->getEvent(), 'array');
 
-            // HACK this should go into a separate column in the format "<BoundedContext>:<EventType>"
-            $convertedEvent['__type'] = TypeHandling::getTypeForValue($eventTransport->getEvent());
-
             $serializedEvent = json_encode($convertedEvent);
             $convertedMetadata = $this->propertyMapper->convert($eventTransport->getMetadata(), 'array');
             $serializedMetadata = json_encode($convertedMetadata);
             $query->setParameter('event_version', $version);
+
+            // the format should be "<BoundedContext>:<EventType>"
+            $query->setParameter('type', TypeHandling::getTypeForValue($eventTransport->getEvent()));
             $query->setParameter('event', $serializedEvent);
             $query->setParameter('metadata', $serializedMetadata);
+
             $query->execute();
             $version++;
         }, $stream->getData());
@@ -196,7 +199,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $unserializedEvent = json_decode($stream['event'], true);
             $unserializedMetadata = json_decode($stream['metadata'], true);
             $data[] = new EventTransport(
-                $this->propertyMapper->convert($unserializedEvent, $unserializedEvent['__type'], $configuration),
+                $this->propertyMapper->convert($unserializedEvent, $stream['type'], $configuration),
                 $this->propertyMapper->convert($unserializedMetadata, MessageMetadata::class, $configuration)
             );
         }

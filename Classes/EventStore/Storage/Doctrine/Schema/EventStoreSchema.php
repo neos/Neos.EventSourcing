@@ -41,6 +41,7 @@ final class EventStoreSchema
         $table->addColumn('event_version', Type::BIGINT, ['unsigned' => true]);
 
         // Events of the stream
+        $table->addColumn('type', Type::TEXT);
         $table->addColumn('event', Type::TEXT);
         $table->addColumn('metadata', Type::TEXT);
 
