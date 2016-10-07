@@ -129,9 +129,9 @@ class DoctrineEventStorage implements EventStorageInterface
         array_map(function (EventTransport $eventTransport) use ($query, &$version) {
             $convertedEvent = $this->propertyMapper->convert($eventTransport->getEvent(), 'array');
 
-            $serializedEvent = json_encode($convertedEvent);
+            $serializedEvent = json_encode($convertedEvent, JSON_PRETTY_PRINT);
             $convertedMetadata = $this->propertyMapper->convert($eventTransport->getMetadata(), 'array');
-            $serializedMetadata = json_encode($convertedMetadata);
+            $serializedMetadata = json_encode($convertedMetadata, JSON_PRETTY_PRINT);
             $query->setParameter('event_version', $version);
 
             // the format should be "<BoundedContext>:<EventType>"
