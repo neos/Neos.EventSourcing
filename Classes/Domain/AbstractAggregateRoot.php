@@ -52,14 +52,6 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     }
 
     /**
-     * @return static
-     */
-    public static function new()
-    {
-        return new static();
-    }
-
-    /**
      * @param string $identifier
      * @return void
      */
