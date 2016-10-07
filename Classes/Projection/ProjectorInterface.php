@@ -14,8 +14,14 @@ namespace Neos\Cqrs\Projection;
 use Neos\Cqrs\EventListener\EventListenerInterface;
 
 /**
- * ProjectionInterface
+ * ProjectorInterface
  */
-interface ProjectionInterface extends EventListenerInterface
+interface ProjectorInterface extends EventListenerInterface
 {
+    /**
+     * Returns the class name of the (main) Read Model of the concrete projector
+     *
+     * @return string
+     */
+    public function getReadModelClassName(): string;
 }

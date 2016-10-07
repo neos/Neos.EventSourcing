@@ -1,0 +1,2 @@
+Neos\Cqrs\EventStore\Storage\EventStorageInterface:
+  className: Neos\Cqrs\EventStore\Storage\Doctrine\DoctrineEventStorage
