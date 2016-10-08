@@ -38,11 +38,11 @@ abstract class AbstractAggregateEvent implements AggregateEventInterface
      * This method can only be called once per event instance. It is usually invoked by the recordThat() method in
      * a concrete aggregate object.
      *
-     * @param $aggregateIdentifier
+     * @param string $aggregateIdentifier
      * @return void
      * @throws Exception
      */
-    public function setAggregateIdentifier($aggregateIdentifier)
+    public function setAggregateIdentifier(string $aggregateIdentifier)
     {
         if ($this->aggregateIdentifier !== null) {
             throw new Exception(sprintf('The aggregate identifier of this %s has already been set (%s) and can only be set once.', get_class($this), $this->aggregateIdentifier), 1474969482419);

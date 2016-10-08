@@ -31,8 +31,7 @@ final class EventStoreSchema
         $table = $schema->createTable($name);
 
         // UUID4 of the stream
-        $table->addColumn('stream_name', Type::TEXT);
-        $table->addColumn('stream_name_hash', Type::STRING, ['length' => 32]);
+        $table->addColumn('stream_name', Type::STRING, ['length' => 255]);
 
         // Version of the aggregate after event was recorded
         $table->addColumn('commit_version', Type::BIGINT, ['unsigned' => true]);
@@ -41,13 +40,14 @@ final class EventStoreSchema
         $table->addColumn('event_version', Type::BIGINT, ['unsigned' => true]);
 
         // Events of the stream
+        $table->addColumn('type', Type::TEXT);
         $table->addColumn('event', Type::TEXT);
         $table->addColumn('metadata', Type::TEXT);
 
         // Timestamp of the stream
         $table->addColumn('recorded_at', DateTimeType::DATETIME_MICRO);
 
-        $table->setPrimaryKey(['stream_name_hash', 'commit_version', 'event_version']);
+        $table->setPrimaryKey(['stream_name', 'commit_version', 'event_version']);
     }
 
     /**
