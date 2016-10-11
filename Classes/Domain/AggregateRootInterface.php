@@ -21,7 +21,7 @@ interface AggregateRootInterface
     /**
      * @return string
      */
-    public function getAggregateIdentifier(): string;
+    public function getIdentifier(): string;
 
     /**
      * @param AggregateEventInterface $event

@@ -68,23 +68,23 @@ Your command must simply implement the ```CommandInterface```.
         /**
          * @var string
          */
-        protected $aggregateIdentifier;
+        protected $identifier;
 
         /**
-         * @param string $aggregateIdentifier
+         * @param string $identifier
          * @param float $duration
          */
-        public function __construct(string $aggregateIdentifier)
+        public function __construct(string $identifier)
         {
-            $this->aggregateIdentifier = $aggregateIdentifier;
+            $this->identifier = $identifier;
         }
 
         /**
          * @return string
          */
-        public function getAggregateIdentifier(): string
+        public function getIdentifier(): string
         {
-            return $this->aggregateIdentifier;
+            return $this->identifier;
         }
     }
 
@@ -110,7 +110,7 @@ Your command must simply implement the ```CommandHandlerInterface```.
          */
         public function handleCreateButton(CreateButton $command)
         {
-            $button = new Button($command->getAggregateIdentifier(), $command->getPublicIdentifier());
+            $button = new Button($command->getIdentifier(), $command->getPublicIdentifier());
             $button->changeLabel($command->getLabel());
 
             $this->buttonRepository->save($button);

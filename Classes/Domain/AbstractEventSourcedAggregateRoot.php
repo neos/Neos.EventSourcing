@@ -11,7 +11,6 @@ namespace Neos\Cqrs\Domain;
  * source code.
  */
 
-use Neos\Cqrs\Event\AggregateEventInterface;
 use Neos\Cqrs\Event\EventTransport;
 use Neos\Cqrs\EventStore\EventStream;
 use Neos\Cqrs\RuntimeException;
