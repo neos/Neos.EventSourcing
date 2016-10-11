@@ -27,7 +27,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     /**
      * @var string
      */
-    private $aggregateIdentifier;
+    protected $aggregateIdentifier;
 
     /**
      * @var EventTransport[]
@@ -35,12 +35,11 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     private $events = [];
 
     /**
-     * @param string $identifier
-     * @return void
+     * @param string $aggregateIdentifier
      */
-    final protected function setAggregateIdentifier($identifier)
+    protected function __construct(string $aggregateIdentifier)
     {
-        $this->aggregateIdentifier = $identifier;
+        $this->aggregateIdentifier = $aggregateIdentifier;
     }
 
     /**
