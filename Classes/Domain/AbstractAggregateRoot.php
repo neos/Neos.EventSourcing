@@ -63,7 +63,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      */
     final public function recordThat(AggregateEventInterface $event, array $metadata = [])
     {
-        $event->setAggregateIdentifier($this->getIdentifier());
+        $event->setIdentifier($this->getIdentifier());
 
         $messageMetadata = new MessageMetadata($metadata);
 

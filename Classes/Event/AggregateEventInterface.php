@@ -22,7 +22,7 @@ interface AggregateEventInterface extends EventInterface
      *
      * @return string
      */
-    public function getAggregateIdentifier(): string;
+    public function getIdentifier(): string;
 
     /**
      * Sets the aggregate identifier for this event.
@@ -30,9 +30,9 @@ interface AggregateEventInterface extends EventInterface
      * This method can only be called once per event instance. It is usually invoked by the recordThat() method in
      * a concrete aggregate object.
      *
-     * @param string $aggregateIdentifier
+     * @param string $identifier
      * @return void
      * @throws Exception
      */
-    public function setAggregateIdentifier(string $aggregateIdentifier);
+    public function setIdentifier(string $identifier);
 }
