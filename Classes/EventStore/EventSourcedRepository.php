@@ -69,7 +69,7 @@ abstract class EventSourcedRepository implements RepositoryInterface
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root %s because its class '%s' does not exist.", $identifier, $this->aggregateClassName), 1474454928115);
         }
 
-        $aggregateRoot = unserialize('O:' . strlen($this->aggregateClassName) . ':"' . $this->aggregateClassName . '":1:{s:22:"' . chr(0) . '*' . chr(0) . 'aggregateIdentifier";s:36:"' . $identifier . '";}');
+        $aggregateRoot = unserialize('O:' . strlen($this->aggregateClassName) . ':"' . $this->aggregateClassName . '":1:{s:13:"' . chr(0) . '*' . chr(0) . 'identifier";s:36:"' . $identifier . '";}');
         if (!$aggregateRoot instanceof EventSourcedAggregateRootInterface) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root '%s' with id '%s' because it does not implement the EventSourcedAggregateRootInterface.", $this->aggregateClassName, $identifier, $this->aggregateClassName), 1474464335530);
         }
@@ -84,7 +84,7 @@ abstract class EventSourcedRepository implements RepositoryInterface
     public function save(AggregateRootInterface $aggregate)
     {
         try {
-            $stream = $this->eventStore->get($this->generateStreamName($aggregate->getAggregateIdentifier()));
+            $stream = $this->eventStore->get($this->generateStreamName($aggregate->getIdentifier()));
         } catch (EventStreamNotFoundException $e) {
             $stream = new EventStream();
         }
@@ -92,7 +92,7 @@ abstract class EventSourcedRepository implements RepositoryInterface
         $uncommittedEvents = $aggregate->pullUncommittedEvents();
         $stream->addEvents(...$uncommittedEvents);
 
-        $this->eventStore->commit($this->generateStreamName($aggregate->getAggregateIdentifier()), $stream, function ($version) use ($uncommittedEvents) {
+        $this->eventStore->commit($this->generateStreamName($aggregate->getIdentifier()), $stream, function ($version) use ($uncommittedEvents) {
             /** @var EventTransport $eventTransport */
             foreach ($uncommittedEvents as $eventTransport) {
                 // @todo metadata enrichment must be done in external service, with some middleware support
