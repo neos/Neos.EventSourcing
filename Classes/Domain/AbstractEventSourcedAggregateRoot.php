@@ -11,7 +11,6 @@ namespace Neos\Cqrs\Domain;
  * source code.
  */
 
-use Neos\Cqrs\Event\AggregateEventInterface;
 use Neos\Cqrs\Event\EventTransport;
 use Neos\Cqrs\EventStore\EventStream;
 use Neos\Cqrs\RuntimeException;
@@ -33,11 +32,7 @@ abstract class AbstractEventSourcedAggregateRoot extends AbstractAggregateRoot i
 
         /** @var EventTransport $eventTransport */
         foreach ($stream as $eventTransport) {
-            $event = $eventTransport->getEvent();
-            if ($event instanceof AggregateEventInterface) {
-                $this->setAggregateIdentifier($event->getAggregateIdentifier());
-            }
-            $this->apply($event);
+            $this->apply($eventTransport->getEvent());
         }
     }
 }
