@@ -16,11 +16,11 @@ use Neos\Cqrs\EventStore\EventStream;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * EventTypeService
+ * Event Publisher
  *
  * @Flow\Scope("singleton")
  */
-class EventHandlingService
+class EventPublisher
 {
     /**
      * @var EventStore
@@ -40,7 +40,6 @@ class EventHandlingService
      * @param string $streamName name of the stream in the event store
      * @param EventStream $stream stream of event to store
      * @return int commited version number
-     * @return int
      */
     public function publish(string $streamName, EventStream $stream) :int
     {

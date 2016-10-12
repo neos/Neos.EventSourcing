@@ -18,11 +18,11 @@ use TYPO3\Flow\Reflection\ReflectionService;
 use TYPO3\Flow\Utility\TypeHandling;
 
 /**
- * EventTypeService
+ * Event Type Resolver
  *
  * @Flow\Scope("singleton")
  */
-class EventTypeService
+class EventTypeResolver
 {
     /**
      * @var ObjectManagerInterface
@@ -57,19 +57,23 @@ class EventTypeService
      */
     public function getEventType(EventInterface $event): string
     {
-        $classname = TypeHandling::getTypeForValue($event);
-        return $this->mapping[$classname];
+        $className = TypeHandling::getTypeForValue($event);
+        return $this->getEventTypeByClassName($className);
     }
 
     /**
      * Return the event type for the given Event classname
      *
-     * @param string $classname
+     * @param string $className
      * @return string
+     * @throws Exception
      */
-    public function getEventTypeByImplementation(string $classname): string
+    public function getEventTypeByClassName(string $className): string
     {
-        return $this->mapping[$classname];
+        if (!isset($this->mapping[$className])) {
+            throw new Exception(sprintf('Event Type not found for class name "%s"', $className), 1476249954);
+        }
+        return $this->mapping[$className];
     }
 
     /**
@@ -87,22 +91,22 @@ class EventTypeService
     /**
      * Return the event short name for the given Event classname
      *
-     * @param string $classname
+     * @param string $className
      * @return string
      */
-    public function getEventShortTypeByImplementation(string $classname): string
+    public function getEventShortTypeByClassName(string $className): string
     {
-        $type = explode(':', $this->getEventTypeByImplementation($classname));
+        $type = explode(':', $this->getEventTypeByClassName($className));
         return end($type);
     }
 
     /**
      * Return the event classname for the given event type
      *
-     * @param $eventType
+     * @param string $eventType
      * @return string
      */
-    public function getEventImplementation($eventType):string
+    public function getEventClassNameByType(string $eventType):string
     {
         return $this->reversedMapping[$eventType];
     }
