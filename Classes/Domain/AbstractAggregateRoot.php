@@ -40,13 +40,6 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     private $events = [];
 
     /**
-     * The constructor of the AggregateRoot must be protected and you must use static constructor to create your object
-     */
-    protected function __construct()
-    {
-    }
-
-    /**
      * @param string $identifier
      */
     protected function __construct(string $identifier)
