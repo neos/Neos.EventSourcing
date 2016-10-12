@@ -19,10 +19,12 @@ use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
 use Neos\Cqrs\EventStore\Storage\Doctrine\DataTypes\DateTimeType;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
-use Neos\Cqrs\Serializer\JsonSerializer;
+use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Property\PropertyMapper;
 use TYPO3\Flow\Property\PropertyMappingConfiguration;
 use TYPO3\Flow\Property\TypeConverter\ObjectConverter;
+use TYPO3\Flow\Utility\TypeHandling;
 
 /**
  * Database event storage, for testing purpose
@@ -36,10 +38,10 @@ class DoctrineEventStorage implements EventStorageInterface
     protected $connectionFactory;
 
     /**
-     * @var JsonSerializer
+     * @var PropertyMapper
      * @Flow\Inject
      */
-    protected $serializer;
+    protected $propertyMapper;
 
     /**
      * @var array
@@ -60,12 +62,12 @@ class DoctrineEventStorage implements EventStorageInterface
         $conn = $this->connectionFactory->get();
         $queryBuilder = $conn->createQueryBuilder();
         $query = $queryBuilder
-            ->select('event, metadata')
+            ->select('type, event, metadata')
             ->from($this->connectionFactory->getStreamTableName())
-            ->andWhere('stream_name_hash = :stream_name_hash')
+            ->andWhere('stream_name = :stream_name')
             ->orderBy('commit_version', 'ASC')
             ->addOrderBy('event_version', 'ASC')
-            ->setParameter('stream_name_hash', md5($streamName));
+            ->setParameter('stream_name', $streamName);
 
         $data = $this->unserializeEvents($query);
 
@@ -103,22 +105,21 @@ class DoctrineEventStorage implements EventStorageInterface
             ->insert($this->connectionFactory->getStreamTableName())
             ->values([
                 'stream_name' => ':stream_name',
-                'stream_name_hash' => ':stream_name_hash',
                 'commit_version' => ':commit_version',
                 'event_version' => ':event_version',
+                'type' => ':type',
                 'event' => ':event',
                 'metadata' => ':metadata',
                 'recorded_at' => ':recorded_at'
             ])
             ->setParameters([
                 'stream_name' => $streamName,
-                'stream_name_hash' => md5($streamName),
                 'commit_version' => $commitVersion,
                 'recorded_at' => $now,
             ], [
                 'stream_name' => \PDO::PARAM_STR,
-                'stream_name_hash' => \PDO::PARAM_STR,
                 'version' => \PDO::PARAM_INT,
+                'type' => \PDO::PARAM_STR,
                 'event' => \PDO::PARAM_STR,
                 'metadata' => \PDO::PARAM_STR,
                 'recorded_at' => DateTimeType::DATETIME_MICRO,
@@ -126,11 +127,18 @@ class DoctrineEventStorage implements EventStorageInterface
 
         $version = 1;
         array_map(function (EventTransport $eventTransport) use ($query, &$version) {
-            $event = $this->serializer->serialize($eventTransport->getEvent());
-            $metadata = $this->serializer->serialize($eventTransport->getMetadata());
+            $convertedEvent = $this->propertyMapper->convert($eventTransport->getEvent(), 'array');
+
+            $serializedEvent = json_encode($convertedEvent, JSON_PRETTY_PRINT);
+            $convertedMetadata = $this->propertyMapper->convert($eventTransport->getMetadata(), 'array');
+            $serializedMetadata = json_encode($convertedMetadata, JSON_PRETTY_PRINT);
             $query->setParameter('event_version', $version);
-            $query->setParameter('event', $event);
-            $query->setParameter('metadata', $metadata);
+
+            // the format should be "<BoundedContext>:<EventType>"
+            $query->setParameter('type', TypeHandling::getTypeForValue($eventTransport->getEvent()));
+            $query->setParameter('event', $serializedEvent);
+            $query->setParameter('metadata', $serializedMetadata);
+
             $query->execute();
             $version++;
         }, $stream->getData());
@@ -159,11 +167,11 @@ class DoctrineEventStorage implements EventStorageInterface
         $query = $queryBuilder
             ->select('commit_version')
             ->from($this->connectionFactory->getStreamTableName())
-            ->andWhere('stream_name_hash = :stream_name_hash')
+            ->andWhere('stream_name = :stream_name')
             ->orderBy('commit_version', 'DESC')
             ->addOrderBy('event_version', 'DESC')
             ->setMaxResults(1)
-            ->setParameter('stream_name_hash', md5($streamName));
+            ->setParameter('stream_name', $streamName);
 
         $version = (integer)$query->execute()->fetchColumn();
         return $version ?: 0;
@@ -177,17 +185,15 @@ class DoctrineEventStorage implements EventStorageInterface
     {
         $configuration = new PropertyMappingConfiguration();
         $configuration->allowAllProperties();
-        $configuration->setTypeConverterOption(
-            ObjectConverter::class,
-            ObjectConverter::CONFIGURATION_OVERRIDE_TARGET_TYPE_ALLOWED,
-            true
-        );
+        $configuration->forProperty('*')->allowAllProperties();
 
         $data = [];
         foreach ($query->execute()->fetchAll() as $stream) {
+            $unserializedEvent = json_decode($stream['event'], true);
+            $unserializedMetadata = json_decode($stream['metadata'], true);
             $data[] = new EventTransport(
-                $this->serializer->unserialize($stream['event']),
-                $this->serializer->unserialize($stream['metadata'])
+                $this->propertyMapper->convert($unserializedEvent, $stream['type'], $configuration),
+                $this->propertyMapper->convert($unserializedMetadata, MessageMetadata::class, $configuration)
             );
         }
         return $data;

@@ -14,7 +14,7 @@ namespace Neos\Cqrs\Domain;
 use Neos\Cqrs\Event\AggregateEventInterface;
 use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventTransport;
-use Neos\Cqrs\Event\EventTypeService;
+use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -24,7 +24,7 @@ use TYPO3\Flow\Annotations as Flow;
 abstract class AbstractAggregateRoot implements AggregateRootInterface
 {
     /**
-     * @var EventTypeService
+     * @var EventTypeResolver
      * @Flow\Inject
      */
     protected $eventTypeService;
@@ -32,17 +32,12 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     /**
      * @var string
      */
-    protected $aggregateIdentifier;
-
-    /**
-     * @var string
-     */
-    protected $aggregateName;
+    private $aggregateIdentifier;
 
     /**
      * @var EventTransport[]
      */
-    protected $events = [];
+    private $events = [];
 
     /**
      * The constructor of the AggregateRoot must be protected and you must use static constructor to create your object
@@ -55,7 +50,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      * @param string $identifier
      * @return void
      */
-    protected function setAggregateIdentifier($identifier)
+    final protected function setAggregateIdentifier($identifier)
     {
         $this->aggregateIdentifier = $identifier;
     }
@@ -63,7 +58,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     /**
      * @return string
      */
-    public function getAggregateIdentifier(): string
+    final public function getAggregateIdentifier(): string
     {
         return $this->aggregateIdentifier;
     }
@@ -80,7 +75,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      * @return void
      * @api
      */
-    public function recordThat(AggregateEventInterface $event, array $metadata = [])
+    final public function recordThat(AggregateEventInterface $event, array $metadata = [])
     {
         $event->setAggregateIdentifier($this->getAggregateIdentifier());
 
@@ -98,11 +93,19 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      *
      * @return array
      */
-    public function pullUncommittedEvents(): array
+    final public function pullUncommittedEvents(): array
     {
         $events = $this->events;
         $this->events = [];
         return $events;
+    }
+
+    /**
+     * @return array
+     */
+    final protected function getEvents(): array
+    {
+        return $this->events;
     }
 
     /**
@@ -111,7 +114,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      * @param  EventInterface $event
      * @return void
      */
-    protected function apply(EventInterface $event)
+    final protected function apply(EventInterface $event)
     {
         $method = sprintf('when%s', $this->eventTypeService->getEventShortType($event));
         if (method_exists($this, $method)) {
