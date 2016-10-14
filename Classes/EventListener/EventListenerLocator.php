@@ -63,7 +63,7 @@ class EventListenerLocator
         if (!isset($this->mapping[$eventType])) {
             return [];
         }
-        return array_map(function($listenerClassNameAndMethod) {
+        return array_map(function ($listenerClassNameAndMethod) {
             return [$this->objectManager->get($listenerClassNameAndMethod[0]), $listenerClassNameAndMethod[1]];
         }, $this->mapping[$eventType]);
     }
