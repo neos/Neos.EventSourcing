@@ -16,6 +16,7 @@ use Neos\Cqrs\EventListener\EventListenerContainer;
 use Neos\Cqrs\EventListener\EventListenerLocator;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Log\SystemLoggerInterface;
+use TYPO3\Flow\Utility\TypeHandling;
 
 /**
  * EventBus
@@ -43,18 +44,13 @@ class EventBus
     public function handle(EventTransport $transport)
     {
         $listeners = $this->locator->getListeners($transport->getEvent());
-
-        if ($listeners === null) {
-            return;
-        }
-
-        /** @var EventListenerContainer $listener */
+        /** @var \callable $listener */
         foreach ($listeners as $listener) {
             try {
-                $listener->when($transport);
+                call_user_func($listener, $transport->getEvent(), $transport->getMetadata());
             } catch (\Exception $exception) {
                 $this->logger->logException($exception);
-                throw new EventBusException(sprintf('Event handler %s->%s threw an exception: %s (%s)', $listener->getListenerClass(), $listener->getListenerMethod(), $exception->getMessage(), $exception->getCode()), 1472675781, $exception);
+                throw new EventBusException(sprintf('An exception occurred while handling event "%s": %s (%s)', TypeHandling::getTypeForValue($transport->getEvent()), $exception->getMessage(), $exception->getCode()), 1472675781, $exception);
             }
         }
     }
