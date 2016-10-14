@@ -57,13 +57,15 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      * is automatically set with the current aggregate identifier
      * and name.
      *
-     * @param AggregateEventInterface $event
+     * @param EventInterface $event
      * @param array $metadata
      * @api
      */
-    final public function recordThat(AggregateEventInterface $event, array $metadata = [])
+    final public function recordThat(EventInterface $event, array $metadata = [])
     {
-        $event->setIdentifier($this->getIdentifier());
+        if ($event instanceof AggregateEventInterface) {
+            $event->setIdentifier($this->getIdentifier());
+        }
 
         $messageMetadata = new MessageMetadata($metadata);
 
