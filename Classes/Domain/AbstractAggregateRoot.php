@@ -14,16 +14,21 @@ namespace Neos\Cqrs\Domain;
 use Neos\Cqrs\Event\AggregateEventInterface;
 use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventTransport;
-use Neos\Cqrs\Event\EventType;
+use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Utility\Arrays;
 
 /**
  * Base class for an aggregate root
  */
 abstract class AbstractAggregateRoot implements AggregateRootInterface
 {
+    /**
+     * @var EventTypeResolver
+     * @Flow\Inject
+     */
+    protected $eventTypeService;
+
     /**
      * @var string
      */
@@ -59,6 +64,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      *
      * @param EventInterface $event
      * @param array $metadata
+     * @return void
      * @api
      */
     final public function recordThat(EventInterface $event, array $metadata = [])
@@ -104,13 +110,7 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      */
     final protected function apply(EventInterface $event)
     {
-        $name = EventType::get($event);
-
-        $nameParts = Arrays::trimExplode('\\', $name);
-        $className = array_pop($nameParts);
-
-        $method = sprintf('when%s', ucfirst($className));
-
+        $method = sprintf('when%s', $this->eventTypeService->getEventShortType($event));
         if (method_exists($this, $method)) {
             $this->$method($event);
         }
