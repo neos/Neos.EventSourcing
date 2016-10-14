@@ -39,6 +39,16 @@ class DoctrineProjectionPersistenceManager
     protected $entityManager;
 
     /**
+     * @param string $className
+     * @param string $identifier
+     * @return object
+     */
+    public function get(string $className, string $identifier)
+    {
+        return $this->entityManager->find($className, $identifier);
+    }
+
+    /**
      * Adds an object for persistence.
      *
      * @param object $object The object to add

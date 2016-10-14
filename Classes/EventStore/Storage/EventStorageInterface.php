@@ -11,6 +11,7 @@ namespace Neos\Cqrs\EventStore\Storage;
  * source code.
  */
 use Neos\Cqrs\EventStore\EventStreamData;
+use Neos\Cqrs\EventStore\EventStreamFilter;
 use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
 
 /**
@@ -19,10 +20,10 @@ use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
 interface EventStorageInterface
 {
     /**
-     * @param string $streamName
+     * @param EventStreamFilter $filter
      * @return EventStreamData Aggregate Root events
      */
-    public function load(string $streamName);
+    public function load(EventStreamFilter $filter);
 
     /**
      * @param string $streamName

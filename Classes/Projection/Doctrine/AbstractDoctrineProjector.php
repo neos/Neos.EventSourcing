@@ -35,9 +35,22 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
      */
     protected function initializeObject()
     {
-        if ($this->readModelClassName === null && substr(get_class($this), -9, 9) === 'Projector') {
+        if ($this->readModelClassName === null) {
+            if (substr(get_class($this), -9, 9) !== 'Projector') {
+                // EXCEPTION
+            }
             $this->readModelClassName = substr(get_class($this), 0, -9);
         }
+    }
+
+    /**
+     * @param string $identifier
+     * @return object
+     * @api
+     */
+    protected function get(string $identifier)
+    {
+        return $this->projectionPersistenceManager->get($this->readModelClassName, $identifier);
     }
 
     /**

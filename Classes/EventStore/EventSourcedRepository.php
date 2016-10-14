@@ -27,16 +27,22 @@ use TYPO3\Flow\Annotations as Flow;
 abstract class EventSourcedRepository implements RepositoryInterface
 {
     /**
-     * @var EventStore
      * @Flow\Inject
+     * @var EventStore
      */
     protected $eventStore;
 
     /**
-     * @var EventBus
      * @Flow\Inject
+     * @var EventBus
      */
     protected $eventBus;
+
+    /**
+     * @Flow\Inject
+     * @var EventStreamResolver
+     */
+    protected $eventStreamResolver;
 
     /**
      * @var string
@@ -58,9 +64,11 @@ abstract class EventSourcedRepository implements RepositoryInterface
      */
     public function findByIdentifier($identifier)
     {
+        $filter = new EventStreamFilter();
+        $filter->streamName = $this->eventStreamResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
         try {
             /** @var EventStream $eventStream */
-            $eventStream = $this->eventStore->get($this->generateStreamName($identifier));
+            $eventStream = $this->eventStore->get($filter);
         } catch (EventStreamNotFoundException $e) {
             return null;
         }
@@ -83,8 +91,11 @@ abstract class EventSourcedRepository implements RepositoryInterface
      */
     public function save(AggregateRootInterface $aggregate)
     {
+        $eventStreamName = $this->eventStreamResolver->getStreamNameForAggregate($aggregate);
+        $filter = new EventStreamFilter();
+        $filter->streamName = $eventStreamName;
         try {
-            $stream = $this->eventStore->get($this->generateStreamName($aggregate->getIdentifier()));
+            $stream = $this->eventStore->get($filter);
         } catch (EventStreamNotFoundException $e) {
             $stream = new EventStream();
         }
@@ -92,7 +103,7 @@ abstract class EventSourcedRepository implements RepositoryInterface
         $uncommittedEvents = $aggregate->pullUncommittedEvents();
         $stream->addEvents(...$uncommittedEvents);
 
-        $this->eventStore->commit($this->generateStreamName($aggregate->getIdentifier()), $stream, function ($version) use ($uncommittedEvents) {
+        $this->eventStore->commit($eventStreamName, $stream, function ($version) use ($uncommittedEvents) {
             /** @var EventTransport $eventTransport */
             foreach ($uncommittedEvents as $eventTransport) {
                 // @todo metadata enrichment must be done in external service, with some middleware support
@@ -100,16 +111,5 @@ abstract class EventSourcedRepository implements RepositoryInterface
                 $this->eventBus->handle($eventTransport->withMetadata($versionedMetadata));
             }
         });
-    }
-
-    /**
-     * @param string $identifier
-     * @return string
-     * @todo find a more flexible way to generate stream name, need to be discussed
-     */
-    protected function generateStreamName(string $identifier)
-    {
-        $streamName = $this->aggregateClassName . '::' . $identifier;
-        return $streamName;
     }
 }
