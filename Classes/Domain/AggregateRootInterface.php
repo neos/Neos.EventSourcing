@@ -11,7 +11,7 @@ namespace Neos\Cqrs\Domain;
  * source code.
  */
 
-use Neos\Cqrs\Event\AggregateEventInterface;
+use Neos\Cqrs\Event\EventInterface;
 
 /**
  * AggregateRootInterface
@@ -24,10 +24,10 @@ interface AggregateRootInterface
     public function getIdentifier(): string;
 
     /**
-     * @param AggregateEventInterface $event
+     * @param EventInterface $event
      * @param array $metadata
      */
-    public function recordThat(AggregateEventInterface $event, array $metadata = []);
+    public function recordThat(EventInterface $event, array $metadata = []);
 
     /**
      * @return array
