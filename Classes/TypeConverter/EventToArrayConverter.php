@@ -65,7 +65,7 @@ class EventToArrayConverter extends AbstractTypeConverter
                 $propertyValue = $propertyValue->getName();
             } elseif ($propertyValue instanceof \DateTimeInterface) {
                 $propertyValue = $propertyValue->format(DATE_ISO8601);
-            } else {
+            } elseif (is_object($propertyValue)) {
                 $propertyValue = $this->convertObject($propertyValue);
             }
         }
