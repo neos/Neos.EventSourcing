@@ -39,6 +39,7 @@ class MetadataToArrayConverter extends EventToArrayConverter
             throw new \InvalidArgumentException('This converter only supports MessageMetadata sources', 1475843240);
         }
         $result = [];
+        $result['timestamp'] = $this->convertObject($source->getTimestamp());
         foreach ($source->getProperties() as $propertyName => $propertyValue) {
             $result[$propertyName] = TypeHandling::isSimpleType(gettype($propertyValue)) ? $propertyValue : $this->convertObject($propertyValue);
         }
