@@ -11,6 +11,7 @@ namespace Neos\Cqrs\TypeConverter;
  * source code.
  */
 
+use Neos\Cqrs\Domain\Timestamp;
 use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Property\PropertyMappingConfigurationInterface;
 use TYPO3\Flow\Utility\TypeHandling;
@@ -39,7 +40,7 @@ class MetadataToArrayConverter extends EventToArrayConverter
             throw new \InvalidArgumentException('This converter only supports MessageMetadata sources', 1475843240);
         }
         $result = [];
-        $result['timestamp'] = $this->convertObject($source->getTimestamp());
+        $result['timestamp'] = $source->getTimestamp()->format(Timestamp::OUTPUT_FORMAT);
         foreach ($source->getProperties() as $propertyName => $propertyValue) {
             $result[$propertyName] = TypeHandling::isSimpleType(gettype($propertyValue)) ? $propertyValue : $this->convertObject($propertyValue);
         }
