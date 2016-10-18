@@ -12,7 +12,6 @@ namespace Neos\Cqrs\Event;
  */
 
 use Neos\Cqrs\Event\Exception\EventBusException;
-use Neos\Cqrs\EventListener\EventListenerContainer;
 use Neos\Cqrs\EventListener\EventListenerLocator;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Log\SystemLoggerInterface;

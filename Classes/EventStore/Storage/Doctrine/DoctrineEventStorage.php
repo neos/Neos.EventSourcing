@@ -23,7 +23,6 @@ use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Property\PropertyMapper;
 use TYPO3\Flow\Property\PropertyMappingConfiguration;
-use TYPO3\Flow\Property\TypeConverter\ObjectConverter;
 use TYPO3\Flow\Utility\TypeHandling;
 
 /**
