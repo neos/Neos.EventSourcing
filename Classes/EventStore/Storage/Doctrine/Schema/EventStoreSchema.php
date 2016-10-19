@@ -13,7 +13,6 @@ namespace Neos\Cqrs\EventStore\Storage\Doctrine\Schema;
 
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
-use Neos\Cqrs\EventStore\Storage\Doctrine\DataTypes\DateTimeType;
 
 /**
  * Use this helper in a doctrine migrations script to set up the event store schema
@@ -30,24 +29,23 @@ final class EventStoreSchema
     {
         $table = $schema->createTable($name);
 
-        // UUID4 of the stream
-        $table->addColumn('stream_name', Type::STRING, ['length' => 255]);
-
-        // Version of the aggregate after event was recorded
-        $table->addColumn('commit_version', Type::BIGINT, ['unsigned' => true]);
-
-        // Version of the event in the current commit
-        $table->addColumn('event_version', Type::BIGINT, ['unsigned' => true]);
-
-        // Events of the stream
-        $table->addColumn('type', Type::TEXT);
-        $table->addColumn('event', Type::TEXT);
+        // The stream id, usually in the format "<BoundedContext>:<StreamName>"
+        $table->addColumn('id', Type::INTEGER, array('autoincrement' => true));
+        // The stream id, usually in the format "<BoundedContext>:<StreamName>"
+        $table->addColumn('stream', Type::STRING, ['length' => 255]);
+        // Version of the event in the respective stream
+        $table->addColumn('version', Type::BIGINT, ['unsigned' => true]);
+        // The event type in the format "<BoundedContext>:<EventType>"
+        $table->addColumn('type', Type::STRING, ['length' => 255]);
+        // The event payload as JSON
+        $table->addColumn('payload', Type::TEXT);
+        // The event metadata as JSON
         $table->addColumn('metadata', Type::TEXT);
+        // Timestamp of the the event publishing
+        $table->addColumn('recordedat', Type::DATETIME);
 
-        // Timestamp of the stream
-        $table->addColumn('recorded_at', DateTimeType::DATETIME_MICRO);
-
-        $table->setPrimaryKey(['stream_name', 'commit_version', 'event_version']);
+        $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['stream', 'version'], 'stream_version');
     }
 
     /**
