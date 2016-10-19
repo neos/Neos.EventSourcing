@@ -126,20 +126,17 @@ class DoctrineEventStorage implements EventStorageInterface
                 'recordedat' => \PDO::PARAM_STR,
             ]);
 
-        $version = 1;
-        array_map(function (EventTransport $eventTransport) use ($query, &$version) {
+        array_map(function (EventTransport $eventTransport) use ($query) {
             $convertedEvent = $this->propertyMapper->convert($eventTransport->getEvent(), 'array');
             $serializedPayload = json_encode($convertedEvent, JSON_PRETTY_PRINT);
             $convertedMetadata = $this->propertyMapper->convert($eventTransport->getMetadata(), 'array');
             $serializedMetadata = json_encode($convertedMetadata, JSON_PRETTY_PRINT);
-            $query->setParameter('version', $version);
 
             $query->setParameter('type', TypeHandling::getTypeForValue($eventTransport->getEvent()));
             $query->setParameter('payload', $serializedPayload);
             $query->setParameter('metadata', $serializedMetadata);
 
             $query->execute();
-            $version++;
         }, $stream->getData());
 
         if ($callback !== null) {
