@@ -13,6 +13,7 @@ namespace Neos\Cqrs\EventStore\Storage\Doctrine;
 
 use Doctrine\DBAL\Query\QueryBuilder;
 use Neos\Cqrs\Event\EventTransport;
+use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventStore\EventStreamData;
 use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
@@ -22,7 +23,6 @@ use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Property\PropertyMapper;
 use TYPO3\Flow\Property\PropertyMappingConfiguration;
 use TYPO3\Flow\Utility\Now;
-use TYPO3\Flow\Utility\TypeHandling;
 
 /**
  * Database event storage, for testing purpose
@@ -40,6 +40,12 @@ class DoctrineEventStorage implements EventStorageInterface
      * @Flow\Inject
      */
     protected $propertyMapper;
+
+    /**
+     * @Flow\Inject
+     * @var EventTypeResolver
+     */
+    protected $eventTypeResolver;
 
     /**
      * @Flow\Inject
@@ -132,7 +138,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $convertedMetadata = $this->propertyMapper->convert($eventTransport->getMetadata(), 'array');
             $serializedMetadata = json_encode($convertedMetadata, JSON_PRETTY_PRINT);
 
-            $query->setParameter('type', TypeHandling::getTypeForValue($eventTransport->getEvent()));
+            $query->setParameter('type', $this->eventTypeResolver->getEventType($eventTransport->getEvent()));
             $query->setParameter('payload', $serializedPayload);
             $query->setParameter('metadata', $serializedMetadata);
 
@@ -186,8 +192,9 @@ class DoctrineEventStorage implements EventStorageInterface
         foreach ($query->execute()->fetchAll() as $stream) {
             $unserializedEvent = json_decode($stream['payload'], true);
             $unserializedMetadata = json_decode($stream['metadata'], true);
+            $eventClassName = $this->eventTypeResolver->getEventClassNameByType($stream['type']);
             $data[] = new EventTransport(
-                $this->propertyMapper->convert($unserializedEvent, $stream['type'], $configuration),
+                $this->propertyMapper->convert($unserializedEvent, $eventClassName, $configuration),
                 $this->propertyMapper->convert($unserializedMetadata, MessageMetadata::class, $configuration)
             );
         }
