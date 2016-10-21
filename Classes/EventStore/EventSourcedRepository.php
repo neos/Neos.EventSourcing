@@ -39,6 +39,12 @@ abstract class EventSourcedRepository implements RepositoryInterface
     protected $eventBus;
 
     /**
+     * @Flow\Inject
+     * @var StreamNameResolver
+     */
+    protected $streamNameResolver;
+
+    /**
      * @var string
      */
     protected $aggregateClassName;
@@ -58,9 +64,9 @@ abstract class EventSourcedRepository implements RepositoryInterface
      */
     public function findByIdentifier($identifier)
     {
+        $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
         try {
-            /** @var EventStream $eventStream */
-            $eventStream = $this->eventStore->get($this->generateStreamName($identifier));
+            $eventStream = $this->eventStore->get($streamName);
         } catch (EventStreamNotFoundException $e) {
             return null;
         }
@@ -83,8 +89,9 @@ abstract class EventSourcedRepository implements RepositoryInterface
      */
     public function save(AggregateRootInterface $aggregate)
     {
+        $streamName = $this->streamNameResolver->getStreamNameForAggregate($aggregate);
         try {
-            $stream = $this->eventStore->get($this->generateStreamName($aggregate->getIdentifier()));
+            $stream = $this->eventStore->get($streamName);
         } catch (EventStreamNotFoundException $e) {
             $stream = new EventStream();
         }
@@ -92,7 +99,7 @@ abstract class EventSourcedRepository implements RepositoryInterface
         $uncommittedEvents = $aggregate->pullUncommittedEvents();
         $stream->addEvents(...$uncommittedEvents);
 
-        $this->eventStore->commit($this->generateStreamName($aggregate->getIdentifier()), $stream, function ($version) use ($uncommittedEvents) {
+        $this->eventStore->commit($streamName, $stream, function ($version) use ($uncommittedEvents) {
             /** @var EventTransport $eventTransport */
             foreach ($uncommittedEvents as $eventTransport) {
                 // @todo metadata enrichment must be done in external service, with some middleware support
@@ -100,16 +107,5 @@ abstract class EventSourcedRepository implements RepositoryInterface
                 $this->eventBus->handle($eventTransport->withMetadata($versionedMetadata));
             }
         });
-    }
-
-    /**
-     * @param string $identifier
-     * @return string
-     * @todo find a more flexible way to generate stream name, need to be discussed
-     */
-    protected function generateStreamName(string $identifier)
-    {
-        $streamName = $this->aggregateClassName . '::' . $identifier;
-        return $streamName;
     }
 }
