@@ -22,7 +22,7 @@ use TYPO3\Flow\Utility\TypeHandling;
  *
  * @Flow\Scope("singleton")
  */
-class EventStreamResolver
+class StreamNameResolver
 {
     /**
      * @var PackageManagerInterface

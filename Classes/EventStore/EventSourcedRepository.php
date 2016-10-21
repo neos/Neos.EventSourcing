@@ -40,9 +40,9 @@ abstract class EventSourcedRepository implements RepositoryInterface
 
     /**
      * @Flow\Inject
-     * @var EventStreamResolver
+     * @var StreamNameResolver
      */
-    protected $eventStreamResolver;
+    protected $streamNameResolver;
 
     /**
      * @var string
@@ -64,7 +64,7 @@ abstract class EventSourcedRepository implements RepositoryInterface
      */
     public function findByIdentifier($identifier)
     {
-        $streamName = $this->eventStreamResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
+        $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
         try {
             $eventStream = $this->eventStore->get($streamName);
         } catch (EventStreamNotFoundException $e) {
@@ -89,7 +89,7 @@ abstract class EventSourcedRepository implements RepositoryInterface
      */
     public function save(AggregateRootInterface $aggregate)
     {
-        $streamName = $this->eventStreamResolver->getStreamNameForAggregate($aggregate);
+        $streamName = $this->streamNameResolver->getStreamNameForAggregate($aggregate);
         try {
             $stream = $this->eventStore->get($streamName);
         } catch (EventStreamNotFoundException $e) {
