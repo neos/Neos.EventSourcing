@@ -18,19 +18,12 @@ use Neos\Cqrs\Event\EventInterface;
  */
 interface AggregateRootInterface
 {
-    /**
-     * @return string
-     */
     public function getIdentifier(): string;
 
-    /**
-     * @param EventInterface $event
-     * @param array $metadata
-     */
-    public function recordThat(EventInterface $event, array $metadata = []);
+    public function recordThat(EventInterface $event);
 
     /**
-     * @return array
+     * @return EventInterface[]
      */
     public function pullUncommittedEvents(): array;
 }

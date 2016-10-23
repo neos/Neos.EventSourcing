@@ -11,39 +11,37 @@ namespace Neos\Cqrs\TypeConverter;
  * source code.
  */
 
-use Neos\Cqrs\Domain\Timestamp;
-use Neos\Cqrs\Message\MessageMetadata;
+use Neos\Cqrs\Event\EventMetadata;
+use TYPO3\Flow\Error\Error;
 use TYPO3\Flow\Property\PropertyMappingConfigurationInterface;
 use TYPO3\Flow\Utility\TypeHandling;
 
 /**
- * Simple TypeConverter that can turn instances of MessageMetadata to an array that contains all properties recursively
+ * Simple TypeConverter that can turn instances of EventMetadata to an array that contains all properties recursively
  */
 class MetadataToArrayConverter extends EventToArrayConverter
 {
-
     /**
      * @var array<string>
      */
-    protected $sourceTypes = [MessageMetadata::class];
+    protected $sourceTypes = [EventMetadata::class];
 
     /**
-     * @param mixed $source
+     * @param EventMetadata $source
      * @param string $targetType
      * @param array $convertedChildProperties
      * @param PropertyMappingConfigurationInterface $configuration
-     * @return array|\TYPO3\Flow\Error\Error
+     * @return array|Error
      */
     public function convertFrom($source, $targetType, array $convertedChildProperties = [], PropertyMappingConfigurationInterface $configuration = null)
     {
-        if (!$source instanceof MessageMetadata) {
-            throw new \InvalidArgumentException('This converter only supports MessageMetadata sources', 1475843240);
+        if (!$source instanceof EventMetadata) {
+            throw new \InvalidArgumentException('This converter only supports EventMetadata sources', 1475843240);
         }
-        $result = [];
-        $result['timestamp'] = $source->getTimestamp()->format(Timestamp::OUTPUT_FORMAT);
+        $convertedProperties = [];
         foreach ($source->getProperties() as $propertyName => $propertyValue) {
-            $result[$propertyName] = TypeHandling::isSimpleType(gettype($propertyValue)) ? $propertyValue : $this->convertObject($propertyValue);
+            $convertedProperties[$propertyName] = TypeHandling::isSimpleType(gettype($propertyValue)) ? $propertyValue : $this->convertObject($propertyValue);
         }
-        return $result;
+        return ['properties' => $convertedProperties];
     }
 }

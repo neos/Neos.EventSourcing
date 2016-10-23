@@ -18,8 +18,6 @@ use TYPO3\Flow\Log\SystemLoggerInterface;
 use TYPO3\Flow\Utility\TypeHandling;
 
 /**
- * EventBus
- *
  * @Flow\Scope("singleton")
  */
 class EventBus
@@ -37,10 +35,10 @@ class EventBus
     protected $logger;
 
     /**
-     * @param EventTransport $transport
+     * @param EventWithMetadata $transport
      * @throws \Exception
      */
-    public function handle(EventTransport $transport)
+    public function handle(EventWithMetadata $transport)
     {
         $listeners = $this->locator->getListeners($transport->getEvent());
         /** @var \callable $listener */

@@ -11,17 +11,17 @@ namespace Neos\Cqrs\EventStore\Storage\Doctrine;
  * source code.
  */
 
-use Doctrine\DBAL\Query\QueryBuilder;
-use Neos\Cqrs\Event\EventTransport;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Types\Type;
 use Neos\Cqrs\Event\EventTypeResolver;
-use Neos\Cqrs\EventStore\EventStreamData;
+use Neos\Cqrs\EventStore\EventStream;
 use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
+use Neos\Cqrs\EventStore\ExpectedVersion;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
-use Neos\Cqrs\Message\MessageMetadata;
+use Neos\Cqrs\EventStore\WritableToStreamInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Property\PropertyMapper;
-use TYPO3\Flow\Property\PropertyMappingConfiguration;
 use TYPO3\Flow\Utility\Now;
 
 /**
@@ -54,23 +54,18 @@ class DoctrineEventStorage implements EventStorageInterface
     protected $now;
 
     /**
-     * @var array
+     * @var Connection
      */
-    protected $runtimeCache = [];
+    private $connection;
 
-    /**
-     * @param string $streamName
-     * @return EventStreamData
-     */
-    public function load(string $streamName)
+    protected function initializeObject()
     {
-        $version = $this->getCurrentVersion($streamName);
-        $cacheKey = md5($streamName . '.' . $version);
-        if (isset($this->runtimeCache[$cacheKey])) {
-            return $this->runtimeCache[$cacheKey];
-        }
-        $conn = $this->connectionFactory->get();
-        $queryBuilder = $conn->createQueryBuilder();
+        $this->connection = $this->connectionFactory->get();
+    }
+
+    public function load(string $streamName): EventStream
+    {
+        $queryBuilder = $this->connection->createQueryBuilder();
         $query = $queryBuilder
             ->select('*')
             ->from($this->connectionFactory->getStreamTableName())
@@ -79,125 +74,72 @@ class DoctrineEventStorage implements EventStorageInterface
             ->addOrderBy('version', 'ASC')
             ->setParameter('stream', $streamName, \PDO::PARAM_STR);
 
-        $data = $this->unserializeEvents($query);
-
-        if ($data === []) {
-            return null;
-        }
-
-        $cacheKey = md5($streamName . '.' . $version);
-        $this->runtimeCache[$cacheKey] = new EventStreamData($data, $version);
-
-        return $this->runtimeCache[$cacheKey];
+        $streamIterator = new DoctrineStreamIterator($query->execute());
+        return new EventStream($streamIterator, $this->getStreamVersion($streamName));
     }
 
     /**
      * @param string $streamName
-     * @param array $data
-     * @param int $commitVersion
-     * @param \Closure $callback
-     * @return int
+     * @param WritableToStreamInterface $events
+     * @param int $expectedVersion
+     * @return void
      * @throws ConcurrencyException|\Exception
      */
-    public function commit(string $streamName, array $data, int $commitVersion, \Closure $callback = null)
+    public function commit(string $streamName, WritableToStreamInterface $events, int $expectedVersion = ExpectedVersion::ANY)
     {
-        $stream = new EventStreamData($data, $commitVersion);
-        $connection = $this->connectionFactory->get();
-        if ($callback !== null) {
-            $connection->beginTransaction();
-        }
+        $this->connection->beginTransaction();
+        $actualVersion = $this->getStreamVersion($streamName);
+        $this->verifyExpectedVersion($actualVersion, $expectedVersion);
 
-        $queryBuilder = $connection->createQueryBuilder();
-
-        $query = $queryBuilder
-            ->insert($this->connectionFactory->getStreamTableName())
-            ->values([
-                'stream' => ':stream',
-                'version' => ':version',
-                'type' => ':type',
-                'payload' => ':payload',
-                'metadata' => ':metadata',
-                'recordedat' => ':recordedat'
-            ])
-            ->setParameters([
-                'stream' => $streamName,
-                'version' => $commitVersion,
-                'recordedat' => $this->now->format(DATE_ISO8601)
-            ], [
-                'stream' => \PDO::PARAM_STR,
-                'version' => \PDO::PARAM_INT,
-                'type' => \PDO::PARAM_STR,
-                'event' => \PDO::PARAM_STR,
-                'metadata' => \PDO::PARAM_STR,
-                'recordedat' => \PDO::PARAM_STR,
-            ]);
-
-        array_map(function (EventTransport $eventTransport) use ($query) {
-            $convertedEvent = $this->propertyMapper->convert($eventTransport->getEvent(), 'array');
-            $serializedPayload = json_encode($convertedEvent, JSON_PRETTY_PRINT);
-            $convertedMetadata = $this->propertyMapper->convert($eventTransport->getMetadata(), 'array');
-            $serializedMetadata = json_encode($convertedMetadata, JSON_PRETTY_PRINT);
-
-            $query->setParameter('type', $this->eventTypeResolver->getEventType($eventTransport->getEvent()));
-            $query->setParameter('payload', $serializedPayload);
-            $query->setParameter('metadata', $serializedMetadata);
-
-            $query->execute();
-        }, $stream->getData());
-
-        if ($callback !== null) {
-            try {
-                $callback($commitVersion);
-                $connection->commit();
-            } catch (\Exception $exception) {
-                $connection->rollBack();
-                throw $exception;
-            }
-        }
-
-        return $commitVersion;
-    }
-
-    /**
-     * @param  string $streamName
-     * @return integer Current Aggregate Root version
-     */
-    public function getCurrentVersion(string $streamName): int
-    {
-        $conn = $this->connectionFactory->get();
-        $queryBuilder = $conn->createQueryBuilder();
-        $query = $queryBuilder
-            ->select('version')
-            ->from($this->connectionFactory->getStreamTableName())
-            ->andWhere('stream = :stream')
-            ->orderBy('version', 'DESC')
-            ->setMaxResults(1)
-            ->setParameter('stream', $streamName);
-
-        $version = (integer)$query->execute()->fetchColumn();
-        return $version ?: 0;
-    }
-
-    /**
-     * @param QueryBuilder $query
-     * @return array
-     */
-    protected function unserializeEvents(QueryBuilder $query): array
-    {
-        $configuration = new PropertyMappingConfiguration();
-        $configuration->allowAllProperties();
-        $configuration->forProperty('*')->allowAllProperties();
-
-        $data = [];
-        foreach ($query->execute()->fetchAll() as $stream) {
-            $unserializedEvent = json_decode($stream['payload'], true);
-            $unserializedMetadata = json_decode($stream['metadata'], true);
-            $eventClassName = $this->eventTypeResolver->getEventClassNameByType($stream['type']);
-            $data[] = new EventTransport(
-                $this->propertyMapper->convert($unserializedEvent, $eventClassName, $configuration),
-                $this->propertyMapper->convert($unserializedMetadata, MessageMetadata::class, $configuration)
+        foreach ($events->toStreamData() as $eventData) {
+            $this->connection->insert(
+                $this->connectionFactory->getStreamTableName(),
+                [
+                    'stream' => $streamName,
+                    'version' => ++$actualVersion,
+                    'type' => $eventData['type'],
+                    'payload' => json_encode($eventData['data'], JSON_PRETTY_PRINT),
+                    'metadata' => json_encode($eventData['metadata'], JSON_PRETTY_PRINT),
+                    'recordedat' => $this->now
+                ],
+                [
+                    'version' => \PDO::PARAM_INT,
+                    'recordedat' => Type::DATETIME,
+                ]
             );
         }
-        return $data;
+        $this->connection->commit();
+    }
+
+    /**
+     * @param string $streamName
+     * @return int
+     */
+    private function getStreamVersion(string $streamName): int
+    {
+        $version = $this->connection->fetchColumn('SELECT MAX(version) FROM ' . $this->connectionFactory->getStreamTableName() . ' WHERE stream = ?', [$streamName]);
+        return $version !== null ? (int)$version : -1;
+    }
+
+    private function verifyExpectedVersion(int $actualVersion, int $expectedVersion)
+    {
+        if ($expectedVersion === ExpectedVersion::ANY) {
+            return;
+        }
+        if ($expectedVersion === $actualVersion ) {
+            return;
+        }
+        throw new ConcurrencyException(sprintf('Expected version: %s, actual version: %s', $this->renderExpectedVersion($expectedVersion), $this->renderExpectedVersion($actualVersion)), 1477143473);
+    }
+
+    private function renderExpectedVersion(int $expectedVersion)
+    {
+        if ($expectedVersion === ExpectedVersion::ANY) {
+            return 'ANY (-2)';
+        }
+        if ($expectedVersion === ExpectedVersion::NO_STREAM) {
+            return 'NO STREAM (-1)';
+        }
+        return (string)$expectedVersion;
     }
 }

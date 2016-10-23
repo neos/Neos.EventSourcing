@@ -11,12 +11,11 @@ namespace Neos\Cqrs\Event;
  * source code.
  */
 
-use TYPO3\Flow\Annotations as Flow;
-
 /**
- * Metadata
+ * Metadata constants
  */
 class Metadata
 {
-    const VERSION = 'neos.cqrs.event:version';
+    const VERSION = 'neos.cqrs:version';
+    const TIMESTAMP = 'neos.cqrs:timestamp';
 }

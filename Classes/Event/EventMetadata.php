@@ -1,5 +1,5 @@
 <?php
-namespace Neos\Cqrs\Message;
+namespace Neos\Cqrs\Event;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,46 +11,25 @@ namespace Neos\Cqrs\Message;
  * source code.
  */
 
-use Neos\Cqrs\Domain\Timestamp;
-use TYPO3\Flow\Annotations as Flow;
-
 /**
- * The MessageMetadata is a container for arbitrary metadata for Commands and Events.
+ * The EventMetadata is a container for arbitrary metadata for Events.
  * This class is immutable.
  *
  * @api
  */
-class MessageMetadata
+class EventMetadata
 {
-    /**
-     * @var \DateTimeImmutable
-     */
-    protected $timestamp;
-
     /**
      * @var array
      */
-    protected $properties = [];
+    private $properties = [];
 
     /**
-     * @param array $properties An associative array of properties that this MessageMetadata contains.
-     * @param \DateTimeImmutable $timestamp Optional. The timestamp when the Message was created. Defaults to the current timestamp.
+     * @param array $properties An associative array of properties that this EventMetadata contains.
      */
-    public function __construct(array $properties = [], \DateTimeImmutable $timestamp = null)
+    public function __construct(array $properties)
     {
         $this->properties = $properties;
-        $this->timestamp = $timestamp ?: Timestamp::create();
-    }
-
-    /**
-     * The timestamp when the message was created.
-     *
-     * @return \DateTimeImmutable
-     * @api
-     */
-    public function getTimestamp(): \DateTimeImmutable
-    {
-        return $this->timestamp;
     }
 
     /**
@@ -77,47 +56,47 @@ class MessageMetadata
     }
 
     /**
-     * Return a new instance of the MessageMetadata with the property set to the value.
+     * Return a new instance of the EventMetadata with the property set to the value.
      * Any existing property with that name will be overwritten.
      *
      * @param string $name The property name to set.
      * @param mixed $value The value to set the property to.
-     * @return MessageMetadata
+     * @return EventMetadata
      * @api
      */
-    public function withProperty(string $name, $value): MessageMetadata
+    public function withProperty(string $name, $value): EventMetadata
     {
-        return new static(array_merge($this->properties, [$name => $value]), $this->timestamp);
+        return new static(array_merge($this->properties, [$name => $value]));
     }
 
     /**
-     * Return a new instance of this MessageMetadata with the given properties.
+     * Return a new instance of this EventMetadata with the given properties.
      * All existing properties will be fully replaced.
      *
      * @param array $properties An associative array of properties to set.
-     * @return MessageMetadata
+     * @return EventMetadata
      * @api
      */
-    public function withProperties(array $properties): MessageMetadata
+    public function withProperties(array $properties): EventMetadata
     {
-        return new static($properties, $this->timestamp);
+        return new static($properties);
     }
 
     /**
-     * Return a new instance of this MessageMetadata with the given properties merged.
+     * Return a new instance of this EventMetadata with the given properties merged.
      * Any existing properties will be overwritten, other properties will stay untouched.
      *
      * @param array $properties An associative array of properties to merge.
-     * @return MessageMetadata
+     * @return EventMetadata
      * @api
      */
-    public function andProperties(array $properties): MessageMetadata
+    public function andProperties(array $properties): EventMetadata
     {
-        return new static(array_merge($this->properties, $properties), $this->timestamp);
+        return new static(array_merge($this->properties, $properties));
     }
 
     /**
-     * Check if this MessageMetadata contains the given property.
+     * Check if this EventMetadata contains the given property.
      *
      * @param string $name The property name to check for existence.
      * @return boolean True if the property exists and is not null, false otherwise.

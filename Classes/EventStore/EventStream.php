@@ -11,24 +11,34 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\Event\EventTransport;
+use Neos\Cqrs\Event\EventMetadata;
+use Neos\Cqrs\Event\EventWithMetadata;
+use Neos\Cqrs\Event\EventTypeResolver;
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Property\PropertyMapper;
+use TYPO3\Flow\Property\PropertyMappingConfiguration;
 
 /**
  * EventStream
  */
-class EventStream implements \IteratorAggregate
+final class EventStream implements \Iterator
 {
     /**
-     * @var EventInterface[] All AR events
+     * @Flow\Inject
+     * @var EventTypeResolver
      */
-    protected $events = [];
+    protected $eventTypeResolver;
 
     /**
-     * @var array New AR events, since AR reconstituted from stream
+     * @Flow\Inject
+     * @var PropertyMapper
      */
-    protected $new = [];
+    protected $propertyMapper;
+
+    /**
+     * @var \Iterator
+     */
+    private $streamIterator;
 
     /**
      * @var integer
@@ -36,29 +46,13 @@ class EventStream implements \IteratorAggregate
     protected $version;
 
     /**
-     * @param EventInterface[] $events
+     * @param \Iterator $streamIterator
      * @param integer $version
      */
-    public function __construct(array $events = [], int $version = 0)
+    public function __construct(\Iterator $streamIterator, int $version = -1)
     {
-        $this->events = $events;
+        $this->streamIterator = $streamIterator;
         $this->version = $version;
-    }
-
-    /**
-     * @return array
-     */
-    public function getEvents()
-    {
-        return $this->events;
-    }
-
-    /**
-     * @return EventInterface[]
-     */
-    public function getNewEvents()
-    {
-        return $this->new;
     }
 
     /**
@@ -70,41 +64,40 @@ class EventStream implements \IteratorAggregate
     }
 
     /**
-     * @param EventTransport $event
+     * @return EventWithMetadata
      */
-    public function addEvent(EventTransport $event)
+    public function current()
     {
-        $this->events[] = $event;
-        $this->new[] = $event;
+        $configuration = new PropertyMappingConfiguration();
+        $configuration->allowAllProperties();
+        $configuration->forProperty('*')->allowAllProperties();
+
+        /** @var EventFromStream $eventFromStream */
+        $eventFromStream = $this->streamIterator->current();
+        $eventClassName = $this->eventTypeResolver->getEventClassNameByType($eventFromStream->getType());
+        return new EventWithMetadata(
+            $this->propertyMapper->convert($eventFromStream->getPayload(), $eventClassName, $configuration),
+            $this->propertyMapper->convert($eventFromStream->getMetadata(), EventMetadata::class, $configuration)
+        );
     }
 
-    /**
-     * @param EventTransport[] $events
-     */
-    public function addEvents(...$events)
+    public function next()
     {
-        foreach ($events as $event) {
-            $this->addEvent($event);
-        }
+        $this->streamIterator->next();
     }
 
-    /**
-     * @param integer|null $version
-     */
-    public function markAllApplied($version = null)
+    public function key()
     {
-        $this->version = $version;
-        $this->new = [];
+        return $this->streamIterator->key();
     }
 
-    /**
-     * Retrieve an external iterator
-     * @return \Generator
-     */
-    public function getIterator()
+    public function valid()
     {
-        foreach ($this->events as $event) {
-            yield $event;
-        }
+        return $this->streamIterator->valid();
+    }
+
+    public function rewind()
+    {
+        $this->streamIterator->rewind();
     }
 }

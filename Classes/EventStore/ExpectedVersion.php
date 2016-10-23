@@ -1,5 +1,5 @@
 <?php
-namespace Neos\Cqrs\Domain;
+namespace Neos\Cqrs\EventStore;
 
 /*
  * This file is part of the Neos.EventStore package.
@@ -11,14 +11,10 @@ namespace Neos\Cqrs\Domain;
  * source code.
  */
 
-use Neos\Cqrs\EventStore\EventStream;
-
-/**
- * AggregateRootInterface
- */
-interface EventSourcedAggregateRootInterface extends AggregateRootInterface
+final class ExpectedVersion
 {
-    public function getVersion(): int;
+    const ANY          = -2;
+    const NO_STREAM    = -1;
 
-    public function reconstituteFromEventStream(EventStream $stream);
+    private function __construct() {}
 }
