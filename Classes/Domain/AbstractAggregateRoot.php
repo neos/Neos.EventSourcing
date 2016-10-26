@@ -89,14 +89,6 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
     }
 
     /**
-     * @return array
-     */
-    final protected function getEvents(): array
-    {
-        return $this->events;
-    }
-
-    /**
      * Apply the given event to this aggregate root.
      *
      * @param  EventInterface $event
