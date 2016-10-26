@@ -74,13 +74,10 @@ abstract class EventSourcedRepository implements RepositoryInterface
         if (!class_exists($this->aggregateClassName)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root %s because its class '%s' does not exist.", $identifier, $this->aggregateClassName), 1474454928115);
         }
-
-        $aggregateRoot = unserialize('O:' . strlen($this->aggregateClassName) . ':"' . $this->aggregateClassName . '":1:{s:13:"' . chr(0) . '*' . chr(0) . 'identifier";s:36:"' . $identifier . '";}');
-        if (!$aggregateRoot instanceof EventSourcedAggregateRootInterface) {
+        if (!is_subclass_of($this->aggregateClassName, EventSourcedAggregateRootInterface::class)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root '%s' with id '%s' because it does not implement the EventSourcedAggregateRootInterface.", $this->aggregateClassName, $identifier, $this->aggregateClassName), 1474464335530);
         }
-        $aggregateRoot->reconstituteFromEventStream($eventStream);
-        return $aggregateRoot;
+        return call_user_func($this->aggregateClassName . '::reconstituteFromEventStream', $identifier, $eventStream);
     }
 
     /**

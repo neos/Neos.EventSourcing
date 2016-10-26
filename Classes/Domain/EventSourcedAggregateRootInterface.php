@@ -19,8 +19,9 @@ use Neos\Cqrs\EventStore\EventStream;
 interface EventSourcedAggregateRootInterface extends AggregateRootInterface
 {
     /**
+     * @param string $identifier
      * @param EventStream $stream
-     * @return void
+     * @return self
      */
-    public function reconstituteFromEventStream(EventStream $stream);
+    public static function reconstituteFromEventStream(string $identifier, EventStream $stream);
 }
