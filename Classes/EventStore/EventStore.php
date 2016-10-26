@@ -11,6 +11,7 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
+use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -31,7 +32,11 @@ class EventStore
 
     public function get(string $streamName): EventStream
     {
-        return $this->storage->load($streamName);
+        $eventStream = $this->storage->load($streamName);
+        if (!$eventStream->valid()) {
+            throw new EventStreamNotFoundException(sprintf('The event stream "%s" does not exist/is empty', $streamName), 1477497156);
+        }
+        return $eventStream;
     }
 
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)

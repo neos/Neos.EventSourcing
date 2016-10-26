@@ -18,6 +18,7 @@ use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventMetadata;
 use Neos\Cqrs\Event\EventPublisher;
 use Neos\Cqrs\Event\EventWithMetadata;
+use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -63,14 +64,19 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
      */
     final public function findByIdentifier($identifier)
     {
+        $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
+        try {
+            $eventStream = $this->eventStore->get($streamName);
+        } catch (EventStreamNotFoundException $exception) {
+            return null;
+        }
         if (!class_exists($this->aggregateClassName)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root %s because its class '%s' does not exist.", $identifier, $this->aggregateClassName), 1474454928115);
         }
         if (!is_subclass_of($this->aggregateClassName, EventSourcedAggregateRootInterface::class)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root '%s' with id '%s' because it does not implement the EventSourcedAggregateRootInterface.", $this->aggregateClassName, $identifier, $this->aggregateClassName), 1474464335530);
         }
-        $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
-        $eventStream = $this->eventStore->get($streamName);
+
         return call_user_func($this->aggregateClassName . '::reconstituteFromEventStream', $identifier, $eventStream);
     }
 
