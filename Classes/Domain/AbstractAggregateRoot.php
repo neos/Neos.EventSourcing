@@ -14,7 +14,6 @@ namespace Neos\Cqrs\Domain;
 use Neos\Cqrs\Event\AggregateEventInterface;
 use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventTransport;
-use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -23,11 +22,6 @@ use TYPO3\Flow\Annotations as Flow;
  */
 abstract class AbstractAggregateRoot implements AggregateRootInterface
 {
-    /**
-     * @var EventTypeResolver
-     * @Flow\Inject
-     */
-    protected $eventTypeService;
 
     /**
      * @var string
@@ -102,9 +96,9 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      */
     final protected function apply(EventInterface $event)
     {
-        $method = sprintf('when%s', $this->eventTypeService->getEventShortType($event));
-        if (method_exists($this, $method)) {
-            $this->$method($event);
+        $methodName = sprintf('when%s', (new \ReflectionClass($event))->getShortName());
+        if (method_exists($this, $methodName)) {
+            $this->$methodName($event);
         }
     }
 }
