@@ -85,10 +85,10 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
     }
 
     /**
-     * @param  AggregateRootInterface $aggregate
+     * @param EventSourcedAggregateRootInterface $aggregate
      * @return void
      */
-    final public function save(AggregateRootInterface $aggregate)
+    final public function save(EventSourcedAggregateRootInterface $aggregate)
     {
         $streamName = $this->streamNameResolver->getStreamNameForAggregate($aggregate);
         try {
