@@ -11,7 +11,7 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-final class EventFromStream
+final class StoredEvent
 {
     /**
      * @var string

@@ -14,7 +14,7 @@ namespace Neos\Cqrs\Event;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\ExpectedVersion;
 use Neos\Cqrs\EventStore\WritableEvent;
-use Neos\Cqrs\EventStore\WritableEventCollection;
+use Neos\Cqrs\EventStore\WritableEvents;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Property\PropertyMapper;
 
@@ -75,14 +75,14 @@ class EventPublisher
      */
     public function publishMany(string $streamName, array $eventsWithMetadata, int $expectedVersion = ExpectedVersion::ANY)
     {
-        $convertedEvents = [];
+        $convertedEvents = new WritableEvents();
         foreach ($eventsWithMetadata as $eventWithMetadata) {
             $type = $this->eventTypeResolver->getEventType($eventWithMetadata->getEvent());
             $data = $this->propertyMapper->convert($eventWithMetadata->getEvent(), 'array');
             $metadata = $this->propertyMapper->convert($eventWithMetadata->getMetadata(), 'array');
-            $convertedEvents[] = new WritableEvent($type, $data, $metadata);
+            $convertedEvents->append(new WritableEvent($type, $data, $metadata));
         }
-        $this->eventStore->commit($streamName, new WritableEventCollection($convertedEvents), $expectedVersion);
+        $this->eventStore->commit($streamName, $convertedEvents, $expectedVersion);
         foreach ($eventsWithMetadata as $eventWithMetadata) {
             $this->eventBus->handle($eventWithMetadata);
         }

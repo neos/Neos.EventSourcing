@@ -11,8 +11,6 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
-use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -36,7 +34,7 @@ class EventStore
         return $this->storage->load($streamName);
     }
 
-    public function commit(string $streamName, WritableToStreamInterface $events, int $expectedVersion = ExpectedVersion::ANY)
+    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)
     {
         $this->storage->commit($streamName, $events, $expectedVersion);
     }

@@ -19,6 +19,9 @@ namespace Neos\Cqrs\Event;
  */
 class EventMetadata
 {
+    const VERSION = 'neos.cqrs:version';
+    const TIMESTAMP = 'neos.cqrs:timestamp';
+
     /**
      * @var array
      */

@@ -14,11 +14,18 @@ namespace Neos\Cqrs\Domain;
 use Neos\Cqrs\EventStore\EventStream;
 
 /**
- * AggregateRootInterface
+ * Contract for event-sourced aggregate roots
  */
 interface EventSourcedAggregateRootInterface extends AggregateRootInterface
 {
-    public function getVersion(): int;
+
+    /**
+     * The version of the event stream at time of reconstitution
+     * This is used to avoid race conditions
+     *
+     * @return int
+     */
+    public function getReconstitutionVersion(): int;
 
     /**
      * @param string $identifier

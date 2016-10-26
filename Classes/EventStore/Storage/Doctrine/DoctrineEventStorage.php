@@ -19,7 +19,7 @@ use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
 use Neos\Cqrs\EventStore\ExpectedVersion;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
-use Neos\Cqrs\EventStore\WritableToStreamInterface;
+use Neos\Cqrs\EventStore\WritableEvents;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Property\PropertyMapper;
 use TYPO3\Flow\Utility\Now;
@@ -80,26 +80,26 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @param string $streamName
-     * @param WritableToStreamInterface $events
+     * @param WritableEvents $events
      * @param int $expectedVersion
      * @return void
      * @throws ConcurrencyException|\Exception
      */
-    public function commit(string $streamName, WritableToStreamInterface $events, int $expectedVersion = ExpectedVersion::ANY)
+    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)
     {
         $this->connection->beginTransaction();
         $actualVersion = $this->getStreamVersion($streamName);
         $this->verifyExpectedVersion($actualVersion, $expectedVersion);
 
-        foreach ($events->toStreamData() as $eventData) {
+        foreach ($events as $event) {
             $this->connection->insert(
                 $this->connectionFactory->getStreamTableName(),
                 [
                     'stream' => $streamName,
                     'version' => ++$actualVersion,
-                    'type' => $eventData['type'],
-                    'payload' => json_encode($eventData['data'], JSON_PRETTY_PRINT),
-                    'metadata' => json_encode($eventData['metadata'], JSON_PRETTY_PRINT),
+                    'type' => $event->getType(),
+                    'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
+                    'metadata' => json_encode($event->getMetadata(), JSON_PRETTY_PRINT),
                     'recordedat' => $this->now
                 ],
                 [

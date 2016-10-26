@@ -72,12 +72,12 @@ final class EventStream implements \Iterator
         $configuration->allowAllProperties();
         $configuration->forProperty('*')->allowAllProperties();
 
-        /** @var EventFromStream $eventFromStream */
-        $eventFromStream = $this->streamIterator->current();
-        $eventClassName = $this->eventTypeResolver->getEventClassNameByType($eventFromStream->getType());
+        /** @var StoredEvent $storedEvent */
+        $storedEvent = $this->streamIterator->current();
+        $eventClassName = $this->eventTypeResolver->getEventClassNameByType($storedEvent->getType());
         return new EventWithMetadata(
-            $this->propertyMapper->convert($eventFromStream->getPayload(), $eventClassName, $configuration),
-            $this->propertyMapper->convert($eventFromStream->getMetadata(), EventMetadata::class, $configuration)
+            $this->propertyMapper->convert($storedEvent->getPayload(), $eventClassName, $configuration),
+            $this->propertyMapper->convert($storedEvent->getMetadata(), EventMetadata::class, $configuration)
         );
     }
 

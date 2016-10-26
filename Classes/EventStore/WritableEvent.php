@@ -11,7 +11,7 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-final class WritableEvent implements WritableToStreamInterface
+final class WritableEvent
 {
     /**
      * @var string
@@ -36,14 +36,26 @@ final class WritableEvent implements WritableToStreamInterface
     }
 
     /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
      * @return array
      */
-    public function toStreamData()
+    public function getData()
     {
-        return [
-            'type' => $this->type,
-            'data' => $this->data,
-            'metadata' => $this->metadata
-        ];
+        return $this->data;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMetadata()
+    {
+        return $this->metadata;
     }
 }

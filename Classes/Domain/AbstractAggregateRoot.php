@@ -13,8 +13,6 @@ namespace Neos\Cqrs\Domain;
 
 use Neos\Cqrs\Event\AggregateEventInterface;
 use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\Event\EventTransport;
-use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -70,6 +68,8 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      * Returns the events which have been recorded since the last call of this method.
      *
      * This method is used internally by the persistence layer (for example, the Event Store).
+     *
+     * @return EventInterface[]
      */
     final public function pullUncommittedEvents(): array
     {
