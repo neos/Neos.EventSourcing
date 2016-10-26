@@ -22,15 +22,16 @@ use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * EventSourcedRepository
+ * Base implementation for an event-sourced repository
  */
-abstract class EventSourcedRepository implements RepositoryInterface
+abstract class AbstractEventSourcedRepository implements RepositoryInterface
 {
     /**
      * @var EventStore
      * @Flow\Inject
      */
     protected $eventStore;
+
 
     /**
      * @var EventBus
@@ -62,7 +63,7 @@ abstract class EventSourcedRepository implements RepositoryInterface
      * @return AggregateRootInterface
      * @throws AggregateRootNotFoundException
      */
-    public function findByIdentifier($identifier)
+    final public function findByIdentifier($identifier)
     {
         $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
         try {
@@ -84,10 +85,10 @@ abstract class EventSourcedRepository implements RepositoryInterface
     }
 
     /**
-     * @param  EventSourcedAggregateRootInterface $aggregate
+     * @param EventSourcedAggregateRootInterface $aggregate
      * @return void
      */
-    public function save(EventSourcedAggregateRootInterface $aggregate)
+    final public function save(EventSourcedAggregateRootInterface $aggregate)
     {
         $streamName = $this->streamNameResolver->getStreamNameForAggregate($aggregate);
         try {
