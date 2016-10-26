@@ -20,5 +20,10 @@ interface EventSourcedAggregateRootInterface extends AggregateRootInterface
 {
     public function getVersion(): int;
 
-    public function reconstituteFromEventStream(EventStream $stream);
+    /**
+     * @param string $identifier
+     * @param EventStream $stream
+     * @return self
+     */
+    public static function reconstituteFromEventStream(string $identifier, EventStream $stream);
 }

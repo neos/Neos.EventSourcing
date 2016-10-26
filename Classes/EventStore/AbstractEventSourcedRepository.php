@@ -22,6 +22,9 @@ use Neos\Cqrs\Event\EventWithMetadata;
 use Neos\Cqrs\Event\Metadata;
 use TYPO3\Flow\Annotations as Flow;
 
+/**
+ * Base implementation for an event-sourced repository
+ */
 abstract class AbstractEventSourcedRepository implements RepositoryInterface
 {
     /**
@@ -29,6 +32,7 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
      * @var EventStore
      */
     protected $eventStore;
+
 
     /**
      * @Flow\Inject
@@ -65,28 +69,21 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
         if (!class_exists($this->aggregateClassName)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root %s because its class '%s' does not exist.", $identifier, $this->aggregateClassName), 1474454928115);
         }
-
-        $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
-        $eventStream = $this->eventStore->get($streamName);
-
-        $aggregateRoot = unserialize('O:' . strlen($this->aggregateClassName) . ':"' . $this->aggregateClassName . '":2:{s:13:"' . chr(0) . '*' . chr(0) . 'identifier";s:' . strlen($identifier) . ':"' . $identifier . '";s:10:"' . chr(0) . '*' . chr(0) . 'version";i:' . (string)$eventStream->getVersion() . ';}');
-        if (!$aggregateRoot instanceof EventSourcedAggregateRootInterface) {
+        if (!is_subclass_of($this->aggregateClassName, EventSourcedAggregateRootInterface::class)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root '%s' with id '%s' because it does not implement the EventSourcedAggregateRootInterface.", $this->aggregateClassName, $identifier, $this->aggregateClassName), 1474464335530);
         }
-        $aggregateRoot->reconstituteFromEventStream($eventStream);
-        return $aggregateRoot;
+        $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
+        $eventStream = $this->eventStore->get($streamName);
+        return call_user_func($this->aggregateClassName . '::reconstituteFromEventStream', $identifier, $eventStream);
     }
 
     /**
-     * @param AggregateRootInterface $aggregate
+     * @param EventSourcedAggregateRootInterface $aggregate
      * @param int $expectedVersion
      * @return void
      */
-    final public function save(AggregateRootInterface $aggregate, int $expectedVersion = null)
+    final public function save(EventSourcedAggregateRootInterface $aggregate, int $expectedVersion = null)
     {
-        if (!$aggregate instanceof EventSourcedAggregateRootInterface) {
-            throw new \InvalidArgumentException(sprintf('This repository can only save instances implementing EventSourcedAggregateRootInterface, given: "%s"', get_class($aggregate)), 1477226552);
-        }
         $streamName = $this->streamNameResolver->getStreamNameForAggregate($aggregate);
         $uncommittedEvents = $aggregate->pullUncommittedEvents();
         $version = $aggregate->getVersion() + 1;

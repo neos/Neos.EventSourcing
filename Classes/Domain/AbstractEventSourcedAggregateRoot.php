@@ -15,16 +15,14 @@ use Neos\Cqrs\EventStore\EventStream;
 use Neos\Cqrs\RuntimeException;
 
 /**
- * AggregateRootTrait
+ * Base implementation for an event-sourced aggregate root
  */
 abstract class AbstractEventSourcedAggregateRoot extends AbstractAggregateRoot implements EventSourcedAggregateRootInterface
 {
     /**
-     * Note: This must not be private so it can be set during reconstitution via unserialize()
-     *
      * @var int
      */
-    protected $version = -1;
+    private $version = -1;
 
     /**
      * @return int
@@ -35,17 +33,17 @@ abstract class AbstractEventSourcedAggregateRoot extends AbstractAggregateRoot i
     }
 
     /**
+     * @param string $identifier
      * @param EventStream $stream
-     * @throws RuntimeException
+     * @return self
      */
-    public function reconstituteFromEventStream(EventStream $stream)
+    public static function reconstituteFromEventStream(string $identifier, EventStream $stream)
     {
-        if ($this->hasUncommittedEvents()) {
-            throw new RuntimeException(sprintf('%s has already been reconstituted from the event stream.', get_class($this)), 1474547708762);
-        }
-
+        $instance = new static($identifier);
+        /** @var EventTransport $eventTransport */
         foreach ($stream as $eventTransport) {
-            $this->apply($eventTransport->getEvent());
+            $instance->apply($eventTransport->getEvent());
         }
+        return $instance;
     }
 }
