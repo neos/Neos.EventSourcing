@@ -90,7 +90,7 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
         $streamName = $this->streamNameResolver->getStreamNameForAggregate($aggregate);
         $uncommittedEvents = $aggregate->pullUncommittedEvents();
         $version = $aggregate->getReconstitutionVersion() + 1;
-        $uncommittedEventsWithMetadata = array_map(function(EventInterface $event) use(&$version) {
+        $uncommittedEventsWithMetadata = array_map(function (EventInterface $event) use (&$version) {
             return new EventWithMetadata($event, new EventMetadata([EventMetadata::VERSION => $version ++]));
         }, $uncommittedEvents);
 

@@ -82,5 +82,4 @@ final class StoredEvent
     {
         return $this->recordedAt;
     }
-
 }

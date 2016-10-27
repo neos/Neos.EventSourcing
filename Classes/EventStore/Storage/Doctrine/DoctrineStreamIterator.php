@@ -38,7 +38,8 @@ final class DoctrineStreamIterator implements \Iterator
     /**
      * @param Statement $statement
      */
-    public function __construct(Statement $statement) {
+    public function __construct(Statement $statement)
+    {
         $this->statement = $statement;
 
         $this->rewind();

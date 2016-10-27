@@ -126,7 +126,7 @@ class DoctrineEventStorage implements EventStorageInterface
         if ($expectedVersion === ExpectedVersion::ANY) {
             return;
         }
-        if ($expectedVersion === $actualVersion ) {
+        if ($expectedVersion === $actualVersion) {
             return;
         }
         throw new ConcurrencyException(sprintf('Expected version: %s, actual version: %s', $this->renderExpectedVersion($expectedVersion), $this->renderExpectedVersion($actualVersion)), 1477143473);
