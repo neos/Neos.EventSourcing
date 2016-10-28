@@ -121,7 +121,7 @@ class EventTypeResolver
      */
     public static function eventTypeMapping(ObjectManagerInterface $objectManager)
     {
-        $buildEventType = function($eventClassName) use ($objectManager) {
+        $buildEventType = function ($eventClassName) use ($objectManager) {
             $packageKey = $objectManager->getPackageKeyByObjectName($eventClassName);
             $shortEventClassName = (new \ReflectionClass($eventClassName))->getShortName();
             return $packageKey . ':' . $shortEventClassName;
