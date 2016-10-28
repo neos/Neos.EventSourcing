@@ -82,5 +82,4 @@ class Projection
     {
         return $this->projectorClassName;
     }
-
 }

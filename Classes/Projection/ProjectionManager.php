@@ -141,7 +141,7 @@ class ProjectionManager
         $matchingIdentifiers = [];
         foreach (array_keys($this->projections) as $fullProjectionIdentifier) {
             if ($this->projectionIdentifiersMatch($projectionIdentifier, $fullProjectionIdentifier)) {
-                $matchingIdentifiers[] = $fullProjectionIdentifier;;
+                $matchingIdentifiers[] = $fullProjectionIdentifier;
             }
         }
         if ($matchingIdentifiers === []) {
@@ -207,5 +207,4 @@ class ProjectionManager
         ksort($projections);
         return $projections;
     }
-
 }

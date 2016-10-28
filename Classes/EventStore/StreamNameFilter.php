@@ -57,5 +57,4 @@ class StreamNameFilter implements EventStreamFilterInterface
     {
         return false;
     }
-
 }

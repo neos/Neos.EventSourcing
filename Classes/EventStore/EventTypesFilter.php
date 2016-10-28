@@ -57,5 +57,4 @@ class EventTypesFilter implements EventStreamFilterInterface
     {
         return true;
     }
-
 }

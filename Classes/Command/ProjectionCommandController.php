@@ -54,5 +54,4 @@ class ProjectionCommandController extends CommandController
     {
         $this->projectionManager->replay($identifier);
     }
-
 }
