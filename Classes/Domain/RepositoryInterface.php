@@ -23,8 +23,8 @@ interface RepositoryInterface
     public function findByIdentifier($identifier);
 
     /**
-     * @param AggregateRootInterface $aggregate
+     * @param EventSourcedAggregateRootInterface $aggregate
      * @return void
      */
-    public function save(AggregateRootInterface $aggregate);
+    public function save(EventSourcedAggregateRootInterface $aggregate);
 }

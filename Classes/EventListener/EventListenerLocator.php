@@ -12,9 +12,9 @@ namespace Neos\Cqrs\EventListener;
  */
 
 use Neos\Cqrs\Event\EventInterface;
+use Neos\Cqrs\Event\EventMetadata;
 use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\Exception;
-use Neos\Cqrs\Message\MessageMetadata;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Reflection\ReflectionService;
@@ -92,25 +92,25 @@ class EventListenerLocator
                 $parameters = array_values($reflectionService->getMethodParameters($listenerClassName, $methodName));
 
                 if (!isset($parameters[0])) {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionally a MessageMetaData', $listenerClassName, $methodName), 1472500228);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionally a EventMetadata', $listenerClassName, $methodName), 1472500228);
                 }
                 $eventClassName = $parameters[0]['class'];
                 if (!$reflectionService->isClassImplementationOf($eventClassName, EventInterface::class)) {
                     throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should be cast to an implementation of EventInterface', $listenerClassName, $methodName), 1472504443);
                 }
-                $eventType = $eventTypeResolver->getEventTypeByClassName($eventClassName);
+
                 if (isset($parameters[1])) {
                     $metaDataType = $parameters[1]['class'];
-                    if ($metaDataType !== MessageMetadata::class) {
-                        throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to MessageMetaData', $listenerClassName, $methodName), 1472504303);
+                    if ($metaDataType !== EventMetadata::class) {
+                        throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to EventMetadata', $listenerClassName, $methodName), 1472504303);
                     }
                 }
-                $eventShortName = $eventTypeResolver->getEventShortTypeByClassName($eventClassName);
-                $expectedMethodName = 'when' . $eventShortName;
+                $expectedMethodName = 'when' . (new \ReflectionClass($eventClassName))->getShortName();
                 if ($expectedMethodName !== $methodName) {
                     throw new Exception(sprintf('Invalid listener in %s::%s the method name is expected to be "%s"', $listenerClassName, $methodName, $expectedMethodName), 1476442394);
                 }
 
+                $eventType = $eventTypeResolver->getEventTypeByClassName($eventClassName);
                 if (!isset($listeners[$eventType])) {
                     $listeners[$eventType] = [];
                 }

@@ -121,20 +121,20 @@ class EventTypeResolver
      */
     public static function eventTypeMapping(ObjectManagerInterface $objectManager)
     {
-        $buildEventType = function ($eventClassname) {
-            list($vendor, $package) = explode('\\', $eventClassname);
-            $eventName = substr($eventClassname, strrpos($eventClassname, '\\') + 1);
-            return $vendor . ':' . $package . ':' . $eventName;
+        $buildEventType = function ($eventClassName) use ($objectManager) {
+            $packageKey = $objectManager->getPackageKeyByObjectName($eventClassName);
+            $shortEventClassName = (new \ReflectionClass($eventClassName))->getShortName();
+            return $packageKey . ':' . $shortEventClassName;
         };
         $mapping = [];
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
-        foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventInterface::class) as $eventClassname) {
-            $type = $buildEventType($eventClassname);
+        foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventInterface::class) as $eventClassName) {
+            $type = $buildEventType($eventClassName);
             if (in_array($type, $mapping)) {
                 throw new Exception(sprintf('Duplicate event type "%s"', $type), 1474710799);
             }
-            $mapping[$eventClassname] = $buildEventType($eventClassname);
+            $mapping[$eventClassName] = $buildEventType($eventClassName);
         }
         return $mapping;
     }

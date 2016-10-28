@@ -12,43 +12,79 @@ namespace Neos\Cqrs\Event;
  */
 
 use Neos\Cqrs\EventStore\EventStore;
-use Neos\Cqrs\EventStore\EventStream;
+use Neos\Cqrs\EventStore\ExpectedVersion;
+use Neos\Cqrs\EventStore\WritableEvent;
+use Neos\Cqrs\EventStore\WritableEvents;
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Property\PropertyMapper;
 
 /**
- * Event Publisher
- *
  * @Flow\Scope("singleton")
  */
 class EventPublisher
 {
     /**
      * @var EventStore
-     * @Flow\Inject
      */
-    protected $eventStore;
+    private $eventStore;
 
     /**
      * @var EventBus
-     * @Flow\Inject
      */
-    protected $eventBus;
+    private $eventBus;
 
     /**
-     * Publish the given EventStream
-     *
-     * @param string $streamName name of the stream in the event store
-     * @param EventStream $stream stream of event to store
-     * @return int commited version number
+     * @var PropertyMapper
      */
-    public function publish(string $streamName, EventStream $stream) :int
+    private $propertyMapper;
+
+    /**
+     * @var EventTypeResolver
+     */
+    private $eventTypeResolver;
+
+    /**
+     * @param EventStore $eventStore
+     * @param EventBus $eventBus
+     * @param PropertyMapper $propertyMapper
+     * @param EventTypeResolver $eventTypeResolver
+     */
+    public function __construct(EventStore $eventStore, EventBus $eventBus, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
     {
-        return $this->eventStore->commit($streamName, $stream, function (EventTransport $eventTransport, int $version) {
-            $this->eventBus->handle(
-                $eventTransport->withMetadata(
-                    $eventTransport->getMetadata()->withProperty(Metadata::VERSION, $version)
-                )
-            );
-        });
+        $this->eventStore = $eventStore;
+        $this->eventBus = $eventBus;
+        $this->propertyMapper = $propertyMapper;
+        $this->eventTypeResolver = $eventTypeResolver;
+    }
+
+
+    /**
+     * @param string $streamName
+     * @param EventWithMetadata $eventWithMetadata
+     * @param int $expectedVersion
+     */
+    public function publish(string $streamName, EventWithMetadata $eventWithMetadata, int $expectedVersion = ExpectedVersion::ANY)
+    {
+        $this->publishMany($streamName, [$eventWithMetadata], $expectedVersion);
+    }
+
+    /**
+     * @param string $streamName
+     * @param EventWithMetadata[] $eventsWithMetadata
+     * @param int $expectedVersion
+     */
+    public function publishMany(string $streamName, array $eventsWithMetadata, int $expectedVersion = ExpectedVersion::ANY)
+    {
+        $convertedEvents = new WritableEvents();
+        foreach ($eventsWithMetadata as $eventWithMetadata) {
+            $type = $this->eventTypeResolver->getEventType($eventWithMetadata->getEvent());
+            $data = $this->propertyMapper->convert($eventWithMetadata->getEvent(), 'array');
+            $metadata = $this->propertyMapper->convert($eventWithMetadata->getMetadata(), 'array');
+            $convertedEvents->append(new WritableEvent($type, $data, $metadata));
+        }
+        $this->eventStore->commit($streamName, $convertedEvents, $expectedVersion);
+        foreach ($eventsWithMetadata as $eventWithMetadata) {
+            $this->eventBus->handle($eventWithMetadata);
+        }
     }
 }

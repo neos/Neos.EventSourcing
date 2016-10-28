@@ -11,6 +11,7 @@ namespace Neos\Cqrs\Projection\Doctrine;
  * source code.
  */
 
+use Neos\Cqrs\Exception;
 use Neos\Cqrs\Projection\AbstractBaseProjector;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -32,25 +33,29 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
      * Make sure to call this method as parent when overriding it in a concrete projector.
      *
      * @return void
+     * @throws Exception
      */
     protected function initializeObject()
     {
         if ($this->readModelClassName === null) {
             if (substr(get_class($this), -9, 9) !== 'Projector') {
-                // EXCEPTION
+                throw new Exception(sprintf('The class name "%s" doesn\'t end in "Projector" so the Read Model class name can\'t be determined automatically. Please set the "readModelClassName" field it in your concrete projector.', get_class($this)), 1476799474);
             }
             $this->readModelClassName = substr(get_class($this), 0, -9);
         }
     }
 
     /**
+     * Retrieves an object with the given $identifier.
+     * For use in the concrete projector.
+     *
      * @param string $identifier
-     * @return object
+     * @return object an instance of $this->readModelClassName or NULL if no matching object could be found
      * @api
      */
-    protected function get(string $identifier)
+    public function get(string $identifier)
     {
-        return $this->projectionPersistenceManager->get($this->readModelClassName, $identifier);
+        return $this->projectionPersistenceManager->get($this->getReadModelClassName(), $identifier);
     }
 
     /**

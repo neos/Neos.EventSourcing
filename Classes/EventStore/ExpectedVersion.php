@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Message\Resolver\Exception;
+namespace Neos\Cqrs\EventStore;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventStore package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,11 +11,12 @@ namespace Neos\Cqrs\Message\Resolver\Exception;
  * source code.
  */
 
-use Neos\Cqrs\Exception;
-
-/**
- * MessageMetadataException
- */
-class MessageMetadataException extends Exception
+final class ExpectedVersion
 {
+    const ANY          = -2;
+    const NO_STREAM    = -1;
+
+    private function __construct()
+    {
+    }
 }

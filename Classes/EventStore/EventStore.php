@@ -11,28 +11,24 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
 use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Log\SystemLoggerInterface;
 
 /**
- * EventStore
+ * @Flow\Scope("singleton")
  */
 class EventStore
 {
     /**
      * @var EventStorageInterface
-     * @Flow\Inject
      */
-    protected $storage;
+    private $storage;
 
-    /**
-     * @var SystemLoggerInterface
-     * @Flow\Inject
-     */
-    protected $logger;
+    public function __construct(EventStorageInterface $storage)
+    {
+        $this->storage = $storage;
+    }
 
     /**
      * @param EventStreamFilter $filter
@@ -41,38 +37,15 @@ class EventStore
      */
     public function get(EventStreamFilter $filter): EventStream
     {
-        $streamData = $this->storage->load($filter);
-
-        if (!$streamData || (!$streamData instanceof EventStreamData)) {
-            throw new EventStreamNotFoundException();
+        $eventStream = $this->storage->load($filter);
+        if (!$eventStream->valid()) {
+            throw new EventStreamNotFoundException(sprintf('The event stream "%s" does not exist/is empty', $filter), 1477497156);
         }
-
-        return new EventStream(
-            $streamData->getData(),
-            $streamData->getVersion()
-        );
+        return $eventStream;
     }
 
-    /**
-     * @param string $streamName
-     * @param EventStream $stream
-     * @return int committed version number
-     * @param \Closure $callback
-     * @throws ConcurrencyException
-     */
-    public function commit(string $streamName, EventStream $stream, \Closure $callback = null) :int
+    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)
     {
-        $newEvents = $stream->getNewEvents();
-
-        if ($newEvents === []) {
-            return $this->storage->getCurrentVersion($streamName);
-        }
-
-        $currentVersion = $stream->getVersion();
-        $expectedVersion = $currentVersion + count($newEvents);
-        $this->storage->commit($streamName, $newEvents, $expectedVersion, $callback);
-        $stream->markAllApplied($expectedVersion);
-
-        return $expectedVersion;
+        $this->storage->commit($streamName, $events, $expectedVersion);
     }
 }

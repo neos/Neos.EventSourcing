@@ -12,8 +12,12 @@ Neos:
             user: NULL
             password: NULL
             charset: 'utf8'
-
-          mappingTypes:
-            'datetime_micro':
-              dbType: 'datetime'
-              className: 'Neos\Cqrs\EventStore\Storage\Doctrine\DataTypes\DateTimeType'
+TYPO3:
+  Flow:
+    persistence:
+      doctrine:
+        migrations:
+          ignoredTables:
+            # ignore the default event store table in "doctrine:migrationgenerate"
+            # commands so it won't be dropped by accident
+            'neos_cqrs_events': TRUE

@@ -11,7 +11,8 @@ namespace Neos\Cqrs\Projection\Doctrine;
  * source code.
  */
 
-use Doctrine\Common\Persistence\ObjectManager as EntityManager;
+use Doctrine\Common\Persistence\ObjectManager as DoctrineObjectManager;
+use Doctrine\ORM\EntityManager as DoctrineEntityManager;
 use Doctrine\ORM\UnitOfWork;
 use Neos\Cqrs\Exception;
 use TYPO3\Flow\Log\SystemLoggerInterface;
@@ -33,10 +34,30 @@ class DoctrineProjectionPersistenceManager
     protected $systemLogger;
 
     /**
-     * @Flow\Inject
-     * @var EntityManager
+     * @var DoctrineEntityManager
      */
-    protected $entityManager;
+    private $entityManager;
+
+    /**
+     * @param DoctrineObjectManager $entityManager
+     * @return void
+     */
+    public function injectEntityManager(DoctrineObjectManager $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }
+
+    /**
+     * Returns an object with the given $identifier from persistence.
+     *
+     * @param string $className
+     * @param string $identifier
+     * @return object
+     */
+    public function get(string $className, string $identifier)
+    {
+        return $this->entityManager->find($className, $identifier);
+    }
 
     /**
      * @param string $className
@@ -99,7 +120,7 @@ class DoctrineProjectionPersistenceManager
      */
     public function drop(string $readModelClassName): int
     {
-        $query = $this->entityManager->createQuery('delete from ' . $readModelClassName . ' m where true');
+        $query = $this->entityManager->createQuery('DELETE FROM ' . $readModelClassName);
         return $query->execute();
     }
 
@@ -120,7 +141,6 @@ class DoctrineProjectionPersistenceManager
             $this->entityManager->flush();
         } catch (\Exception $exception) {
             $this->systemLogger->logException($exception);
-            /** @var Connection $connection */
             $connection = $this->entityManager->getConnection();
             $connection->close();
             $connection->connect();

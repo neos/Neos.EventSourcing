@@ -25,12 +25,11 @@ interface AggregateRootInterface
 
     /**
      * @param EventInterface $event
-     * @param array $metadata
      */
-    public function recordThat(EventInterface $event, array $metadata = []);
+    public function recordThat(EventInterface $event);
 
     /**
-     * @return array
+     * @return EventInterface[]
      */
     public function pullUncommittedEvents(): array;
 }

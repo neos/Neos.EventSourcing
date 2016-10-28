@@ -11,28 +11,41 @@ namespace Neos\Cqrs\Domain;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventTransport;
 use Neos\Cqrs\EventStore\EventStream;
-use Neos\Cqrs\RuntimeException;
 
 /**
- * AggregateRootTrait
+ * Base implementation for an event-sourced aggregate root
  */
 abstract class AbstractEventSourcedAggregateRoot extends AbstractAggregateRoot implements EventSourcedAggregateRootInterface
 {
     /**
-     * @param EventStream $stream
-     * @throws RuntimeException
+     * @var int
      */
-    public function reconstituteFromEventStream(EventStream $stream)
-    {
-        if ($this->getEvents() !== []) {
-            throw new RuntimeException(sprintf('%s has already been reconstituted from the event stream.', get_class($this)), 1474547708762);
-        }
+    private $reconstitutionVersion = -1;
 
-        /** @var EventTransport $eventTransport */
-        foreach ($stream as $eventTransport) {
-            $this->apply($eventTransport->getEvent());
+    /**
+     * The version of the event stream at time of reconstitution
+     * This is used to avoid race conditions
+     *
+     * @return int
+     */
+    final public function getReconstitutionVersion(): int
+    {
+        return $this->reconstitutionVersion;
+    }
+
+    /**
+     * @param string $identifier
+     * @param EventStream $stream
+     * @return self
+     */
+    public static function reconstituteFromEventStream(string $identifier, EventStream $stream)
+    {
+        $instance = new static($identifier);
+        foreach ($stream as $eventWithMetadata) {
+            $instance->apply($eventWithMetadata->getEvent());
         }
+        $instance->reconstitutionVersion = $stream->getVersion();
+        return $instance;
     }
 }
