@@ -201,9 +201,9 @@ Your must implement the ```EventListenerInterface```:
 
         /**
          * @param ButtonTagged $event
-         * @param MessageMetadata $metadata
+         * @param EventMetadata $metadata
          */
-        public function onButtonTagged(ButtonTagged $event, MessageMetadata $metadata)
+        public function onButtonTagged(ButtonTagged $event, EventMetadata $metadata)
         {
             $this->systemLogger->log('--- ConsoleOutputListener say something has been tagged ---');
         }
@@ -216,7 +216,7 @@ All the wiring between event is done automatically, if you respect the following
 
 * Method name must be on[ShortEventName]
 * The first parameter must be casted with your ```Event```
-* The second parameter is optional, but should be casted to ```MessageMetadata```
+* The second parameter is optional, but should be casted to ```EventMetadata```
 
 ## EventStore
 

@@ -10,33 +10,17 @@ namespace Neos\Cqrs\EventStore\Storage;
  * information, please view the LICENSE file which was distributed with this
  * source code.
  */
-use Neos\Cqrs\EventStore\EventStreamData;
-use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
+
+use Neos\Cqrs\EventStore\EventStream;
+use Neos\Cqrs\EventStore\ExpectedVersion;
+use Neos\Cqrs\EventStore\WritableEvents;
 
 /**
  * EventStorageInterface
  */
 interface EventStorageInterface
 {
-    /**
-     * @param string $streamName
-     * @return EventStreamData Aggregate Root events
-     */
-    public function load(string $streamName);
+    public function load(string $streamName): EventStream;
 
-    /**
-     * @param string $streamName
-     * @param array $data
-     * @param integer $expectedVersion
-     * @param \Closure $callback
-     * @return void
-     * @throws ConcurrencyException
-     */
-    public function commit(string $streamName, array $data, int $expectedVersion, \Closure $callback = null);
-
-    /**
-     * @param string $streamName
-     * @return integer Current Aggregate Root version
-     */
-    public function getCurrentVersion(string $streamName): int;
+    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY);
 }

@@ -11,13 +11,13 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\Domain\AggregateRootInterface;
 use Neos\Cqrs\Domain\EventSourcedAggregateRootInterface;
 use Neos\Cqrs\Domain\Exception\AggregateRootNotFoundException;
 use Neos\Cqrs\Domain\RepositoryInterface;
-use Neos\Cqrs\Event\EventBus;
-use Neos\Cqrs\Event\EventTransport;
-use Neos\Cqrs\Event\Metadata;
+use Neos\Cqrs\Event\EventInterface;
+use Neos\Cqrs\Event\EventMetadata;
+use Neos\Cqrs\Event\EventPublisher;
+use Neos\Cqrs\Event\EventWithMetadata;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -27,17 +27,16 @@ use TYPO3\Flow\Annotations as Flow;
 abstract class AbstractEventSourcedRepository implements RepositoryInterface
 {
     /**
-     * @var EventStore
      * @Flow\Inject
+     * @var EventStore
      */
     protected $eventStore;
 
-
     /**
-     * @var EventBus
      * @Flow\Inject
+     * @var EventPublisher
      */
-    protected $eventBus;
+    protected $eventPublisher;
 
     /**
      * @Flow\Inject
@@ -60,7 +59,7 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
 
     /**
      * @param string $identifier
-     * @return AggregateRootInterface
+     * @return EventSourcedAggregateRootInterface
      * @throws AggregateRootNotFoundException
      */
     final public function findByIdentifier($identifier)
@@ -68,42 +67,36 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
         $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
         try {
             $eventStream = $this->eventStore->get($streamName);
-        } catch (EventStreamNotFoundException $e) {
+        } catch (EventStreamNotFoundException $exception) {
             return null;
         }
-
         if (!class_exists($this->aggregateClassName)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root %s because its class '%s' does not exist.", $identifier, $this->aggregateClassName), 1474454928115);
         }
         if (!is_subclass_of($this->aggregateClassName, EventSourcedAggregateRootInterface::class)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root '%s' with id '%s' because it does not implement the EventSourcedAggregateRootInterface.", $this->aggregateClassName, $identifier, $this->aggregateClassName), 1474464335530);
         }
+
         return call_user_func($this->aggregateClassName . '::reconstituteFromEventStream', $identifier, $eventStream);
     }
 
     /**
      * @param EventSourcedAggregateRootInterface $aggregate
+     * @param int $expectedVersion
      * @return void
      */
-    final public function save(EventSourcedAggregateRootInterface $aggregate)
+    final public function save(EventSourcedAggregateRootInterface $aggregate, int $expectedVersion = null)
     {
         $streamName = $this->streamNameResolver->getStreamNameForAggregate($aggregate);
-        try {
-            $stream = $this->eventStore->get($streamName);
-        } catch (EventStreamNotFoundException $e) {
-            $stream = new EventStream();
-        }
-
         $uncommittedEvents = $aggregate->pullUncommittedEvents();
-        $stream->addEvents(...$uncommittedEvents);
+        $version = $aggregate->getReconstitutionVersion() + 1;
+        $uncommittedEventsWithMetadata = array_map(function (EventInterface $event) use (&$version) {
+            return new EventWithMetadata($event, new EventMetadata([EventMetadata::VERSION => $version ++]));
+        }, $uncommittedEvents);
 
-        $this->eventStore->commit($streamName, $stream, function ($version) use ($uncommittedEvents) {
-            /** @var EventTransport $eventTransport */
-            foreach ($uncommittedEvents as $eventTransport) {
-                // @todo metadata enrichment must be done in external service, with some middleware support
-                $versionedMetadata = $eventTransport->getMetadata()->withProperty(Metadata::VERSION, $version);
-                $this->eventBus->handle($eventTransport->withMetadata($versionedMetadata));
-            }
-        });
+        if ($expectedVersion === null) {
+            $expectedVersion = $aggregate->getReconstitutionVersion();
+        }
+        $this->eventPublisher->publishMany($streamName, $uncommittedEventsWithMetadata, $expectedVersion);
     }
 }

@@ -11,70 +11,36 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
 use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Log\SystemLoggerInterface;
 
 /**
- * EventStore
+ * @Flow\Scope("singleton")
  */
 class EventStore
 {
     /**
      * @var EventStorageInterface
-     * @Flow\Inject
      */
-    protected $storage;
+    private $storage;
 
-    /**
-     * @var SystemLoggerInterface
-     * @Flow\Inject
-     */
-    protected $logger;
-
-    /**
-     * Get events for AR
-     * @param string $streamName
-     * @return EventStream Can be empty stream
-     * @throws EventStreamNotFoundException
-     */
-    public function get(string $streamName): EventStream
+    public function __construct(EventStorageInterface $storage)
     {
-        /** @var EventStreamData $streamData */
-        $streamData = $this->storage->load($streamName);
-
-        if (!$streamData || (!$streamData instanceof EventStreamData)) {
-            throw new EventStreamNotFoundException();
-        }
-
-        return new EventStream(
-            $streamData->getData(),
-            $streamData->getVersion()
-        );
+        $this->storage = $storage;
     }
 
-    /**
-     * @param string $streamName
-     * @param EventStream $stream
-     * @return int committed version number
-     * @param \Closure $callback
-     * @throws ConcurrencyException
-     */
-    public function commit(string $streamName, EventStream $stream, \Closure $callback = null) :int
+    public function get(string $streamName): EventStream
     {
-        $newEvents = $stream->getNewEvents();
-
-        if ($newEvents === []) {
-            return $this->storage->getCurrentVersion($streamName);
+        $eventStream = $this->storage->load($streamName);
+        if (!$eventStream->valid()) {
+            throw new EventStreamNotFoundException(sprintf('The event stream "%s" does not exist/is empty', $streamName), 1477497156);
         }
+        return $eventStream;
+    }
 
-        $currentVersion = $stream->getVersion();
-        $expectedVersion = $currentVersion + count($newEvents);
-        $this->storage->commit($streamName, $newEvents, $expectedVersion, $callback);
-        $stream->markAllApplied($expectedVersion);
-
-        return $expectedVersion;
+    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)
+    {
+        $this->storage->commit($streamName, $events, $expectedVersion);
     }
 }
