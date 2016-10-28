@@ -12,13 +12,16 @@ namespace Neos\Cqrs\EventStore\Storage\Doctrine;
  */
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Types\Type;
 use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventStore\EventStream;
+use Neos\Cqrs\EventStore\EventStreamFilterInterface;
 use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
 use Neos\Cqrs\EventStore\ExpectedVersion;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
+use Neos\Cqrs\EventStore\StreamNameFilter;
 use Neos\Cqrs\EventStore\WritableEvents;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Property\PropertyMapper;
@@ -63,19 +66,16 @@ class DoctrineEventStorage implements EventStorageInterface
         $this->connection = $this->connectionFactory->get();
     }
 
-    public function load(string $streamName): EventStream
+    public function load(EventStreamFilterInterface $filter): EventStream
     {
-        $queryBuilder = $this->connection->createQueryBuilder();
-        $query = $queryBuilder
+        $query = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->connectionFactory->getStreamTableName())
-            ->andWhere('stream = :stream')
-            ->orderBy('id', 'ASC')
-            ->addOrderBy('version', 'ASC')
-            ->setParameter('stream', $streamName, \PDO::PARAM_STR);
+            ->orderBy('id', 'ASC');
+        $this->applyEventStreamFilter($query, $filter);
 
         $streamIterator = new DoctrineStreamIterator($query->execute());
-        return new EventStream($streamIterator, $this->getStreamVersion($streamName));
+        return new EventStream($streamIterator, $this->getStreamVersion($filter));
     }
 
     /**
@@ -88,7 +88,7 @@ class DoctrineEventStorage implements EventStorageInterface
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)
     {
         $this->connection->beginTransaction();
-        $actualVersion = $this->getStreamVersion($streamName);
+        $actualVersion = $this->getStreamVersion(new StreamNameFilter($streamName));
         $this->verifyExpectedVersion($actualVersion, $expectedVersion);
 
         foreach ($events as $event) {
@@ -112,12 +112,16 @@ class DoctrineEventStorage implements EventStorageInterface
     }
 
     /**
-     * @param string $streamName
+     * @param EventStreamFilterInterface $filter
      * @return int
      */
-    private function getStreamVersion(string $streamName): int
+    private function getStreamVersion(EventStreamFilterInterface $filter): int
     {
-        $version = $this->connection->fetchColumn('SELECT MAX(version) FROM ' . $this->connectionFactory->getStreamTableName() . ' WHERE stream = ?', [$streamName]);
+        $query = $this->connection->createQueryBuilder()
+            ->select('MAX(version)')
+            ->from($this->connectionFactory->getStreamTableName());
+        $this->applyEventStreamFilter($query, $filter);
+        $version = $query->execute()->fetchColumn();
         return $version !== null ? (int)$version : -1;
     }
 
@@ -141,5 +145,20 @@ class DoctrineEventStorage implements EventStorageInterface
             return 'NO STREAM (-1)';
         }
         return (string)$expectedVersion;
+    }
+
+    private function applyEventStreamFilter(QueryBuilder $query, EventStreamFilterInterface $filter)
+    {
+        if ($filter->hasStreamName()) {
+            $query->andWhere('stream = :streamName');
+            $query->setParameter('streamName', $filter->getStreamName());
+        } elseif ($filter->hasStreamNamePrefix()) {
+            $query->andWhere('stream LIKE :streamNamePrefix');
+            $query->setParameter('streamNamePrefix', $filter->getStreamNamePrefix() . '%');
+        }
+        if ($filter->hasEventTypes()) {
+            $query->andWhere('type IN (:eventTypes)');
+            $query->setParameter('eventTypes', $filter->getEventTypes(), Connection::PARAM_STR_ARRAY);
+        }
     }
 }

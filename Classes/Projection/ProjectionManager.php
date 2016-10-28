@@ -11,11 +11,10 @@ namespace Neos\Cqrs\Projection;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventTransport;
 use Neos\Cqrs\Event\EventTypeResolver;
-use Neos\Cqrs\EventListener\EventListenerContainer;
 use Neos\Cqrs\EventStore\EventStore;
-use Neos\Cqrs\EventStore\EventStreamFilter;
+use Neos\Cqrs\EventStore\EventStreamFilterInterface;
+use Neos\Cqrs\EventStore\EventTypesFilter;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cache\Frontend\VariableFrontend;
 use TYPO3\Flow\Object\ObjectManagerInterface;
@@ -100,14 +99,12 @@ class ProjectionManager
             $parameters = array_values($this->reflectionService->getMethodParameters($projectorClassName, $methodName));
             $eventTypes[] = $this->eventTypeResolver->getEventTypeByClassName($parameters[0]['class']);
         }
-        $filter = new EventStreamFilter();
-        $filter->eventTypes = $eventTypes;
+        $filter = new EventTypesFilter($eventTypes);
 
         $projector = $this->objectManager->get($projectorClassName);
-        /** @var EventTransport $eventTransport */
-        foreach ($this->eventStore->get($filter) as $eventTransport) {
-            $listenerMethodName = 'when' . $this->eventTypeResolver->getEventShortType($eventTransport->getEvent());
-            call_user_func([$projector, $listenerMethodName], $eventTransport->getEvent(), $eventTransport->getMetadata());
+        foreach ($this->eventStore->get($filter) as $eventWithMetadata) {
+            $listenerMethodName = 'when' . $this->eventTypeResolver->getEventShortType($eventWithMetadata->getEvent());
+            call_user_func([$projector, $listenerMethodName], $eventWithMetadata->getEvent(), $eventWithMetadata->getMetadata());
         }
     }
 

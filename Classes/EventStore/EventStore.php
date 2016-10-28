@@ -31,11 +31,11 @@ class EventStore
     }
 
     /**
-     * @param EventStreamFilter $filter
+     * @param EventStreamFilterInterface $filter
      * @return EventStream Can be empty stream
      * @throws EventStreamNotFoundException
      */
-    public function get(EventStreamFilter $filter): EventStream
+    public function get(EventStreamFilterInterface $filter): EventStream
     {
         $eventStream = $this->storage->load($filter);
         if (!$eventStream->valid()) {
