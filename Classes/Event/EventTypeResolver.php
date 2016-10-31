@@ -26,7 +26,6 @@ class EventTypeResolver
 {
     /**
      * @var ObjectManagerInterface
-     * @Flow\Inject
      */
     protected $objectManager;
 
@@ -39,6 +38,17 @@ class EventTypeResolver
      * @var array
      */
     protected $reversedMapping = [];
+
+    /**
+     * Injecting via setter injection because this resolver must also work during compile time, when proxy classes are
+     * not available.
+     *
+     * @param ObjectManagerInterface $objectManager
+     */
+    public function injectObjectManager(ObjectManagerInterface $objectManager)
+    {
+        $this->objectManager = $objectManager;
+    }
 
     /**
      * Register event listeners based on annotations
