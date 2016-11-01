@@ -11,8 +11,7 @@ namespace Neos\Cqrs\Projection\Doctrine;
  * source code.
  */
 
-use Doctrine\Common\Persistence\ObjectManager as DoctrineObjectManager;
-use Doctrine\ORM\EntityManager as DoctrineEntityManager;
+use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\ORM\UnitOfWork;
 use Neos\Cqrs\Exception;
 use TYPO3\Flow\Log\SystemLoggerInterface;
@@ -34,15 +33,15 @@ class DoctrineProjectionPersistenceManager
     protected $systemLogger;
 
     /**
-     * @var DoctrineEntityManager
+     * @var ObjectManager
      */
     private $entityManager;
 
     /**
-     * @param DoctrineObjectManager $entityManager
+     * @param ObjectManager $entityManager
      * @return void
      */
-    public function injectEntityManager(DoctrineObjectManager $entityManager)
+    public function injectEntityManager(ObjectManager $entityManager)
     {
         $this->entityManager = $entityManager;
     }
@@ -68,6 +67,7 @@ class DoctrineProjectionPersistenceManager
     public function add($object)
     {
         $this->entityManager->persist($object);
+        $this->entityManager->flush();
     }
 
     /**
@@ -86,6 +86,7 @@ class DoctrineProjectionPersistenceManager
         }
         try {
             $this->entityManager->persist($object);
+            $this->entityManager->flush();
         } catch (\Exception $exception) {
             throw new Exception('Could not persist updated object of type "' . get_class($object) . '"', 1474531485464, $exception);
         }
@@ -100,6 +101,7 @@ class DoctrineProjectionPersistenceManager
     public function remove($object)
     {
         $this->entityManager->remove($object);
+        $this->entityManager->flush();
     }
 
     /**
