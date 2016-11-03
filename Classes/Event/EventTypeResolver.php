@@ -133,6 +133,9 @@ class EventTypeResolver
     {
         $buildEventType = function ($eventClassName) use ($objectManager) {
             $packageKey = $objectManager->getPackageKeyByObjectName($eventClassName);
+            if ($packageKey === false) {
+                throw new Exception(sprintf('Could not determine package key from object name "%s"', $eventClassName), 1478088597);
+            }
             $shortEventClassName = (new \ReflectionClass($eventClassName))->getShortName();
             return $packageKey . ':' . $shortEventClassName;
         };
