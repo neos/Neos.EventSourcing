@@ -11,6 +11,7 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
+use Neos\Cqrs\Exception;
 use TYPO3\Flow\Annotations as Flow;
 
 class EventTypesFilter implements EventStreamFilterInterface
@@ -22,6 +23,9 @@ class EventTypesFilter implements EventStreamFilterInterface
 
     public function __construct(array $eventTypes)
     {
+        if ($eventTypes === []) {
+            throw new Exception('No type filter provided', 1478299912);
+        }
         $this->eventTypes = $eventTypes;
     }
 

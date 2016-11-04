@@ -11,6 +11,7 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
+use Neos\Cqrs\Exception;
 use TYPO3\Flow\Annotations as Flow;
 
 class StreamNameFilter implements EventStreamFilterInterface
@@ -22,6 +23,10 @@ class StreamNameFilter implements EventStreamFilterInterface
 
     public function __construct(string $streamName)
     {
+        $streamName = trim($streamName);
+        if ($streamName === '') {
+            throw new Exception('Empty stream filter provided', 1478299970);
+        }
         $this->streamName = $streamName;
     }
 
