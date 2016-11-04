@@ -36,50 +36,45 @@ class Projection
     /**
      * @var string
      */
-    private $packageKey;
-
-    /**
-     * @var string
-     */
     private $projectorClassName;
 
-    public function __construct(string $fullIdentifier, string $shortIdentifier, string $packageKey, string $projectorClassName)
+    /**
+     * Array of event types this projection listens to
+     *
+     * @var string[]
+     */
+    private $eventTypes;
+
+    public function __construct(string $fullIdentifier, string $shortIdentifier, string $projectorClassName, array $eventTypes)
     {
         $this->fullIdentifier = $fullIdentifier;
         $this->shortIdentifier = $shortIdentifier;
-        $this->packageKey = $packageKey;
         $this->projectorClassName = $projectorClassName;
+        $this->eventTypes = $eventTypes;
     }
 
-    /**
-     * @return string
-     */
-    public function getFullIdentifier()
+    public function getFullIdentifier(): string
     {
         return $this->fullIdentifier;
     }
 
-    /**
-     * @return string
-     */
-    public function getShortIdentifier()
+    public function getShortIdentifier(): string
     {
         return $this->shortIdentifier;
     }
 
-    /**
-     * @return string
-     */
-    public function getPackageKey()
-    {
-        return $this->packageKey;
-    }
-
-    /**
-     * @return string
-     */
-    public function getProjectorClassName()
+    public function getProjectorClassName(): string
     {
         return $this->projectorClassName;
     }
+
+    /**
+     * @return \string[]
+     */
+    public function getEventTypes(): array
+    {
+        return $this->eventTypes;
+    }
+
+
 }

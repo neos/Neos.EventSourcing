@@ -12,8 +12,8 @@ namespace Neos\Cqrs\Projection;
  */
 
 use Neos\Cqrs\Event\EventTypeResolver;
+use Neos\Cqrs\EventListener\EventListenerLocator;
 use Neos\Cqrs\EventStore\EventStore;
-use Neos\Cqrs\EventStore\EventStreamFilterInterface;
 use Neos\Cqrs\EventStore\EventTypesFilter;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cache\Frontend\VariableFrontend;
@@ -38,15 +38,15 @@ class ProjectionManager
 
     /**
      * @Flow\Inject
-     * @var ReflectionService
-     */
-    protected $reflectionService;
-
-    /**
-     * @Flow\Inject
      * @var EventTypeResolver
      */
     protected $eventTypeResolver;
+
+    /**
+     * @Flow\Inject
+     * @var EventListenerLocator
+     */
+    protected $eventListenerLocator;
 
     /**
      * @Flow\Inject
@@ -81,53 +81,45 @@ class ProjectionManager
         return $this->projections;
     }
 
+    public function getProjection(string $projectionIdentifier): Projection
+    {
+        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
+        return $this->projections[$fullProjectionIdentifier];
+    }
+
     /**
      * @param string $projectionIdentifier
      * @return void
      */
     public function replay(string $projectionIdentifier)
     {
-        $eventTypes = [];
-        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
-        $projection = $this->projections[$fullProjectionIdentifier];
-        $projectorClassName = $projection->getProjectorClassName();
-        foreach (get_class_methods($projectorClassName) as $methodName) {
-            preg_match('/^when.*$/', $methodName, $matches);
-            if (!isset($matches[0])) {
-                continue;
-            }
-            $parameters = array_values($this->reflectionService->getMethodParameters($projectorClassName, $methodName));
-            $eventTypes[] = $this->eventTypeResolver->getEventTypeByClassName($parameters[0]['class']);
-        }
-        $filter = new EventTypesFilter($eventTypes);
+        $projection = $this->getProjection($projectionIdentifier);
+        $filter = new EventTypesFilter($projection->getEventTypes());
 
-        $projector = $this->objectManager->get($projectorClassName);
-        foreach ($this->eventStore->get($filter) as $eventWithMetadata) {
-            $listenerMethodName = 'when' . $this->eventTypeResolver->getEventShortType($eventWithMetadata->getEvent());
-            call_user_func([$projector, $listenerMethodName], $eventWithMetadata->getEvent(), $eventWithMetadata->getMetadata());
+        foreach ($this->eventStore->get($filter) as $index => $eventWithMetadata) {
+            $listener = $this->eventListenerLocator->getListener($eventWithMetadata->getEvent(), $projection->getProjectorClassName());
+            call_user_func($listener, $eventWithMetadata->getEvent(), $eventWithMetadata->getMetadata());
         }
     }
 
-    /**
-     * @param string $projectionIdentifier
-     * @return void
-     */
-    public function catchup(string $projectionIdentifier)
-    {
-        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
-        $cacheId = md5($fullProjectionIdentifier);
-        if (!$this->projectionCache->has($cacheId)) {
-            $projectionState = [
-                'revision' => 0
-            ];
-        } else {
-            $projectionState = $this->projectionCache->get($cacheId);
-            $projectionState['revision'] ++;
-        }
-        $this->projectionCache->set($cacheId, $projectionState);
-        \TYPO3\Flow\var_dump($projectionState);
-
-    }
+//    /**
+//     * @param string $projectionIdentifier
+//     * @return void
+//     */
+//    public function catchup(string $projectionIdentifier)
+//    {
+//        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
+//        $cacheId = md5($fullProjectionIdentifier);
+//        if (!$this->projectionCache->has($cacheId)) {
+//            $projectionState = [
+//                'revision' => 0
+//            ];
+//        } else {
+//            $projectionState = $this->projectionCache->get($cacheId);
+//            $projectionState['revision']++;
+//        }
+//        $this->projectionCache->set($cacheId, $projectionState);
+//    }
 
     /**
      * Takes a short projection identifier and returns the "full" identifier if valid
@@ -195,16 +187,52 @@ class ProjectionManager
         $reflectionService = $objectManager->get(ReflectionService::class);
         /** @var PackageManagerInterface $packageManager */
         $packageManager = $objectManager->get(PackageManagerInterface::class);
-        $projections = [];
+        /** @var EventListenerLocator $eventListenerLocator */
+        $eventListenerLocator = $objectManager->get(EventListenerLocator::class);
+        $projectionsByName = $projectorClassNamesByIdentifier = [];
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(ProjectorInterface::class) as $projectorClassName) {
             $package = $packageManager->getPackageByClassName($projectorClassName);
-            $projectionIdentifier = strtolower($package->getPackageKey() . ':' . (new ClassReflection($projectorClassName))->getShortName());
-            if (isset($projections[$projectionIdentifier])) {
-                throw new \RuntimeException(sprintf('The projection identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $projectionIdentifier, $projections[$projectionIdentifier], $projectorClassName), 1476198478);
+            $projectionName = (new ClassReflection($projectorClassName))->getShortName();
+            if (substr($projectionName, -9) === 'Projector') {
+                $projectionName = substr($projectionName, 0, -9);
             }
-            $projections[$projectionIdentifier] = new Projection($projectionIdentifier, 'short', $package->getPackageKey(), $projectorClassName);
+            $projectionName = strtolower($projectionName);
+            $packageKey = strtolower($package->getPackageKey());
+            $projectionIdentifier = $packageKey . ':' . $projectionName;
+            if (isset($projectorClassNamesByIdentifier[$projectionIdentifier])) {
+                throw new \RuntimeException(sprintf('The projection identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $projectionIdentifier, $projectorClassNamesByIdentifier[$projectionIdentifier], $projectorClassName), 1476198478);
+            }
+            $projectorClassNamesByIdentifier[$projectionIdentifier] = $projectorClassName;
+            if (!isset($projectionsByName[$projectionName])) {
+                $projectionsByName[$projectionName] = [];
+            }
+            $projectionsByName[$projectionName][] = $packageKey;
         }
-        ksort($projections);
+        ksort($projectorClassNamesByIdentifier);
+
+        $projections = [];
+        foreach ($projectorClassNamesByIdentifier as $fullProjectionIdentifier => $projectorClassName) {
+            list($packageKey, $projectionName) = explode(':', $fullProjectionIdentifier);
+            if (count($projectionsByName[$projectionName]) === 1) {
+                $shortIdentifier = $projectionName;
+            } else {
+                $shortIdentifier = $fullProjectionIdentifier;
+                $prefix = null;
+                foreach (array_reverse(explode('.', $packageKey)) as $packageKeyPart) {
+                    $prefix = $prefix === null ? $packageKeyPart : $packageKeyPart . '.' . $prefix;
+                    $matchingPackageKeys = array_filter($projectionsByName[$projectionName], function ($searchedPackageKey) use ($packageKey) {
+                        return $searchedPackageKey === $packageKey || substr($packageKey, -(strlen($searchedPackageKey) + 1)) === '.' . $searchedPackageKey;
+                    });
+                    if (count($matchingPackageKeys) === 1) {
+                        $shortIdentifier = $prefix . ':' . $projectionName;
+                        break;
+                    }
+                }
+            }
+            $projectionEventTypes = $eventListenerLocator->getEventTypesByListenerClassName($projectorClassName);
+            $projections[$fullProjectionIdentifier] = new Projection($fullProjectionIdentifier, $shortIdentifier, $projectorClassName, $projectionEventTypes);
+        }
+
         return $projections;
     }
 }

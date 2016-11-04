@@ -39,7 +39,7 @@ class EventListenerLocator
     protected $eventTypeService;
 
     /**
-     * @var array
+     * @var array in the format ['<eventType>' => ['<listenerClassName>' => '<listenerMethodName>', '<listenerClassName2>' => '<listenerMethodName2>', ...]]
      */
     protected $mapping = [];
 
@@ -63,9 +63,40 @@ class EventListenerLocator
         if (!isset($this->mapping[$eventType])) {
             return [];
         }
-        return array_map(function ($listenerClassNameAndMethod) {
-            return [$this->objectManager->get($listenerClassNameAndMethod[0]), $listenerClassNameAndMethod[1]];
-        }, $this->mapping[$eventType]);
+        $listeners = [];
+        array_walk($this->mapping[$eventType], function ($listenerMethodName, $listenerClassName) use (&$listeners) {
+            $listeners[] = [$this->objectManager->get($listenerClassName), $listenerMethodName];
+        });
+        return $listeners;
+    }
+
+    /**
+     * @param EventInterface $event
+     * @param string $listenerClassName
+     * @return \callable|null
+     */
+    public function getListener(EventInterface $event, string $listenerClassName)
+    {
+        $eventType = $this->eventTypeService->getEventType($event);
+        if (!isset($this->mapping[$eventType][$listenerClassName])) {
+            return null;
+        }
+        return [$this->objectManager->get($listenerClassName), $this->mapping[$eventType][$listenerClassName]];
+    }
+
+    /**
+     * @param string $listenerClassName
+     * @return string[]
+     */
+    public function getEventTypesByListenerClassName(string $listenerClassName): array
+    {
+        $eventTypes = [];
+        array_walk($this->mapping, function ($listenerMapping, $eventType) use (&$eventTypes, $listenerClassName) {
+            if (key($listenerMapping) === $listenerClassName) {
+                $eventTypes[] = $eventType;
+            }
+        });
+        return $eventTypes;
     }
 
     /**
@@ -84,37 +115,37 @@ class EventListenerLocator
         /** @var EventTypeResolver $eventTypeResolver */
         $eventTypeResolver = $objectManager->get(EventTypeResolver::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listenerClassName) {
-            foreach (get_class_methods($listenerClassName) as $methodName) {
-                preg_match('/^when[A-Z].*$/', $methodName, $matches);
+            foreach (get_class_methods($listenerClassName) as $listenerMethodName) {
+                preg_match('/^when[A-Z].*$/', $listenerMethodName, $matches);
                 if (!isset($matches[0])) {
                     continue;
                 }
-                $parameters = array_values($reflectionService->getMethodParameters($listenerClassName, $methodName));
+                $parameters = array_values($reflectionService->getMethodParameters($listenerClassName, $listenerMethodName));
 
                 if (!isset($parameters[0])) {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionally a EventMetadata', $listenerClassName, $methodName), 1472500228);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionally a EventMetadata', $listenerClassName, $listenerMethodName), 1472500228);
                 }
                 $eventClassName = $parameters[0]['class'];
                 if (!$reflectionService->isClassImplementationOf($eventClassName, EventInterface::class)) {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should be cast to an implementation of EventInterface', $listenerClassName, $methodName), 1472504443);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should be cast to an implementation of EventInterface', $listenerClassName, $listenerMethodName), 1472504443);
                 }
 
                 if (isset($parameters[1])) {
                     $metaDataType = $parameters[1]['class'];
                     if ($metaDataType !== EventMetadata::class) {
-                        throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to EventMetadata', $listenerClassName, $methodName), 1472504303);
+                        throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to EventMetadata', $listenerClassName, $listenerMethodName), 1472504303);
                     }
                 }
                 $expectedMethodName = 'when' . (new \ReflectionClass($eventClassName))->getShortName();
-                if ($expectedMethodName !== $methodName) {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method name is expected to be "%s"', $listenerClassName, $methodName, $expectedMethodName), 1476442394);
+                if ($expectedMethodName !== $listenerMethodName) {
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method name is expected to be "%s"', $listenerClassName, $listenerMethodName, $expectedMethodName), 1476442394);
                 }
 
                 $eventType = $eventTypeResolver->getEventTypeByClassName($eventClassName);
                 if (!isset($listeners[$eventType])) {
                     $listeners[$eventType] = [];
                 }
-                $listeners[$eventType][] = [$listenerClassName, $methodName];
+                $listeners[$eventType][$listenerClassName] = $listenerMethodName;
             }
         }
 
