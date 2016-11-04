@@ -34,12 +34,13 @@ class EventStore
      * @param EventStreamFilterInterface $filter
      * @return EventStream Can be empty stream
      * @throws EventStreamNotFoundException
+     * @todo improve exception message, log the current filter type and configuration
      */
     public function get(EventStreamFilterInterface $filter): EventStream
     {
         $eventStream = $this->storage->load($filter);
         if (!$eventStream->valid()) {
-            throw new EventStreamNotFoundException(sprintf('The event stream "%s" does not exist/is empty', $filter), 1477497156);
+            throw new EventStreamNotFoundException('Invalid event stream', 1477497156);
         }
         return $eventStream;
     }
