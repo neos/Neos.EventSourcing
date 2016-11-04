@@ -91,9 +91,11 @@ class EventListenerLocator
     public function getEventTypesByListenerClassName(string $listenerClassName): array
     {
         $eventTypes = [];
-        array_walk($this->mapping, function ($listenerMapping, $eventType) use (&$eventTypes, $listenerClassName) {
-            if (key($listenerMapping) === $listenerClassName) {
-                $eventTypes[] = $eventType;
+        array_walk($this->mapping, function ($listenerMappings, $eventType) use (&$eventTypes, $listenerClassName) {
+            foreach (array_keys($listenerMappings) as $listenerMappingClassname) {
+                if ($listenerMappingClassname === $listenerClassName) {
+                    $eventTypes[] = $eventType;
+                }
             }
         });
         return $eventTypes;
