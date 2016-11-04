@@ -35,19 +35,19 @@ class EventBus
     protected $logger;
 
     /**
-     * @param EventWithMetadata $transport
+     * @param EventWithMetadata $eventWithMetadata
      * @throws \Exception
      */
-    public function handle(EventWithMetadata $transport)
+    public function handle(EventWithMetadata $eventWithMetadata)
     {
-        $listeners = $this->locator->getListeners($transport->getEvent());
+        $listeners = $this->locator->getListeners($eventWithMetadata->getEvent());
         /** @var \callable $listener */
         foreach ($listeners as $listener) {
             try {
-                call_user_func($listener, $transport->getEvent(), $transport->getMetadata());
+                call_user_func($listener, $eventWithMetadata->getEvent(), $eventWithMetadata->getMetadata());
             } catch (\Exception $exception) {
                 $this->logger->logException($exception);
-                throw new EventBusException(sprintf('An exception occurred while handling event "%s": %s (%s)', TypeHandling::getTypeForValue($transport->getEvent()), $exception->getMessage(), $exception->getCode()), 1472675781, $exception);
+                throw new EventBusException(sprintf('An exception occurred while handling event "%s": %s (%s)', TypeHandling::getTypeForValue($eventWithMetadata->getEvent()), $exception->getMessage(), $exception->getCode()), 1472675781, $exception);
             }
         }
     }
