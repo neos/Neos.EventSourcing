@@ -12,6 +12,7 @@ namespace Neos\Cqrs\Event;
  */
 
 use Neos\Cqrs\Event\Exception\EventBusException;
+use Neos\Cqrs\Event\Middleware\EventBusLayers;
 use Neos\Cqrs\EventListener\EventListenerLocator;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Log\SystemLoggerInterface;
@@ -35,20 +36,32 @@ class EventBus
     protected $logger;
 
     /**
+     * @var EventBusLayers
+     * @Flow\Inject
+     */
+    protected $middelwareLayers;
+
+    /**
      * @param EventWithMetadata $eventWithMetadata
      * @throws \Exception
      */
     public function handle(EventWithMetadata $eventWithMetadata)
     {
-        $listeners = $this->locator->getListeners($eventWithMetadata->getEvent());
-        /** @var \callable $listener */
-        foreach ($listeners as $listener) {
-            try {
-                call_user_func($listener, $eventWithMetadata->getEvent(), $eventWithMetadata->getMetadata());
-            } catch (\Exception $exception) {
-                $this->logger->logException($exception);
-                throw new EventBusException(sprintf('An exception occurred while handling event "%s": %s (%s)', TypeHandling::getTypeForValue($eventWithMetadata->getEvent()), $exception->getMessage(), $exception->getCode()), 1472675781, $exception);
+        $this->middelwareLayers->execute($eventWithMetadata, function (EventWithMetadata $eventWithMetadata) {
+            $listeners = $this->locator->getListeners($eventWithMetadata->getEvent());
+            /** @var \callable $listener */
+            foreach ($listeners as $listener) {
+                try {
+                    call_user_func($listener, $eventWithMetadata->getEvent(), $eventWithMetadata->getMetadata());
+                } catch (\Exception $exception) {
+                    $this->logger->logException($exception);
+                    throw new EventBusException(vsprintf('An exception occurred while handling event "%s": %s (%s)', [
+                        TypeHandling::getTypeForValue($eventWithMetadata->getEvent()),
+                        $exception->getMessage(),
+                        $exception->getCode()
+                    ]), 1472675781, $exception);
+                }
             }
-        }
+        });
     }
 }
