@@ -12,6 +12,7 @@ namespace Neos\Cqrs\EventStore;
  */
 
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
+use Neos\Cqrs\EventStore\Middleware\EventStoreLayers;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -20,6 +21,12 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class EventStore
 {
+    /**
+     * @var EventStoreLayers
+     * @Flow\Inject
+     */
+    protected $middlewareLayers;
+
     /**
      * @var EventStorageInterface
      */
@@ -45,8 +52,17 @@ class EventStore
         return $eventStream;
     }
 
+    /**
+     * @param string $streamName
+     * @param WritableEvents $events
+     * @param int $expectedVersion
+     */
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)
     {
-        $this->storage->commit($streamName, $events, $expectedVersion);
+        $commit = new EventStoreCommit($streamName, $events, $expectedVersion);
+
+        $this->middlewareLayers->execute($commit, function (EventStoreCommit $commit) {
+            $this->storage->commit($commit);
+        });
     }
 }

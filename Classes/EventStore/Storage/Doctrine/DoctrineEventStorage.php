@@ -15,6 +15,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Types\Type;
 use Neos\Cqrs\Event\EventTypeResolver;
+use Neos\Cqrs\EventStore\EventStoreCommit;
 use Neos\Cqrs\EventStore\EventStream;
 use Neos\Cqrs\EventStore\EventStreamFilterInterface;
 use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
@@ -79,23 +80,21 @@ class DoctrineEventStorage implements EventStorageInterface
     }
 
     /**
-     * @param string $streamName
-     * @param WritableEvents $events
-     * @param int $expectedVersion
+     * @param EventStoreCommit $commit
      * @return void
      * @throws ConcurrencyException|\Exception
      */
-    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)
+    public function commit(EventStoreCommit $commit)
     {
         $this->connection->beginTransaction();
-        $actualVersion = $this->getStreamVersion(new StreamNameFilter($streamName));
-        $this->verifyExpectedVersion($actualVersion, $expectedVersion);
+        $actualVersion = $this->getStreamVersion(new StreamNameFilter($commit->getStreamName()));
+        $this->verifyExpectedVersion($actualVersion, $commit->getExpectedVersion());
 
-        foreach ($events as $event) {
+        foreach ($commit->getEvents() as $event) {
             $this->connection->insert(
                 $this->connectionFactory->getStreamTableName(),
                 [
-                    'stream' => $streamName,
+                    'stream' => $commit->getStreamName(),
                     'version' => ++$actualVersion,
                     'type' => $event->getType(),
                     'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
