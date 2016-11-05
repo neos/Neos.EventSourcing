@@ -1,2 +1,12 @@
 Neos\Cqrs\EventStore\Storage\EventStorageInterface:
   className: Neos\Cqrs\EventStore\Storage\Doctrine\DoctrineEventStorage
+
+Neos\Cqrs\Projection\ProjectionManager:
+  properties:
+    'projectionCache':
+      object:
+        factoryObjectName: TYPO3\Flow\Cache\CacheManager
+        factoryMethodName: getCache
+        arguments:
+          1:
+            value: 'Neos_Cqrs_ProjectionCache'

@@ -33,5 +33,4 @@ interface EventSourcedAggregateRootInterface extends AggregateRootInterface
      * @return self
      */
     public static function reconstituteFromEventStream(string $identifier, EventStream $stream);
-
 }
