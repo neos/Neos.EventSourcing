@@ -134,6 +134,12 @@ check ```Settings.yaml``` for the configuration.
 
 * [x] **EventBus**: default implementation, implement your own based on ```EventBusInterface```
 
+### EventBus Middelware
+
+You can implement before/after middleware around the event bus by implementing the ```EventBusLayerInterface```.
+
+This can be used for upcasting, monitoring, advanced event routing, ...
+
 ### EventListenerLocator
 
 * [x] **EventListenerLocator**: based on convention, implement your own based on ```EventListenerLocatorInterface```
@@ -226,7 +232,7 @@ Currently the event store support a doctrine based storage. You can implement cu
 
 ### EventStore Middelware
 
-You can implement before/after middleware around the event store, like this::
+You can implement before/after middleware around the event store by implementing the ```EventStoreLayerInterface```::
 
     class LoggingLayer implements EventStoreLayerInterface
     {
