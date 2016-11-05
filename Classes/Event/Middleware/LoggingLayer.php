@@ -1,5 +1,5 @@
 <?php
-namespace Neos\Cqrs\EventStore\Middleware;
+namespace Neos\Cqrs\Event\Middleware;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -11,15 +11,16 @@ namespace Neos\Cqrs\EventStore\Middleware;
  * source code.
  */
 
+use Neos\Cqrs\Event\EventTypeResolver;
+use Neos\Cqrs\Event\EventWithMetadata;
 use Neos\Cqrs\EventStore\EventStoreCommit;
-use Neos\Cqrs\EventStore\WritableEvent;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Log\SystemLoggerInterface;
 
 /**
  * LoggingLayer
  */
-class LoggingLayer implements EventStoreLayerInterface
+class LoggingLayer implements EventBusLayerInterface
 {
     /**
      * @var SystemLoggerInterface
@@ -28,21 +29,23 @@ class LoggingLayer implements EventStoreLayerInterface
     protected $logger;
 
     /**
-     * @param EventStoreCommit $commit
+     * @var EventTypeResolver
+     * @Flow\Inject
+     */
+    protected $eventTypeResolver;
+
+    /**
+     * @param EventWithMetadata $event
      * @param \Closure $next
      * @return EventStoreCommit
      */
-    public function execute($commit, \Closure $next)
+    public function execute($event, \Closure $next)
     {
-        $response = $next($commit);
+        $response = $next($event);
 
-        /** @var WritableEvent $event */
-        foreach ($commit->getEvents() as $event) {
-            $this->logger->log(vsprintf('service="EventStore" message="Event stored with success" eventType=%s streamName=%s', [
-                $event->getType(),
-                $commit->getStreamName()
-            ]));
-        }
+        $this->logger->log(vsprintf('service="EventBus" message="Event published with success" eventType=%s', [
+            $this->eventTypeResolver->getEventType($event->getEvent()),
+        ]));
 
         return $response;
     }
