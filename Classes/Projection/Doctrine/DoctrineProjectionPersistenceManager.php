@@ -13,6 +13,7 @@ namespace Neos\Cqrs\Projection\Doctrine;
 
 use Doctrine\Common\Persistence\ObjectManager as DoctrineObjectManager;
 use Doctrine\ORM\EntityManager as DoctrineEntityManager;
+use Doctrine\ORM\ORMException;
 use Doctrine\ORM\UnitOfWork;
 use Neos\Cqrs\Exception;
 use TYPO3\Flow\Log\SystemLoggerInterface;
@@ -37,6 +38,11 @@ class DoctrineProjectionPersistenceManager
      * @var DoctrineEntityManager
      */
     private $entityManager;
+
+    /**
+     * @var int
+     */
+    private $numberOfPendingChanges = 0;
 
     /**
      * @param DoctrineObjectManager $entityManager
@@ -68,6 +74,7 @@ class DoctrineProjectionPersistenceManager
     public function add($object)
     {
         $this->entityManager->persist($object);
+        $this->garbageCollection();
     }
 
     /**
@@ -89,6 +96,7 @@ class DoctrineProjectionPersistenceManager
         } catch (\Exception $exception) {
             throw new Exception('Could not persist updated object of type "' . get_class($object) . '"', 1474531485464, $exception);
         }
+        $this->garbageCollection();
     }
 
     /**
@@ -100,6 +108,7 @@ class DoctrineProjectionPersistenceManager
     public function remove($object)
     {
         $this->entityManager->remove($object);
+        $this->garbageCollection();
     }
 
     /**
@@ -129,7 +138,7 @@ class DoctrineProjectionPersistenceManager
 
         try {
             $this->entityManager->flush();
-        } catch (\Exception $exception) {
+        } catch (ORMException $exception) {
             $this->systemLogger->logException($exception);
             $connection = $this->entityManager->getConnection();
             $connection->close();
@@ -137,6 +146,22 @@ class DoctrineProjectionPersistenceManager
             $this->systemLogger->log('Reconnected the Doctrine EntityManager to the persistence backend.', LOG_INFO);
             $this->entityManager->flush();
         }
+    }
+
+    /**
+     * Persists all pending changes and clears the Doctrine EntityManager if there are more than 100 pending changes
+     *
+     * @return void
+     */
+    private function garbageCollection()
+    {
+        $this->numberOfPendingChanges ++;
+        if ($this->numberOfPendingChanges < 100) {
+            return;
+        }
+        $this->numberOfPendingChanges = 0;
+        $this->persistAll();
+        $this->entityManager->clear();
     }
 
     /**
