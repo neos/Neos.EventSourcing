@@ -220,7 +220,52 @@ All the wiring between event is done automatically, if you respect the following
 
 ## EventStore
 
-See package **Neos.EventStore**.
+Currently the event store support a doctrine based storage. You can implement custom storage implementation. 
+ 
+[TODO]
+
+### EventStore Middelware
+
+You can implement before/after middleware around the event store, like this::
+
+    class LoggingLayer implements EventStoreLayerInterface
+    {
+        /**
+         * @var SystemLoggerInterface
+         * @Flow\Inject
+         */
+        protected $logger;
+    
+        /**
+         * @param EventStoreCommit $commit
+         * @param \Closure $next
+         * @return EventStoreCommit
+         */
+        public function execute($commit, \Closure $next)
+        {
+            // Execute before
+            foreach ($commit->getEvents() as $event) {
+                $this->logger->log(vsprintf('message="Event pushed to the storage" eventType=%s streamName=%s', [
+                    $event->getType(),
+                    $commit->getStreamName()
+                ]));
+            }
+    
+            // Execute the next middleware
+            $response = $next($commit);
+            
+            // Execute after
+            foreach ($commit->getEvents() as $event) {
+                $this->logger->log(vsprintf('message="Event stored with success" eventType=%s streamName=%s', [
+                    $event->getType(),
+                    $commit->getStreamName()
+                ]));
+            }
+    
+            // Return the response
+            return $response;
+        }
+    }
 
 ## Message
 

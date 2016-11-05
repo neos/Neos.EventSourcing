@@ -11,7 +11,6 @@ namespace Neos\Cqrs\EventStore\Middleware;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventWithMetadata;
 use Neos\Cqrs\EventStore\EventStoreCommit;
 use Neos\Cqrs\Middleware\MiddlewareLayers;
 use TYPO3\Flow\Annotations as Flow;
