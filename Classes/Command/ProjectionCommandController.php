@@ -71,20 +71,25 @@ class ProjectionCommandController extends CommandController
      */
     public function describeCommand($projection)
     {
-        $projection = $this->projectionManager->getProjection($projection);
-        $this->outputLine('<b>PROJECTION:</b>');
-        $this->outputLine('  <i>%s</i>', [$projection->getFullIdentifier()]);
-        $this->outputLine();
-        $this->outputLine('<b>REPLAY:</b>');
-        $this->outputLine('  %s projection:replay %s', [$this->getFlowInvocationString(), $projection->getShortIdentifier()]);
-        $this->outputLine();
-        $this->outputLine('<b>PROJECTOR:</b>');
-        $this->outputLine('  %s', [$projection->getProjectorClassName()]);
-        $this->outputLine();
+        try {
+            $projection = $this->projectionManager->getProjection($projection);
+            $this->outputLine('<b>PROJECTION:</b>');
+            $this->outputLine('  <i>%s</i>', [$projection->getFullIdentifier()]);
+            $this->outputLine();
+            $this->outputLine('<b>REPLAY:</b>');
+            $this->outputLine('  %s projection:replay %s', [$this->getFlowInvocationString(), $projection->getShortIdentifier()]);
+            $this->outputLine();
+            $this->outputLine('<b>PROJECTOR:</b>');
+            $this->outputLine('  %s', [$projection->getProjectorClassName()]);
+            $this->outputLine();
 
-        $this->outputLine('<b>HANDLED EVENT TYPES:</b>');
-        foreach ($projection->getEventTypes() as $eventType) {
-            $this->outputLine('  * %s', [$eventType]);
+            $this->outputLine('<b>HANDLED EVENT TYPES:</b>');
+            foreach ($projection->getEventTypes() as $eventType) {
+                $this->outputLine('  * %s', [$eventType]);
+            }
+        } catch (\Exception $e) {
+            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
+            $this->quit(1);
         }
     }
 

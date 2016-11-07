@@ -88,6 +88,8 @@ class ProjectionManager
     }
 
     /**
+     * Replay events of the specified projection
+     *
      * @param string $projectionIdentifier
      * @return void
      */
