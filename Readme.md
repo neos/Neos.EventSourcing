@@ -59,11 +59,7 @@ separate packages for more flexibility.
 
 ### Command
 
-* [x] **Command**: implement your own based on ```CommandInterface```
-
-Your command must simply implement the ```CommandInterface```.
-
-    class ConfirmOrder implements CommandInterface
+    final class ConfirmOrder
     {
         /**
          * @var string
@@ -90,14 +86,10 @@ Your command must simply implement the ```CommandInterface```.
 
 ### CommandHandler
 
-* [x] **CommandHandler**: implement your own based on ```CommandHandlerInterface```
-
-Your command must simply implement the ```CommandHandlerInterface```.
-
     /**
      * @Flow\Scope("singleton")
      */
-    class ButtonCommandHandler implements CommandHandlerInterface
+    class ButtonCommandHandler
     {
         /**
          * @var ButtonRepository
