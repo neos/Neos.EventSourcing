@@ -33,5 +33,5 @@ interface ProjectorInterface extends EventListenerInterface
      * @return void
      * @api
      */
-    public function drop();
+    public function reset();
 }

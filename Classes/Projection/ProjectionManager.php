@@ -99,9 +99,7 @@ class ProjectionManager
         $projection = $this->getProjection($projectionIdentifier);
 
         $projector = $this->objectManager->get($projection->getProjectorClassName());
-        if ($projector instanceof ProjectorInterface) {
-            $projector->drop();
-        }
+        $projector->reset();
 
         $filter = new EventTypesFilter($projection->getEventTypes());
 
