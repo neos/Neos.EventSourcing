@@ -75,6 +75,4 @@ class Projection
     {
         return $this->eventTypes;
     }
-
-
 }
