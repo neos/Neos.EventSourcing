@@ -27,7 +27,6 @@ use TYPO3\Flow\Reflection\ReflectionService;
 class EventListenerLocator
 {
     /**
-     * @Flow\Inject
      * @var ObjectManagerInterface
      */
     protected $objectManager;
@@ -42,6 +41,18 @@ class EventListenerLocator
      * @var array in the format ['<eventType>' => ['<listenerClassName>' => '<listenerMethodName>', '<listenerClassName2>' => '<listenerMethodName2>', ...]]
      */
     protected $mapping = [];
+
+    /**
+     * Injecting via setter injection because this resolver must also work during compile time, when proxy classes are
+     * not available.
+     *
+     * @param ObjectManagerInterface $objectManager
+     */
+    public function injectObjectManager(ObjectManagerInterface $objectManager)
+    {
+        $this->objectManager = $objectManager;
+    }
+
 
     /**
      * Register event listeners based on annotations
