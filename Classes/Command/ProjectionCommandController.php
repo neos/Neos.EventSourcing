@@ -96,7 +96,8 @@ class ProjectionCommandController extends CommandController
     /**
      * Replay projections
      *
-     * This command allows you to replay all relevant events for a given projection.
+     * This command allows you to replay all relevant events for one or all projections.
+     * You can specify the special identifier "all" for replaying _all_ existing projections.
      *
      * @param string $projection The projection identifier; see projection:list for possible options
      * @return void
@@ -104,7 +105,24 @@ class ProjectionCommandController extends CommandController
      */
     public function replayCommand($projection)
     {
-        $this->projectionManager->replay($projection);
+        $eventsCount = 0;
+
+        try {
+            if ($projection === 'all') {
+                foreach ($this->projectionManager->getProjections() as $projection) {
+                    $this->outputLine('Replaying events for %s ...', [$projection->getFullIdentifier()]);
+                    $eventsCount += $this->projectionManager->replay($projection->getFullIdentifier());
+                }
+            } else {
+                $projection = $this->projectionManager->getProjection($projection);
+                $this->outputLine('Replaying events for %s ...', [$projection->getFullIdentifier()]);
+                $eventsCount = $this->projectionManager->replay($projection);
+            }
+            $this->outputLine('Replayed %s events.', [$eventsCount]);
+        } catch (\Exception $e) {
+            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
+            $this->quit(1);
+        }
     }
 
     /**
