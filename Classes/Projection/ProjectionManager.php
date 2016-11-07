@@ -91,7 +91,7 @@ class ProjectionManager
      * Replay events of the specified projection
      *
      * @param string $projectionIdentifier
-     * @return integer Number of events which have been replayed
+     * @return int Number of events which have been replayed
      */
     public function replay(string $projectionIdentifier)
     {
