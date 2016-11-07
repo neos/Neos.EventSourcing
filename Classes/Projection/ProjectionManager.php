@@ -74,6 +74,8 @@ class ProjectionManager
     }
 
     /**
+     * Return all detected projections
+     *
      * @return Projection[]
      */
     public function getProjections()
@@ -81,10 +83,29 @@ class ProjectionManager
         return $this->projections;
     }
 
+    /**
+     * Returns information about a specific projection in form of a Projection DTO
+     *
+     * @param string $projectionIdentifier The short or full projection identifier
+     * @return Projection
+     */
     public function getProjection(string $projectionIdentifier): Projection
     {
         $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
         return $this->projections[$fullProjectionIdentifier];
+    }
+
+    /**
+     * Tells if the specified projection is currently empty
+     *
+     * @param string $projectionIdentifier
+     * @return bool
+     */
+    public function isProjectionEmpty(string $projectionIdentifier): bool
+    {
+        $projection = $this->getProjection($projectionIdentifier);
+        $projector = $this->objectManager->get($projection->getProjectorClassName());
+        return $projector->isEmpty();
     }
 
     /**

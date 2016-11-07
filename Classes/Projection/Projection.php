@@ -18,7 +18,6 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class Projection
 {
-
     /**
      * identifier in the form "<package.key>:<projection>"
      *
@@ -45,6 +44,14 @@ class Projection
      */
     private $eventTypes;
 
+    /**
+     * Projection constructor
+     *
+     * @param string $fullIdentifier
+     * @param string $shortIdentifier
+     * @param string $projectorClassName
+     * @param array $eventTypes
+     */
     public function __construct(string $fullIdentifier, string $shortIdentifier, string $projectorClassName, array $eventTypes)
     {
         $this->fullIdentifier = $fullIdentifier;
@@ -53,16 +60,25 @@ class Projection
         $this->eventTypes = $eventTypes;
     }
 
+    /**
+     * @return string
+     */
     public function getFullIdentifier(): string
     {
         return $this->fullIdentifier;
     }
 
+    /**
+     * @return string
+     */
     public function getShortIdentifier(): string
     {
         return $this->shortIdentifier;
     }
 
+    /**
+     * @return string
+     */
     public function getProjectorClassName(): string
     {
         return $this->projectorClassName;
