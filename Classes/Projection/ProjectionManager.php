@@ -97,6 +97,12 @@ class ProjectionManager
     {
         $eventCount = 0;
         $projection = $this->getProjection($projectionIdentifier);
+
+        $projector = $this->objectManager->get($projection->getProjectorClassName());
+        if ($projector instanceof ProjectorInterface) {
+            $projector->drop();
+        }
+
         $filter = new EventTypesFilter($projection->getEventTypes());
 
         foreach ($this->eventStore->get($filter) as $index => $eventWithMetadata) {

@@ -22,6 +22,16 @@ interface ProjectorInterface extends EventListenerInterface
      * Returns the class name of the (main) Read Model of the concrete projector
      *
      * @return string
+     * @api
      */
     public function getReadModelClassName(): string;
+
+    /**
+     * Removes all objects of this repository as if remove() was called for all of them.
+     * For usage in the concrete projector.
+     *
+     * @return void
+     * @api
+     */
+    public function drop();
 }

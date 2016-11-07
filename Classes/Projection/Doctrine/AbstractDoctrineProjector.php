@@ -105,8 +105,8 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
      * @return void
      * @api
      */
-    protected function drop()
-    {
-        $this->projectionPersistenceManager->drop($this->getReadModelClassName());
-    }
+   public function drop()
+   {
+       $this->projectionPersistenceManager->drop($this->getReadModelClassName());
+   }
 }
