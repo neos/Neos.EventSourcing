@@ -14,10 +14,7 @@ namespace Neos\Cqrs\EventStore;
 use Neos\Cqrs\Domain\EventSourcedAggregateRootInterface;
 use Neos\Cqrs\Domain\Exception\AggregateRootNotFoundException;
 use Neos\Cqrs\Domain\RepositoryInterface;
-use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\Event\EventMetadata;
 use Neos\Cqrs\Event\EventPublisher;
-use Neos\Cqrs\Event\EventWithMetadata;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -88,15 +85,9 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
     final public function save(EventSourcedAggregateRootInterface $aggregate, int $expectedVersion = null)
     {
         $streamName = $this->streamNameResolver->getStreamNameForAggregate($aggregate);
-        $uncommittedEvents = $aggregate->pullUncommittedEvents();
-        $version = $aggregate->getReconstitutionVersion() + 1;
-        $uncommittedEventsWithMetadata = array_map(function (EventInterface $event) use (&$version) {
-            return new EventWithMetadata($event, new EventMetadata([EventMetadata::VERSION => $version ++]));
-        }, $uncommittedEvents);
-
         if ($expectedVersion === null) {
             $expectedVersion = $aggregate->getReconstitutionVersion();
         }
-        $this->eventPublisher->publishMany($streamName, $uncommittedEventsWithMetadata, $expectedVersion);
+        $this->eventPublisher->publishMany($streamName, $aggregate->pullUncommittedEvents(), $expectedVersion);
     }
 }

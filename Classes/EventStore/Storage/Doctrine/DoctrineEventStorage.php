@@ -21,6 +21,7 @@ use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
 use Neos\Cqrs\EventStore\ExpectedVersion;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
+use Neos\Cqrs\EventStore\StoredEvent;
 use Neos\Cqrs\EventStore\StreamNameFilter;
 use Neos\Cqrs\EventStore\WritableEvents;
 use TYPO3\Flow\Annotations as Flow;
@@ -82,15 +83,16 @@ class DoctrineEventStorage implements EventStorageInterface
      * @param string $streamName
      * @param WritableEvents $events
      * @param int $expectedVersion
-     * @return void
+     * @return StoredEvent[]
      * @throws ConcurrencyException|\Exception
      */
-    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)
+    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array
     {
         $this->connection->beginTransaction();
         $actualVersion = $this->getStreamVersion(new StreamNameFilter($streamName));
         $this->verifyExpectedVersion($actualVersion, $expectedVersion);
 
+        $storedEvents = [];
         foreach ($events as $event) {
             $this->connection->insert(
                 $this->connectionFactory->getStreamTableName(),
@@ -107,8 +109,11 @@ class DoctrineEventStorage implements EventStorageInterface
                     'recordedat' => Type::DATETIME,
                 ]
             );
+            $eventIdentifier = $this->connection->lastInsertId();
+            $storedEvents[] = new StoredEvent($eventIdentifier, $event->getType(), $event->getData(), $event->getMetadata(), $actualVersion, $this->now);
         }
         $this->connection->commit();
+        return $storedEvents;
     }
 
     /**

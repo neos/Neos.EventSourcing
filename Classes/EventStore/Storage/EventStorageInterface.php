@@ -14,6 +14,7 @@ namespace Neos\Cqrs\EventStore\Storage;
 use Neos\Cqrs\EventStore\EventStream;
 use Neos\Cqrs\EventStore\EventStreamFilterInterface;
 use Neos\Cqrs\EventStore\ExpectedVersion;
+use Neos\Cqrs\EventStore\StoredEvent;
 use Neos\Cqrs\EventStore\WritableEvents;
 
 /**
@@ -21,7 +22,17 @@ use Neos\Cqrs\EventStore\WritableEvents;
  */
 interface EventStorageInterface
 {
+    /**
+     * @param EventStreamFilterInterface $filter
+     * @return EventStream
+     */
     public function load(EventStreamFilterInterface $filter): EventStream;
 
-    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY);
+    /**
+     * @param string $streamName
+     * @param WritableEvents $events
+     * @param int $expectedVersion
+     * @return StoredEvent[]
+     */
+    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array;
 }

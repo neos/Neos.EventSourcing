@@ -45,8 +45,14 @@ class EventStore
         return $eventStream;
     }
 
-    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY)
+    /**
+     * @param string $streamName
+     * @param WritableEvents $events
+     * @param int $expectedVersion
+     * @return StoredEvent[]
+     */
+    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array
     {
-        $this->storage->commit($streamName, $events, $expectedVersion);
+        return $this->storage->commit($streamName, $events, $expectedVersion);
     }
 }

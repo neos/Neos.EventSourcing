@@ -12,8 +12,8 @@ namespace Neos\Cqrs\EventListener;
  */
 
 use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\Event\EventMetadata;
 use Neos\Cqrs\Event\EventTypeResolver;
+use Neos\Cqrs\EventStore\StoredEvent;
 use Neos\Cqrs\Exception;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
@@ -63,14 +63,13 @@ class EventListenerLocator
     }
 
     /**
-     * Returns event listeners for the given event (type)
+     * Returns event listeners for the given event type
      *
-     * @param EventInterface $event
+     * @param string $eventType
      * @return \callable[]
      */
-    public function getListeners(EventInterface $event): array
+    public function getListeners(string $eventType): array
     {
-        $eventType = $this->eventTypeService->getEventType($event);
         if (!isset($this->mapping[$eventType])) {
             return [];
         }
@@ -82,13 +81,15 @@ class EventListenerLocator
     }
 
     /**
-     * @param EventInterface $event
+     * Returns a single listener for the given $eventType and $listenerClassName, or null if the given listener
+     * does not handle events of the specified type.
+     *
+     * @param string $eventType
      * @param string $listenerClassName
      * @return \callable|null
      */
-    public function getListener(EventInterface $event, string $listenerClassName)
+    public function getListener(string $eventType, string $listenerClassName)
     {
-        $eventType = $this->eventTypeService->getEventType($event);
         if (!isset($this->mapping[$eventType][$listenerClassName])) {
             return null;
         }
@@ -103,8 +104,8 @@ class EventListenerLocator
     {
         $eventTypes = [];
         array_walk($this->mapping, function ($listenerMappings, $eventType) use (&$eventTypes, $listenerClassName) {
-            foreach (array_keys($listenerMappings) as $listenerMappingClassname) {
-                if ($listenerMappingClassname === $listenerClassName) {
+            foreach (array_keys($listenerMappings) as $listenerMappingClassName) {
+                if ($listenerMappingClassName === $listenerClassName) {
                     $eventTypes[] = $eventType;
                 }
             }
@@ -136,7 +137,7 @@ class EventListenerLocator
                 $parameters = array_values($reflectionService->getMethodParameters($listenerClassName, $listenerMethodName));
 
                 if (!isset($parameters[0])) {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionally a EventMetadata', $listenerClassName, $listenerMethodName), 1472500228);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionally a StoredEvent', $listenerClassName, $listenerMethodName), 1472500228);
                 }
                 $eventClassName = $parameters[0]['class'];
                 if (!$reflectionService->isClassImplementationOf($eventClassName, EventInterface::class)) {
@@ -144,9 +145,9 @@ class EventListenerLocator
                 }
 
                 if (isset($parameters[1])) {
-                    $metaDataType = $parameters[1]['class'];
-                    if ($metaDataType !== EventMetadata::class) {
-                        throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to EventMetadata', $listenerClassName, $listenerMethodName), 1472504303);
+                    $storedEventDataType = $parameters[1]['class'];
+                    if ($storedEventDataType !== StoredEvent::class) {
+                        throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to StoredEvent but expects an instance of "%s"', $listenerClassName, $listenerMethodName, $storedEventDataType), 1472504303);
                     }
                 }
                 $expectedMethodName = 'when' . (new \ReflectionClass($eventClassName))->getShortName();
