@@ -121,17 +121,22 @@ class ProjectionCommandController extends CommandController
      *
      * This command allows you to replay all relevant events for all known projections.
      *
+     * @param bool $onlyEmpty If specified, only projections which are currently empty will be considered
      * @return void
      * @see neos.cqrs:projection:replay
      * @see neos.cqrs:projection:list
      */
-    public function replayAllCommand()
+    public function replayAllCommand($onlyEmpty = false)
     {
         $eventsCount = 0;
         try {
             foreach ($this->projectionManager->getProjections() as $projection) {
-                $this->outputLine('Replaying events for projection "%s" ...', [$projection->getFullIdentifier()]);
-                $eventsCount += $this->projectionManager->replay($projection->getFullIdentifier());
+                if ($onlyEmpty && !$this->projectionManager->isProjectionEmpty($projection->getFullIdentifier())) {
+                    $this->outputLine('Skipping non-empty projection "%s" ...', [$projection->getFullIdentifier()]);
+                } else {
+                    $this->outputLine('Replaying events for projection "%s" ...', [$projection->getFullIdentifier()]);
+                    $eventsCount += $this->projectionManager->replay($projection->getFullIdentifier());
+                }
             }
             $this->outputLine('Replayed %s events.', [$eventsCount]);
         } catch (\Exception $e) {

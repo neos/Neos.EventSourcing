@@ -124,6 +124,18 @@ class DoctrineProjectionPersistenceManager
     }
 
     /**
+     * Returns the number of read models stored in this projection.
+     *
+     * @param string $readModelClassName
+     * @return int
+     */
+    public function count(string $readModelClassName): int
+    {
+        $query = $this->entityManager->createQuery('SELECT COUNT(m) FROM ' . $readModelClassName . ' m');
+        return $query->getSingleScalarResult();
+    }
+
+    /**
      * Commits new, updated or removed read model objects which have been registered with add(), update() or remove().
      *
      * @return void
