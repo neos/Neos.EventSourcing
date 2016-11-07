@@ -91,12 +91,16 @@ class ProjectionManager
      * Replay events of the specified projection
      *
      * @param string $projectionIdentifier
-     * @return integer Number of events which have been replayed
+     * @return int Number of events which have been replayed
      */
     public function replay(string $projectionIdentifier)
     {
         $eventCount = 0;
         $projection = $this->getProjection($projectionIdentifier);
+
+        $projector = $this->objectManager->get($projection->getProjectorClassName());
+        $projector->reset();
+
         $filter = new EventTypesFilter($projection->getEventTypes());
 
         foreach ($this->eventStore->get($filter) as $index => $eventWithMetadata) {

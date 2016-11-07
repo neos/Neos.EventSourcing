@@ -73,20 +73,43 @@ class ProjectionCommandController extends CommandController
     {
         try {
             $projection = $this->projectionManager->getProjection($projection);
-            $this->outputLine('<b>PROJECTION:</b>');
-            $this->outputLine('  <i>%s</i>', [$projection->getFullIdentifier()]);
-            $this->outputLine();
-            $this->outputLine('<b>REPLAY:</b>');
-            $this->outputLine('  %s projection:replay %s', [$this->getFlowInvocationString(), $projection->getShortIdentifier()]);
-            $this->outputLine();
-            $this->outputLine('<b>PROJECTOR:</b>');
-            $this->outputLine('  %s', [$projection->getProjectorClassName()]);
-            $this->outputLine();
+        } catch (\InvalidArgumentException $e) {
+            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
+            $this->quit(1);
+        }
 
-            $this->outputLine('<b>HANDLED EVENT TYPES:</b>');
-            foreach ($projection->getEventTypes() as $eventType) {
-                $this->outputLine('  * %s', [$eventType]);
-            }
+        $this->outputLine('<b>PROJECTION:</b>');
+        $this->outputLine('  <i>%s</i>', [$projection->getFullIdentifier()]);
+        $this->outputLine();
+        $this->outputLine('<b>REPLAY:</b>');
+        $this->outputLine('  %s projection:replay %s', [$this->getFlowInvocationString(), $projection->getShortIdentifier()]);
+        $this->outputLine();
+        $this->outputLine('<b>PROJECTOR:</b>');
+        $this->outputLine('  %s', [$projection->getProjectorClassName()]);
+        $this->outputLine();
+
+        $this->outputLine('<b>HANDLED EVENT TYPES:</b>');
+        foreach ($projection->getEventTypes() as $eventType) {
+            $this->outputLine('  * %s', [$eventType]);
+        }
+    }
+
+    /**
+     * Replay a projection
+     *
+     * This command allows you to replay all relevant events for one specific projection.
+     *
+     * @param string $projection The projection identifier; see projection:list for possible options
+     * @return void
+     * @see neos.cqrs:projection:list
+     * @see neos.cqrs:projection:replayall
+     */
+    public function replayCommand($projection)
+    {
+        try {
+            $this->outputLine('Replaying events for projection "%s" ...', [$projection]);
+            $eventsCount = $this->projectionManager->replay($projection);
+            $this->outputLine('Replayed %s events.', [$eventsCount]);
         } catch (\Exception $e) {
             $this->outputLine('<error>%s</error>', [$e->getMessage()]);
             $this->quit(1);
@@ -94,29 +117,21 @@ class ProjectionCommandController extends CommandController
     }
 
     /**
-     * Replay projections
+     * Replay all projections
      *
-     * This command allows you to replay all relevant events for one or all projections.
-     * You can specify the special identifier "all" for replaying _all_ existing projections.
+     * This command allows you to replay all relevant events for all known projections.
      *
-     * @param string $projection The projection identifier; see projection:list for possible options
      * @return void
+     * @see neos.cqrs:projection:replay
      * @see neos.cqrs:projection:list
      */
-    public function replayCommand($projection)
+    public function replayAllCommand()
     {
         $eventsCount = 0;
-
         try {
-            if ($projection === 'all') {
-                foreach ($this->projectionManager->getProjections() as $projection) {
-                    $this->outputLine('Replaying events for %s ...', [$projection->getFullIdentifier()]);
-                    $eventsCount += $this->projectionManager->replay($projection->getFullIdentifier());
-                }
-            } else {
-                $projection = $this->projectionManager->getProjection($projection);
-                $this->outputLine('Replaying events for %s ...', [$projection->getFullIdentifier()]);
-                $eventsCount = $this->projectionManager->replay($projection);
+            foreach ($this->projectionManager->getProjections() as $projection) {
+                $this->outputLine('Replaying events for projection "%s" ...', [$projection->getFullIdentifier()]);
+                $eventsCount += $this->projectionManager->replay($projection->getFullIdentifier());
             }
             $this->outputLine('Replayed %s events.', [$eventsCount]);
         } catch (\Exception $e) {
