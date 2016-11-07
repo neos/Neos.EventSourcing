@@ -88,18 +88,23 @@ class ProjectionManager
     }
 
     /**
+     * Replay events of the specified projection
+     *
      * @param string $projectionIdentifier
-     * @return void
+     * @return integer Number of events which have been replayed
      */
     public function replay(string $projectionIdentifier)
     {
+        $eventCount = 0;
         $projection = $this->getProjection($projectionIdentifier);
         $filter = new EventTypesFilter($projection->getEventTypes());
 
         foreach ($this->eventStore->get($filter) as $index => $eventWithMetadata) {
             $listener = $this->eventListenerLocator->getListener($eventWithMetadata->getEvent(), $projection->getProjectorClassName());
             call_user_func($listener, $eventWithMetadata->getEvent(), $eventWithMetadata->getMetadata());
+            $eventCount ++;
         }
+        return $eventCount;
     }
 
 //    /**

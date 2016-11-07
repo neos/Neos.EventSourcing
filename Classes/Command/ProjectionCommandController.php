@@ -36,6 +36,11 @@ class ProjectionCommandController extends CommandController
     protected $packageManager;
 
     /**
+     * List all projections
+     *
+     * This command displays a list of all projections and their respective short projection identifier which can
+     * be used in the other projection commands.
+     *
      * @return void
      */
     public function listCommand()
@@ -49,54 +54,90 @@ class ProjectionCommandController extends CommandController
                 $this->outputLine('PACKAGE "%s":', array(strtoupper($packageKey)));
                 $this->outputLine(str_repeat('-', $this->output->getMaximumLineLength()));
             }
-            $this->outputLine('%-2s%-40s %s', array('', $projection->getShortIdentifier(), $this->truncate($projection->getProjectorClassName())));
+            $this->outputLine('%-2s%-40s %s', array('', $projection->getShortIdentifier(), $this->shortenText($projection->getProjectorClassName())));
         }
         $this->outputLine();
     }
 
     /**
-     * @param string $projection
+     * Describe a projection
+     *
+     * This command displays detailed information about a specific projection, including the projector class name
+     * and the event types which are processed by this projector.
+     *
+     * @param string $projection The projection identifier; see projection:list for possible options
      * @return void
+     * @see neos.cqrs:projection:list
      */
     public function describeCommand($projection)
     {
-        $projection = $this->projectionManager->getProjection($projection);
-        $this->outputLine('<b>PROJECTION:</b>');
-        $this->outputLine('  <i>%s</i>', [$projection->getFullIdentifier()]);
-        $this->outputLine();
-        $this->outputLine('<b>REPLAY:</b>');
-        $this->outputLine('  %s projetion:replay %s', [$this->getFlowInvocationString(), $projection->getShortIdentifier()]);
-        $this->outputLine();
-        $this->outputLine('<b>PROJECTOR:</b>');
-        $this->outputLine('  %s', [$projection->getProjectorClassName()]);
-        $this->outputLine();
+        try {
+            $projection = $this->projectionManager->getProjection($projection);
+            $this->outputLine('<b>PROJECTION:</b>');
+            $this->outputLine('  <i>%s</i>', [$projection->getFullIdentifier()]);
+            $this->outputLine();
+            $this->outputLine('<b>REPLAY:</b>');
+            $this->outputLine('  %s projection:replay %s', [$this->getFlowInvocationString(), $projection->getShortIdentifier()]);
+            $this->outputLine();
+            $this->outputLine('<b>PROJECTOR:</b>');
+            $this->outputLine('  %s', [$projection->getProjectorClassName()]);
+            $this->outputLine();
 
-        $this->outputLine('<b>HANDLED EVENT TYPES:</b>');
-        foreach ($projection->getEventTypes() as $eventType) {
-            $this->outputLine('  * %s', [$eventType]);
+            $this->outputLine('<b>HANDLED EVENT TYPES:</b>');
+            foreach ($projection->getEventTypes() as $eventType) {
+                $this->outputLine('  * %s', [$eventType]);
+            }
+        } catch (\Exception $e) {
+            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
+            $this->quit(1);
         }
     }
 
     /**
-     * @param string $text
-     * @param int $maximumCharacters
-     * @return mixed
+     * Replay projections
+     *
+     * This command allows you to replay all relevant events for one or all projections.
+     * You can specify the special identifier "all" for replaying _all_ existing projections.
+     *
+     * @param string $projection The projection identifier; see projection:list for possible options
+     * @return void
+     * @see neos.cqrs:projection:list
      */
-    private function truncate($text, $maximumCharacters = 36)
+    public function replayCommand($projection)
+    {
+        $eventsCount = 0;
+
+        try {
+            if ($projection === 'all') {
+                foreach ($this->projectionManager->getProjections() as $projection) {
+                    $this->outputLine('Replaying events for %s ...', [$projection->getFullIdentifier()]);
+                    $eventsCount += $this->projectionManager->replay($projection->getFullIdentifier());
+                }
+            } else {
+                $projection = $this->projectionManager->getProjection($projection);
+                $this->outputLine('Replaying events for %s ...', [$projection->getFullIdentifier()]);
+                $eventsCount = $this->projectionManager->replay($projection);
+            }
+            $this->outputLine('Replayed %s events.', [$eventsCount]);
+        } catch (\Exception $e) {
+            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
+            $this->quit(1);
+        }
+    }
+
+    /**
+     * Shortens the given text by removing characters from the middle
+     *
+     * @param string $text Text to shorten
+     * @param int $maximumCharacters Maximum of characters
+     * @return string
+     */
+    private function shortenText($text, $maximumCharacters = 36)
     {
         $length = strlen($text);
         if ($length <= $maximumCharacters) {
             return $text;
         }
         return substr_replace($text, '...', ($maximumCharacters - 3) / 2, $length - $maximumCharacters + 3);
-    }
-
-    /**
-     * @param string $identifier
-     * @return void
-     */
-    public function replayCommand($identifier)
-    {
-        $this->projectionManager->replay($identifier);
     }
 }
