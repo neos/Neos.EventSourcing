@@ -32,7 +32,6 @@ class EventListenerLocator
     protected $objectManager;
 
     /**
-     * @Flow\Inject
      * @var EventTypeResolver
      */
     protected $eventTypeService;
@@ -53,6 +52,16 @@ class EventListenerLocator
         $this->objectManager = $objectManager;
     }
 
+    /**
+     * Injecting via setter injection because this resolver must also work during compile time, when proxy classes are
+     * not available.
+     *
+     * @param EventTypeResolver $eventTypeResolver
+     */
+    public function injectEventTypeResolver(EventTypeResolver $eventTypeResolver)
+    {
+        $this->eventTypeService = $eventTypeResolver;
+    }
 
     /**
      * Register event listeners based on annotations
