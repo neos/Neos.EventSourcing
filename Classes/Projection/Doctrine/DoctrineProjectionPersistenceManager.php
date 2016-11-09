@@ -57,10 +57,10 @@ class DoctrineProjectionPersistenceManager
      * Returns an object with the given $identifier from persistence.
      *
      * @param string $className
-     * @param string $identifier
+     * @param mixed $identifier
      * @return object
      */
-    public function get(string $className, string $identifier)
+    public function get(string $className, $identifier)
     {
         return $this->entityManager->find($className, $identifier);
     }
