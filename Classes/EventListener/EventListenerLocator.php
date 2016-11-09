@@ -13,7 +13,7 @@ namespace Neos\Cqrs\EventListener;
 
 use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventTypeResolver;
-use Neos\Cqrs\EventStore\StoredEvent;
+use Neos\Cqrs\EventStore\RawEvent;
 use Neos\Cqrs\Exception;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
@@ -146,7 +146,7 @@ class EventListenerLocator
                 $parameters = array_values($reflectionService->getMethodParameters($listenerClassName, $listenerMethodName));
 
                 if (!isset($parameters[0])) {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionally a StoredEvent', $listenerClassName, $listenerMethodName), 1472500228);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, must accept an EventInterface and optionally a RawEvent', $listenerClassName, $listenerMethodName), 1472500228);
                 }
                 $eventClassName = $parameters[0]['class'];
                 if (!$reflectionService->isClassImplementationOf($eventClassName, EventInterface::class)) {
@@ -154,9 +154,9 @@ class EventListenerLocator
                 }
 
                 if (isset($parameters[1])) {
-                    $storedEventDataType = $parameters[1]['class'];
-                    if ($storedEventDataType !== StoredEvent::class) {
-                        throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to StoredEvent but expects an instance of "%s"', $listenerClassName, $listenerMethodName, $storedEventDataType), 1472504303);
+                    $rawEventDataType = $parameters[1]['class'];
+                    if ($rawEventDataType !== RawEvent::class) {
+                        throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the second parameter should be cast to RawEvent but expects an instance of "%s"', $listenerClassName, $listenerMethodName, $rawEventDataType), 1472504303);
                     }
                 }
                 $expectedMethodName = 'when' . (new \ReflectionClass($eventClassName))->getShortName();

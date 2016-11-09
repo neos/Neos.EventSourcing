@@ -62,7 +62,7 @@ final class EventStream implements \Iterator
     }
 
     /**
-     * @return EventTransport
+     * @return EventAndRawEvent
      */
     public function current()
     {
@@ -70,12 +70,12 @@ final class EventStream implements \Iterator
         $configuration->allowAllProperties();
         $configuration->forProperty('*')->allowAllProperties();
 
-        /** @var StoredEvent $storedEvent */
-        $storedEvent = $this->streamIterator->current();
-        $eventClassName = $this->eventTypeResolver->getEventClassNameByType($storedEvent->getType());
-        return new EventTransport(
-            $storedEvent,
-            $this->propertyMapper->convert($storedEvent->getPayload(), $eventClassName, $configuration)
+        /** @var RawEvent $rawEvent */
+        $rawEvent = $this->streamIterator->current();
+        $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
+        return new EventAndRawEvent(
+            $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration),
+            $rawEvent
         );
     }
 

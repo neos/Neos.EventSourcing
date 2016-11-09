@@ -22,6 +22,11 @@ use TYPO3\Flow\Property\PropertyMappingConfiguration;
 
 /**
  * @Flow\Scope("singleton")
+ *
+ * Central authority for publishing events to the event store and all subscribed listeners.
+ * This class is used by the AbstractEventSourcedRepository, but it can also be used to publish events "manually":
+ *
+ *   $this->eventPublisher->publish('some-stream', new SomethingHasHappened());
  */
 class EventPublisher
 {
@@ -59,11 +64,13 @@ class EventPublisher
         $this->eventTypeResolver = $eventTypeResolver;
     }
 
-
     /**
+     * Publish a single $event to the event store and all subscribed listeners
+     *
      * @param string $streamName
      * @param EventInterface $event
      * @param int $expectedVersion
+     * @return void
      */
     public function publish(string $streamName, EventInterface $event, int $expectedVersion = ExpectedVersion::ANY)
     {
@@ -71,9 +78,12 @@ class EventPublisher
     }
 
     /**
+     * Publish the given $events as a single transaction to the event store and all subscribed listeners
+     *
      * @param string $streamName
      * @param EventInterface[] $events
      * @param int $expectedVersion
+     * @return void
      */
     public function publishMany(string $streamName, array $events, int $expectedVersion = ExpectedVersion::ANY)
     {
@@ -81,20 +91,20 @@ class EventPublisher
         foreach ($events as $event) {
             $type = $this->eventTypeResolver->getEventType($event);
             $metadata = [];
-            $this->emitPublishEvent($event, $metadata);
+            $this->emitBeforePublishingEvent($event, $metadata);
             $data = $this->propertyMapper->convert($event, 'array');
             $convertedEvents->append(new WritableEvent($type, $data, $metadata));
         }
-        $storedEvents = $this->eventStore->commit($streamName, $convertedEvents, $expectedVersion);
+        $rawEvents = $this->eventStore->commit($streamName, $convertedEvents, $expectedVersion);
 
         $configuration = new PropertyMappingConfiguration();
         $configuration->allowAllProperties();
         $configuration->forProperty('*')->allowAllProperties();
-        foreach ($storedEvents as $storedEvent) {
-            $eventClassName = $this->eventTypeResolver->getEventClassNameByType($storedEvent->getType());
-            $event = $this->propertyMapper->convert($storedEvent->getPayload(), $eventClassName, $configuration);
-            foreach ($this->eventListenerLocator->getListeners($storedEvent->getType()) as $listener) {
-                call_user_func($listener, $event, $storedEvent);
+        foreach ($rawEvents as $rawEvent) {
+            $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
+            $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
+            foreach ($this->eventListenerLocator->getListeners($rawEvent->getType()) as $listener) {
+                call_user_func($listener, $event, $rawEvent);
             }
         }
     }
@@ -105,7 +115,7 @@ class EventPublisher
      * @param array $metadata The events metadata, passed as reference so that it can be altered
      * @return void
      */
-    protected function emitPublishEvent(EventInterface $event, array &$metadata)
+    protected function emitBeforePublishingEvent(EventInterface $event, array &$metadata)
     {
     }
 }

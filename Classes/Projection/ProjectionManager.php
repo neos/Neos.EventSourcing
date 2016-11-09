@@ -131,9 +131,9 @@ class ProjectionManager
             return 0;
         }
         foreach ($eventStream as $eventTransport) {
-            $storedEvent = $eventTransport->getStoredEvent();
-            $listener = $this->eventListenerLocator->getListener($storedEvent->getType(), $projection->getProjectorClassName());
-            call_user_func($listener, $eventTransport->getEvent(), $storedEvent);
+            $rawEvent = $eventTransport->getRawEvent();
+            $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
+            call_user_func($listener, $eventTransport->getEvent(), $rawEvent);
             $eventCount ++;
         }
         return $eventCount;

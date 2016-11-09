@@ -49,7 +49,7 @@ class EventStore
      * @param string $streamName
      * @param WritableEvents $events
      * @param int $expectedVersion
-     * @return StoredEvent[]
+     * @return RawEvent[]
      */
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array
     {

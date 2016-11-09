@@ -12,7 +12,7 @@ namespace Neos\Cqrs\EventStore\Storage\Doctrine;
  */
 
 use Doctrine\DBAL\Driver\Statement;
-use Neos\Cqrs\EventStore\StoredEvent;
+use Neos\Cqrs\EventStore\RawEvent;
 
 /**
  * Stream Iterator for the doctrine based EventStore
@@ -46,7 +46,7 @@ final class DoctrineStreamIterator implements \Iterator
     }
 
     /**
-     * @return StoredEvent
+     * @return RawEvent
      */
     public function current()
     {
@@ -56,7 +56,7 @@ final class DoctrineStreamIterator implements \Iterator
         $payload = json_decode($this->currentEventData['payload'], true);
         $metadata = json_decode($this->currentEventData['metadata'], true);
         $recordedAt = new \DateTimeImmutable($this->currentEventData['recordedat']);
-        return new StoredEvent(
+        return new RawEvent(
             $this->currentEventData['id'],
             $this->currentEventData['type'],
             $payload,
