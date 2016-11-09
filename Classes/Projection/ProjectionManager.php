@@ -130,10 +130,10 @@ class ProjectionManager
         } catch (EventStreamNotFoundException $exception) {
             return 0;
         }
-        foreach ($eventStream as $eventTransport) {
-            $rawEvent = $eventTransport->getRawEvent();
+        foreach ($eventStream as $eventAndRawEvent) {
+            $rawEvent = $eventAndRawEvent->getRawEvent();
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
-            call_user_func($listener, $eventTransport->getEvent(), $rawEvent);
+            call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
         }
         return $eventCount;
