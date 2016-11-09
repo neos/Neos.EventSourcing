@@ -49,11 +49,11 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
      * Retrieves an object with the given $identifier.
      * For use in the concrete projector.
      *
-     * @param string $identifier
+     * @param mixed $identifier
      * @return object an instance of $this->readModelClassName or NULL if no matching object could be found
      * @api
      */
-    public function get(string $identifier)
+    public function get($identifier)
     {
         return $this->projectionPersistenceManager->get($this->getReadModelClassName(), $identifier);
     }
