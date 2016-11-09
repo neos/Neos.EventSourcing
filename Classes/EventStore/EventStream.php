@@ -11,8 +11,6 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventMetadata;
-use Neos\Cqrs\Event\EventWithMetadata;
 use Neos\Cqrs\Event\EventTypeResolver;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Property\PropertyMapper;
@@ -64,7 +62,7 @@ final class EventStream implements \Iterator
     }
 
     /**
-     * @return EventWithMetadata
+     * @return EventAndRawEvent
      */
     public function current()
     {
@@ -72,12 +70,12 @@ final class EventStream implements \Iterator
         $configuration->allowAllProperties();
         $configuration->forProperty('*')->allowAllProperties();
 
-        /** @var StoredEvent $storedEvent */
-        $storedEvent = $this->streamIterator->current();
-        $eventClassName = $this->eventTypeResolver->getEventClassNameByType($storedEvent->getType());
-        return new EventWithMetadata(
-            $this->propertyMapper->convert($storedEvent->getPayload(), $eventClassName, $configuration),
-            $this->propertyMapper->convert($storedEvent->getMetadata(), EventMetadata::class, $configuration)
+        /** @var RawEvent $rawEvent */
+        $rawEvent = $this->streamIterator->current();
+        $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
+        return new EventAndRawEvent(
+            $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration),
+            $rawEvent
         );
     }
 

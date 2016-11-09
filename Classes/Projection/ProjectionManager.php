@@ -15,6 +15,7 @@ use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventListener\EventListenerLocator;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\EventTypesFilter;
+use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cache\Frontend\VariableFrontend;
 use TYPO3\Flow\Object\ObjectManagerInterface;
@@ -124,9 +125,15 @@ class ProjectionManager
 
         $filter = new EventTypesFilter($projection->getEventTypes());
 
-        foreach ($this->eventStore->get($filter) as $index => $eventWithMetadata) {
-            $listener = $this->eventListenerLocator->getListener($eventWithMetadata->getEvent(), $projection->getProjectorClassName());
-            call_user_func($listener, $eventWithMetadata->getEvent(), $eventWithMetadata->getMetadata());
+        try {
+            $eventStream = $this->eventStore->get($filter);
+        } catch (EventStreamNotFoundException $exception) {
+            return 0;
+        }
+        foreach ($eventStream as $eventAndRawEvent) {
+            $rawEvent = $eventAndRawEvent->getRawEvent();
+            $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
+            call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
         }
         return $eventCount;

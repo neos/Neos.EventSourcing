@@ -11,7 +11,14 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-final class StoredEvent
+/**
+ * The raw event data including payload, metadata and technical meta information
+ *
+ * This class represents an event before it has been converted to an instance of EventInterface.
+ * It is used by the EventStream which converts it on-the-fly and it will be passed to any when*() event listener
+ * as optional argument.
+ */
+final class RawEvent
 {
     /**
      * @var string
