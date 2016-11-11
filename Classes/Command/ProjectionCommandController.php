@@ -36,6 +36,11 @@ class ProjectionCommandController extends CommandController
     protected $packageManager;
 
     /**
+     * @var array in the format ['<shortIdentifier>' => '<fullIdentifier>', ...]
+     */
+    private $shortProjectionIdentifiers;
+
+    /**
      * List all projections
      *
      * This command displays a list of all projections and their respective short projection identifier which can
@@ -54,7 +59,7 @@ class ProjectionCommandController extends CommandController
                 $this->outputLine('PACKAGE "%s":', array(strtoupper($packageKey)));
                 $this->outputLine(str_repeat('-', $this->output->getMaximumLineLength()));
             }
-            $this->outputLine('%-2s%-40s %s', array('', $projection->getShortIdentifier(), $this->shortenText($projection->getProjectorClassName())));
+            $this->outputLine('%-2s%-40s %s', array('', $this->getShortProjectionIdentifier($projection->getIdentifier()), $this->shortenText($projection->getProjectorClassName())));
         }
         $this->outputLine();
     }
@@ -79,10 +84,10 @@ class ProjectionCommandController extends CommandController
         }
 
         $this->outputLine('<b>PROJECTION:</b>');
-        $this->outputLine('  <i>%s</i>', [$projection->getFullIdentifier()]);
+        $this->outputLine('  <i>%s</i>', [$projection->getIdentifier()]);
         $this->outputLine();
         $this->outputLine('<b>REPLAY:</b>');
-        $this->outputLine('  %s projection:replay %s', [$this->getFlowInvocationString(), $projection->getShortIdentifier()]);
+        $this->outputLine('  %s projection:replay %s', [$this->getFlowInvocationString(), $this->getShortProjectionIdentifier($projection->getIdentifier())]);
         $this->outputLine();
         $this->outputLine('<b>PROJECTOR:</b>');
         $this->outputLine('  %s', [$projection->getProjectorClassName()]);
@@ -131,11 +136,11 @@ class ProjectionCommandController extends CommandController
         $eventsCount = 0;
         try {
             foreach ($this->projectionManager->getProjections() as $projection) {
-                if ($onlyEmpty && !$this->projectionManager->isProjectionEmpty($projection->getFullIdentifier())) {
-                    $this->outputLine('Skipping non-empty projection "%s" ...', [$projection->getFullIdentifier()]);
+                if ($onlyEmpty && !$this->projectionManager->isProjectionEmpty($projection->getIdentifier())) {
+                    $this->outputLine('Skipping non-empty projection "%s" ...', [$projection->getIdentifier()]);
                 } else {
-                    $this->outputLine('Replaying events for projection "%s" ...', [$projection->getFullIdentifier()]);
-                    $eventsCount += $this->projectionManager->replay($projection->getFullIdentifier());
+                    $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
+                    $eventsCount += $this->projectionManager->replay($projection->getIdentifier());
                 }
             }
             $this->outputLine('Replayed %s events.', [$eventsCount]);
@@ -143,6 +148,47 @@ class ProjectionCommandController extends CommandController
             $this->outputLine('<error>%s</error>', [$e->getMessage()]);
             $this->quit(1);
         }
+    }
+
+    /**
+     * Returns the shortest unambiguous projection identifier for a given $fullProjectionIdentifier
+     *
+     * @param string $fullProjectionIdentifier
+     * @return string
+     */
+    private function getShortProjectionIdentifier(string $fullProjectionIdentifier)
+    {
+        if ($this->shortProjectionIdentifiers === null) {
+            $projectionsByName = $projectionIdentifiers = [];
+            foreach ($this->projectionManager->getProjections() as $projection) {
+                $projectionIdentifiers[] = $projection->getIdentifier();
+                list($packageKey, $projectionName) = explode(':', $projection->getIdentifier());
+                if (!isset($projectionsByName[$projectionName])) {
+                    $projectionsByName[$projectionName] = [];
+                }
+                $projectionsByName[$projectionName][] = $packageKey;
+            }
+            $this->shortProjectionIdentifiers = [];
+            foreach ($projectionIdentifiers as $projectionIdentifier) {
+                list($packageKey, $projectionName) = explode(':', $projectionIdentifier);
+                if (count($projectionsByName[$projectionName]) === 1) {
+                    $this->shortProjectionIdentifiers[$projectionIdentifier] = $projectionName;
+                    continue;
+                }
+                $prefix = null;
+                foreach (array_reverse(explode('.', $packageKey)) as $packageKeyPart) {
+                    $prefix = $prefix === null ? $packageKeyPart : $packageKeyPart . '.' . $prefix;
+                    $matchingPackageKeys = array_filter($projectionsByName[$projectionName], function ($searchedPackageKey) use ($packageKey) {
+                        return $searchedPackageKey === $packageKey || substr($packageKey, -(strlen($searchedPackageKey) + 1)) === '.' . $searchedPackageKey;
+                    });
+                    if (count($matchingPackageKeys) === 1) {
+                        $this->shortProjectionIdentifiers[$projectionIdentifier] = $prefix . ':' . $projectionName;
+                        break;
+                    }
+                }
+            }
+        }
+        return isset($this->shortProjectionIdentifiers[$fullProjectionIdentifier]) ? $this->shortProjectionIdentifiers[$fullProjectionIdentifier] : $fullProjectionIdentifier;
     }
 
     /**

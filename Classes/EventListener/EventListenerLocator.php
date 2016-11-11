@@ -29,38 +29,26 @@ class EventListenerLocator
     /**
      * @var ObjectManagerInterface
      */
-    protected $objectManager;
+    private $objectManager;
 
     /**
      * @var EventTypeResolver
      */
-    protected $eventTypeService;
+    private $eventTypeService;
 
     /**
-     * @var array in the format ['<eventType>' => ['<listenerClassName>' => '<listenerMethodName>', '<listenerClassName2>' => '<listenerMethodName2>', ...]]
+     * @var array in the format ['<eventClassName>' => ['<listenerClassName>' => '<listenerMethodName>', '<listenerClassName2>' => '<listenerMethodName2>', ...]]
      */
-    protected $mapping = [];
+    private $mapping = [];
 
     /**
-     * Injecting via setter injection because this resolver must also work during compile time, when proxy classes are
-     * not available.
-     *
      * @param ObjectManagerInterface $objectManager
+     * @param EventTypeResolver $eventTypeService
      */
-    public function injectObjectManager(ObjectManagerInterface $objectManager)
+    public function __construct(ObjectManagerInterface $objectManager, EventTypeResolver $eventTypeService)
     {
         $this->objectManager = $objectManager;
-    }
-
-    /**
-     * Injecting via setter injection because this resolver must also work during compile time, when proxy classes are
-     * not available.
-     *
-     * @param EventTypeResolver $eventTypeResolver
-     */
-    public function injectEventTypeResolver(EventTypeResolver $eventTypeResolver)
-    {
-        $this->eventTypeService = $eventTypeResolver;
+        $this->eventTypeService = $eventTypeService;
     }
 
     /**
@@ -79,11 +67,12 @@ class EventListenerLocator
      */
     public function getListeners(string $eventType): array
     {
-        if (!isset($this->mapping[$eventType])) {
+        $eventClassName = $this->eventTypeService->getEventClassNameByType($eventType);
+        if (!isset($this->mapping[$eventClassName])) {
             return [];
         }
         $listeners = [];
-        array_walk($this->mapping[$eventType], function ($listenerMethodName, $listenerClassName) use (&$listeners) {
+        array_walk($this->mapping[$eventClassName], function ($listenerMethodName, $listenerClassName) use (&$listeners) {
             $listeners[] = [$this->objectManager->get($listenerClassName), $listenerMethodName];
         });
         return $listeners;
@@ -99,10 +88,11 @@ class EventListenerLocator
      */
     public function getListener(string $eventType, string $listenerClassName)
     {
-        if (!isset($this->mapping[$eventType][$listenerClassName])) {
+        $eventClassName = $this->eventTypeService->getEventClassNameByType($eventType);
+        if (!isset($this->mapping[$eventClassName][$listenerClassName])) {
             return null;
         }
-        return [$this->objectManager->get($listenerClassName), $this->mapping[$eventType][$listenerClassName]];
+        return [$this->objectManager->get($listenerClassName), $this->mapping[$eventClassName][$listenerClassName]];
     }
 
     /**
@@ -112,7 +102,8 @@ class EventListenerLocator
     public function getEventTypesByListenerClassName(string $listenerClassName): array
     {
         $eventTypes = [];
-        array_walk($this->mapping, function ($listenerMappings, $eventType) use (&$eventTypes, $listenerClassName) {
+        array_walk($this->mapping, function ($listenerMappings, $eventClassName) use (&$eventTypes, $listenerClassName) {
+            $eventType = $this->eventTypeService->getEventTypeByClassName($eventClassName);
             foreach (array_keys($listenerMappings) as $listenerMappingClassName) {
                 if ($listenerMappingClassName === $listenerClassName) {
                     $eventTypes[] = $eventType;
@@ -135,8 +126,6 @@ class EventListenerLocator
         $listeners = [];
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
-        /** @var EventTypeResolver $eventTypeResolver */
-        $eventTypeResolver = $objectManager->get(EventTypeResolver::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listenerClassName) {
             foreach (get_class_methods($listenerClassName) as $listenerMethodName) {
                 preg_match('/^when[A-Z].*$/', $listenerMethodName, $matches);
@@ -164,15 +153,13 @@ class EventListenerLocator
                     throw new Exception(sprintf('Invalid listener in %s::%s the method name is expected to be "%s"', $listenerClassName, $listenerMethodName, $expectedMethodName), 1476442394);
                 }
 
-                $eventType = $eventTypeResolver->getEventTypeByClassName($eventClassName);
-                if (!isset($listeners[$eventType])) {
-                    $listeners[$eventType] = [];
+                if (!isset($listeners[$eventClassName])) {
+                    $listeners[$eventClassName] = [];
                 }
-                $listeners[$eventType][$listenerClassName] = $listenerMethodName;
+                $listeners[$eventClassName][$listenerClassName] = $listenerMethodName;
             }
         }
 
-        ksort($listeners);
         return $listeners;
     }
 }

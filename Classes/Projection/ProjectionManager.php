@@ -62,7 +62,7 @@ class ProjectionManager
     protected $eventStore;
 
     /**
-     * @var Projection[]
+     * @var array in the format ['<projectionIdentifier>' => '<projectorClassName>', ...]
      */
     private $projections = [];
 
@@ -78,10 +78,11 @@ class ProjectionManager
      * Return all detected projections
      *
      * @return Projection[]
+     * @api
      */
     public function getProjections()
     {
-        return $this->projections;
+        return array_map([$this, 'getProjection'], array_keys($this->projections));
     }
 
     /**
@@ -89,11 +90,14 @@ class ProjectionManager
      *
      * @param string $projectionIdentifier The short or full projection identifier
      * @return Projection
+     * @api
      */
     public function getProjection(string $projectionIdentifier): Projection
     {
         $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
-        return $this->projections[$fullProjectionIdentifier];
+        $projectorClassName = $this->projections[$fullProjectionIdentifier];
+        $eventTypes = $this->eventListenerLocator->getEventTypesByListenerClassName($projectorClassName);
+        return new Projection($fullProjectionIdentifier, $projectorClassName, $eventTypes);
     }
 
     /**
@@ -104,8 +108,9 @@ class ProjectionManager
      */
     public function isProjectionEmpty(string $projectionIdentifier): bool
     {
-        $projection = $this->getProjection($projectionIdentifier);
-        $projector = $this->objectManager->get($projection->getProjectorClassName());
+        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
+        $projectorClassName = $this->projections[$fullProjectionIdentifier];
+        $projector = $this->objectManager->get($projectorClassName);
         return $projector->isEmpty();
     }
 
@@ -114,6 +119,7 @@ class ProjectionManager
      *
      * @param string $projectionIdentifier
      * @return int Number of events which have been replayed
+     * @api
      */
     public function replay(string $projectionIdentifier)
     {
@@ -224,9 +230,7 @@ class ProjectionManager
         $reflectionService = $objectManager->get(ReflectionService::class);
         /** @var PackageManagerInterface $packageManager */
         $packageManager = $objectManager->get(PackageManagerInterface::class);
-        /** @var EventListenerLocator $eventListenerLocator */
-        $eventListenerLocator = $objectManager->get(EventListenerLocator::class);
-        $projectionsByName = $projectorClassNamesByIdentifier = [];
+        $projections = [];
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(ProjectorInterface::class) as $projectorClassName) {
             $package = $packageManager->getPackageByClassName($projectorClassName);
             $projectionName = (new ClassReflection($projectorClassName))->getShortName();
@@ -236,40 +240,12 @@ class ProjectionManager
             $projectionName = strtolower($projectionName);
             $packageKey = strtolower($package->getPackageKey());
             $projectionIdentifier = $packageKey . ':' . $projectionName;
-            if (isset($projectorClassNamesByIdentifier[$projectionIdentifier])) {
+            if (isset($projections[$projectionIdentifier])) {
                 throw new \RuntimeException(sprintf('The projection identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $projectionIdentifier, $projectorClassNamesByIdentifier[$projectionIdentifier], $projectorClassName), 1476198478);
             }
-            $projectorClassNamesByIdentifier[$projectionIdentifier] = $projectorClassName;
-            if (!isset($projectionsByName[$projectionName])) {
-                $projectionsByName[$projectionName] = [];
-            }
-            $projectionsByName[$projectionName][] = $packageKey;
+            $projections[$projectionIdentifier] = $projectorClassName;
         }
-        ksort($projectorClassNamesByIdentifier);
-
-        $projections = [];
-        foreach ($projectorClassNamesByIdentifier as $fullProjectionIdentifier => $projectorClassName) {
-            list($packageKey, $projectionName) = explode(':', $fullProjectionIdentifier);
-            if (count($projectionsByName[$projectionName]) === 1) {
-                $shortIdentifier = $projectionName;
-            } else {
-                $shortIdentifier = $fullProjectionIdentifier;
-                $prefix = null;
-                foreach (array_reverse(explode('.', $packageKey)) as $packageKeyPart) {
-                    $prefix = $prefix === null ? $packageKeyPart : $packageKeyPart . '.' . $prefix;
-                    $matchingPackageKeys = array_filter($projectionsByName[$projectionName], function ($searchedPackageKey) use ($packageKey) {
-                        return $searchedPackageKey === $packageKey || substr($packageKey, -(strlen($searchedPackageKey) + 1)) === '.' . $searchedPackageKey;
-                    });
-                    if (count($matchingPackageKeys) === 1) {
-                        $shortIdentifier = $prefix . ':' . $projectionName;
-                        break;
-                    }
-                }
-            }
-            $projectionEventTypes = $eventListenerLocator->getEventTypesByListenerClassName($projectorClassName);
-            $projections[$fullProjectionIdentifier] = new Projection($fullProjectionIdentifier, $shortIdentifier, $projectorClassName, $projectionEventTypes);
-        }
-
+        ksort($projections);
         return $projections;
     }
 }
