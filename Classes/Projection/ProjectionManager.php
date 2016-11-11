@@ -121,7 +121,7 @@ class ProjectionManager
      * @return int Number of events which have been replayed
      * @api
      */
-    public function replay(string $projectionIdentifier)
+    public function replay(string $projectionIdentifier): int
     {
         $eventCount = 0;
         $projection = $this->getProjection($projectionIdentifier);
@@ -145,24 +145,34 @@ class ProjectionManager
         return $eventCount;
     }
 
-//    /**
-//     * @param string $projectionIdentifier
-//     * @return void
-//     */
-//    public function catchup(string $projectionIdentifier)
-//    {
-//        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
-//        $cacheId = md5($fullProjectionIdentifier);
-//        if (!$this->projectionCache->has($cacheId)) {
-//            $projectionState = [
-//                'revision' => 0
-//            ];
-//        } else {
-//            $projectionState = $this->projectionCache->get($cacheId);
-//            $projectionState['revision']++;
-//        }
-//        $this->projectionCache->set($cacheId, $projectionState);
-//    }
+    /**
+     * @param string $projectionIdentifier
+     * @return int Number of events which have been applied
+     */
+    public function catchup(string $projectionIdentifier): int
+    {
+        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
+        $cacheId = md5($fullProjectionIdentifier);
+        $lastAppliedSequenceNumber = $this->projectionCache->has($cacheId) ? (int)$this->projectionCache->get($cacheId) : 0;
+
+        $projection = $this->getProjection($projectionIdentifier);
+
+        $filter = new EventTypesFilter($projection->getEventTypes(), $lastAppliedSequenceNumber + 1);
+        $eventCount = 0;
+        try {
+            $eventStream = $this->eventStore->get($filter);
+        } catch (EventStreamNotFoundException $exception) {
+            return 0;
+        }
+        foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
+            $rawEvent = $eventAndRawEvent->getRawEvent();
+            $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
+            call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
+            $eventCount ++;
+            $this->projectionCache->set($cacheId, $sequenceNumber);
+        }
+        return $eventCount;
+    }
 
     /**
      * Takes a short projection identifier and returns the "full" identifier if valid

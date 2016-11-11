@@ -103,7 +103,7 @@ class EventPublisher
         foreach ($rawEvents as $rawEvent) {
             $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
             $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
-            foreach ($this->eventListenerLocator->getListeners($rawEvent->getType()) as $listener) {
+            foreach ($this->eventListenerLocator->getSynchronousListeners($rawEvent->getType()) as $listener) {
                 call_user_func($listener, $event, $rawEvent);
             }
         }

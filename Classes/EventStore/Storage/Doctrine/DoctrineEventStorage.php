@@ -165,5 +165,9 @@ class DoctrineEventStorage implements EventStorageInterface
             $query->andWhere('type IN (:eventTypes)');
             $query->setParameter('eventTypes', $filter->getEventTypes(), Connection::PARAM_STR_ARRAY);
         }
+        if ($filter->hasMinimumSequenceNumber()) {
+            $query->andWhere('id >= :minimumSequenceNumber');
+            $query->setParameter('minimumSequenceNumber', $filter->getMinimumSequenceNumber());
+        }
     }
 }

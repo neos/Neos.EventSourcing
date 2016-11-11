@@ -21,12 +21,18 @@ class EventTypesFilter implements EventStreamFilterInterface
      */
     private $eventTypes;
 
-    public function __construct(array $eventTypes)
+    /**
+     * @var int
+     */
+    private $minimumSequenceNumber = 0;
+
+    public function __construct(array $eventTypes, int $minimumSequenceNumber = 0)
     {
         if ($eventTypes === []) {
             throw new Exception('No type filter provided', 1478299912);
         }
         $this->eventTypes = $eventTypes;
+        $this->minimumSequenceNumber = $minimumSequenceNumber;
     }
 
     public function getStreamName(): string
@@ -60,5 +66,15 @@ class EventTypesFilter implements EventStreamFilterInterface
     public function hasEventTypes(): bool
     {
         return true;
+    }
+
+    public function getMinimumSequenceNumber(): int
+    {
+        return $this->minimumSequenceNumber;
+    }
+
+    public function hasMinimumSequenceNumber(): bool
+    {
+        return $this->minimumSequenceNumber > 0;
     }
 }
