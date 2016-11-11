@@ -26,13 +26,6 @@ class Projection
     private $fullIdentifier;
 
     /**
-     * Shortest unambiguous identifier in the form "<package.key>:<projection>", "<key>:<projection>" or "<projection">"
-     *
-     * @var string
-     */
-    private $shortIdentifier;
-
-    /**
      * @var string
      */
     private $projectorClassName;
@@ -45,17 +38,13 @@ class Projection
     private $eventTypes;
 
     /**
-     * Projection constructor
-     *
-     * @param string $fullIdentifier
-     * @param string $shortIdentifier
+     * @param string $identifier
      * @param string $projectorClassName
      * @param array $eventTypes
      */
-    public function __construct(string $fullIdentifier, string $shortIdentifier, string $projectorClassName, array $eventTypes)
+    public function __construct(string $identifier, string $projectorClassName, array $eventTypes)
     {
-        $this->fullIdentifier = $fullIdentifier;
-        $this->shortIdentifier = $shortIdentifier;
+        $this->fullIdentifier = $identifier;
         $this->projectorClassName = $projectorClassName;
         $this->eventTypes = $eventTypes;
     }
@@ -63,17 +52,9 @@ class Projection
     /**
      * @return string
      */
-    public function getFullIdentifier(): string
+    public function getIdentifier(): string
     {
         return $this->fullIdentifier;
-    }
-
-    /**
-     * @return string
-     */
-    public function getShortIdentifier(): string
-    {
-        return $this->shortIdentifier;
     }
 
     /**
