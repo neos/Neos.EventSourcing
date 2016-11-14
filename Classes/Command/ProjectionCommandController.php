@@ -14,6 +14,7 @@ namespace Neos\Cqrs\Command;
 use Neos\Cqrs\Projection\ProjectionManager;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cli\CommandController;
+use TYPO3\Flow\Core\Booting\Scripts;
 use TYPO3\Flow\Package\PackageManagerInterface;
 
 /**
@@ -34,6 +35,12 @@ class ProjectionCommandController extends CommandController
      * @var PackageManagerInterface
      */
     protected $packageManager;
+
+    /**
+     * @Flow\InjectConfiguration(package="TYPO3.Flow")
+     * @var array
+     */
+    protected $flowSettings;
 
     /**
      * @var array in the format ['<shortIdentifier>' => '<fullIdentifier>', ...]
@@ -170,6 +177,32 @@ class ProjectionCommandController extends CommandController
             $this->outputLine('<error>%s</error>', [$e->getMessage()]);
             $this->quit(1);
         }
+    }
+
+    /**
+     * Listen to new events for a given (asynchronous) projection
+     *
+     * @param string $projection The projection identifier; see projection:list for possible options
+     * @param int $lookupInterval Pause between lookups (in seconds)
+     * @return void
+     * @see neos.cqrs:projection:list
+     * @see neos.cqrs:projection:catchup
+     */
+    public function watchCommand($projection, $lookupInterval = 10)
+    {
+        try {
+            $projectionDto = $this->projectionManager->getProjection($projection);
+        } catch (\InvalidArgumentException $e) {
+            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
+            $this->quit(1);
+            return;
+        }
+
+        $this->outputLine('Watching events for projection "%s" ...', [$projectionDto->getIdentifier()]);
+        do {
+            Scripts::executeCommandAsync('neos.cqrs:projection:catchup', $this->flowSettings, ['projection' => $projectionDto->getIdentifier()]);
+            sleep($lookupInterval);
+        } while(true);
     }
 
     /**
