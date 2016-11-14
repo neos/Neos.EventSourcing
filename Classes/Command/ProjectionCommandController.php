@@ -160,11 +160,11 @@ class ProjectionCommandController extends CommandController
      * @see neos.cqrs:projection:list
      * @see neos.cqrs:projection:replay
      */
-    public function catchupCommand($projection)
+    public function catchUpCommand($projection)
     {
         try {
             $this->outputLine('Catching up projection "%s" ...', [$projection]);
-            $eventsCount = $this->projectionManager->catchup($projection);
+            $eventsCount = $this->projectionManager->catchUp($projection);
             $this->outputLine('Applied %d events.', [$eventsCount]);
         } catch (\Exception $e) {
             $this->outputLine('<error>%s</error>', [$e->getMessage()]);

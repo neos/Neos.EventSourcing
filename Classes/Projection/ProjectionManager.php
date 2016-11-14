@@ -149,7 +149,7 @@ class ProjectionManager
      * @param string $projectionIdentifier
      * @return int Number of events which have been applied
      */
-    public function catchup(string $projectionIdentifier): int
+    public function catchUp(string $projectionIdentifier): int
     {
         $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
         $cacheId = md5($fullProjectionIdentifier);
