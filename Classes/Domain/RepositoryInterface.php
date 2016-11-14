@@ -20,7 +20,7 @@ interface RepositoryInterface
      * @param string $identifier
      * @return AggregateRootInterface|null
      */
-    public function findByIdentifier($identifier);
+    public function get(string $identifier);
 
     /**
      * @param EventSourcedAggregateRootInterface $aggregate
