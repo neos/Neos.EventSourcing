@@ -200,7 +200,7 @@ class ProjectionCommandController extends CommandController
 
         $this->outputLine('Watching events for projection "%s" ...', [$projectionDto->getIdentifier()]);
         do {
-            Scripts::executeCommandAsync('neos.cqrs:projection:catchup', $this->flowSettings, ['projection' => $projectionDto->getIdentifier()]);
+            Scripts::executeCommand('neos.cqrs:projection:catchup', $this->flowSettings, false, ['projection' => $projectionDto->getIdentifier()]);
             sleep($lookupInterval);
         } while(true);
     }
