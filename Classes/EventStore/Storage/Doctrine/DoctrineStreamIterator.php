@@ -44,18 +44,13 @@ final class DoctrineStreamIterator implements \Iterator
     private $innerIterator;
 
     /**
-     * @var bool
-     */
-    private $rewound = false;
-
-    /**
      * @param QueryBuilder $queryBuilder
      */
     public function __construct(QueryBuilder $queryBuilder)
     {
         $this->queryBuilder = clone $queryBuilder;
         $this->queryBuilder->setMaxResults(self::BATCH_SIZE);
-        $this->rewind();
+        $this->fetchBatch();
     }
 
     /**
@@ -82,6 +77,7 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function next()
     {
+        $this->currentOffset ++;
         $this->innerIterator->next();
         if ($this->innerIterator->valid()) {
             return;
@@ -94,7 +90,7 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function key()
     {
-        return $this->innerIterator->current()['id'];
+        return $this->innerIterator->valid() ? $this->innerIterator->current()['id'] : null;
     }
 
     /**
@@ -110,11 +106,11 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function rewind()
     {
-        if ($this->rewound) {
+        if ($this->currentOffset === 0) {
             return;
         }
+        $this->currentOffset = 0;
         $this->fetchBatch();
-        $this->rewound = true;
     }
 
     /**
@@ -126,7 +122,6 @@ final class DoctrineStreamIterator implements \Iterator
     {
         $this->queryBuilder->setFirstResult($this->currentOffset);
         $rawResult = $this->queryBuilder->execute()->fetchAll();
-        $this->currentOffset += count($rawResult);
         $this->innerIterator = new \ArrayIterator($rawResult);
     }
 }
