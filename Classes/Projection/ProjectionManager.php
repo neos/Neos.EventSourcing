@@ -136,11 +136,12 @@ class ProjectionManager
         } catch (EventStreamNotFoundException $exception) {
             return 0;
         }
-        foreach ($eventStream as $eventAndRawEvent) {
+        foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
             $rawEvent = $eventAndRawEvent->getRawEvent();
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
+            $this->saveSequenceNumber($projection->getIdentifier(), $sequenceNumber);
         }
         return $eventCount;
     }
@@ -152,8 +153,7 @@ class ProjectionManager
     public function catchUp(string $projectionIdentifier): int
     {
         $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
-        $cacheId = md5($fullProjectionIdentifier);
-        $lastAppliedSequenceNumber = $this->projectionCache->has($cacheId) ? (int)$this->projectionCache->get($cacheId) : 0;
+        $lastAppliedSequenceNumber = $this->getHighestAppliedSequenceNumber($fullProjectionIdentifier);
 
         $projection = $this->getProjection($projectionIdentifier);
 
@@ -169,9 +169,38 @@ class ProjectionManager
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
-            $this->projectionCache->set($cacheId, $sequenceNumber);
+            $this->saveSequenceNumber($fullProjectionIdentifier, $sequenceNumber);
         }
         return $eventCount;
+    }
+
+    /**
+     * Returns the last seen sequence number for the given projection - defaults to 0
+     *
+     * @param string $fullProjectionIdentifier
+     * @return int
+     */
+    private function getHighestAppliedSequenceNumber(string $fullProjectionIdentifier): int
+    {
+        $cacheId = md5($fullProjectionIdentifier);
+        if (!$this->projectionCache->has($cacheId)) {
+            return 0;
+        }
+        return (int)$this->projectionCache->get($cacheId);
+    }
+
+    /**
+     * Saves the $sequenceNumber for the given projection
+     *
+     * @see catchUp()
+     *
+     * @param string $fullProjectionIdentifier
+     * @param int $sequenceNumber
+     */
+    private function saveSequenceNumber(string $fullProjectionIdentifier, int $sequenceNumber)
+    {
+        $cacheId = md5($fullProjectionIdentifier);
+        $this->projectionCache->set($cacheId, $sequenceNumber);
     }
 
     /**
