@@ -75,7 +75,7 @@ class DoctrineEventStorage implements EventStorageInterface
             ->orderBy('id', 'ASC');
         $this->applyEventStreamFilter($query, $filter);
 
-        $streamIterator = new DoctrineStreamIterator($query->execute());
+        $streamIterator = new DoctrineStreamIterator($query);
         return new EventStream($streamIterator, $this->getStreamVersion($filter));
     }
 
