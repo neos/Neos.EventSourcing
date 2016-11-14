@@ -86,8 +86,8 @@ class EventListenerLocator
      */
     public function getSynchronousListeners(string $eventType): array
     {
-        return array_filter($this->getListeners($eventType), function(array $listener) {
-            return (!$listener[0] instanceof AsyncEventListenerInterface);
+        return array_filter($this->getListeners($eventType), function (array $listener) {
+            return (!$listener[0] instanceof AsynchronousEventListenerInterface);
         });
     }
 
@@ -99,8 +99,8 @@ class EventListenerLocator
      */
     public function getAsynchronousListeners(string $eventType): array
     {
-        return array_filter($this->getListeners($eventType), function(array $listener) {
-            return ($listener[0] instanceof AsyncEventListenerInterface);
+        return array_filter($this->getListeners($eventType), function (array $listener) {
+            return ($listener[0] instanceof AsynchronousEventListenerInterface);
         });
     }
 

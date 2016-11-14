@@ -13,7 +13,9 @@ namespace Neos\Cqrs\EventListener;
 
 /**
  * Marker interface for asynchronous event listeners
+ *
+ * Asynchronous event listeners are not triggered directly when new events are published, but only when executing the CLI command projection:catchup
  */
-interface AsyncEventListenerInterface extends EventListenerInterface
+interface AsynchronousEventListenerInterface extends EventListenerInterface
 {
 }
