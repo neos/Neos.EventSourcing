@@ -15,7 +15,7 @@ class Version20161114151203 extends AbstractMigration
      */
     public function getDescription()
     {
-        return '';
+        return 'Introduce a projection state for Doctrine-based projectors';
     }
 
     /**

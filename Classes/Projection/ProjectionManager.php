@@ -13,12 +13,10 @@ namespace Neos\Cqrs\Projection;
 
 use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventListener\EventListenerLocator;
-use Neos\Cqrs\EventListener\AppliedEventsAwareEventListener;
 use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\EventTypesFilter;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
-use Neos\Cqrs\Projection\Doctrine\AbstractAsynchronousDoctrineProjector;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cache\Frontend\VariableFrontend;
 use TYPO3\Flow\Object\ObjectManagerInterface;
@@ -144,21 +142,30 @@ class ProjectionManager
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
-            $this->saveHighestAppliedSequenceNumber($projection->getIdentifier(), $sequenceNumber);
+
+            if ($projector instanceof AsynchronousEventListenerInterface) {
+                $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
+            }
         }
         return $eventCount;
     }
 
     /**
+     * Play all events for the given projection which haven't been applied yet.
+     *
      * @param string $projectionIdentifier
      * @return int Number of events which have been applied
      */
     public function catchUp(string $projectionIdentifier): int
     {
-        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
-        $lastAppliedSequenceNumber = $this->getHighestAppliedSequenceNumber($fullProjectionIdentifier);
-
         $projection = $this->getProjection($projectionIdentifier);
+        if (!$projection->isAsynchronous()) {
+            throw new \InvalidArgumentException(sprintf('The projection "%s" is not based an asynchronous projection, so catching up is not supported.', $projection->getIdentifier()), 1479147244634);
+        }
+
+        /** @var AsynchronousEventListenerInterface $projector */
+        $projector = $this->objectManager->get($projection->getProjectorClassName());
+        $lastAppliedSequenceNumber = $projector->getHighestAppliedSequenceNumber();
 
         $filter = new EventTypesFilter($projection->getEventTypes(), $lastAppliedSequenceNumber + 1);
         $eventCount = 0;
@@ -172,58 +179,10 @@ class ProjectionManager
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
-            $this->saveHighestAppliedSequenceNumber($fullProjectionIdentifier, $sequenceNumber);
+
+            $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
         }
         return $eventCount;
-    }
-
-    /**
-     * Returns the last seen sequence number for the given projection - defaults to 0
-     *
-     * @param string $fullProjectionIdentifier
-     * @return int
-     */
-    private function getHighestAppliedSequenceNumber(string $fullProjectionIdentifier): int
-    {
-        if (!isset($this->projections[$fullProjectionIdentifier])) {
-            throw new \InvalidArgumentException(sprintf('No projection could be found that matches the projection identifier "%s"', $fullProjectionIdentifier), 1479134970534);
-        }
-
-        $projection = $this->getProjection($fullProjectionIdentifier);
-        if ($projection->isAsynchronous()) {
-            /** @var AsynchronousEventListenerInterface $projector */
-            $projector = $this->objectManager->get($projection->getProjectorClassName());
-            $sequenceNumber = $projector->getHighestAppliedSequenceNumber();
-        } else {
-            $cacheId = md5($fullProjectionIdentifier);
-            $sequenceNumber = ($this->projectionCache->has($cacheId) ? (int)$this->projectionCache->get($cacheId) : 0);
-        }
-        return $sequenceNumber;
-    }
-
-    /**
-     * Saves the $sequenceNumber for the given projection
-     *
-     * @see catchUp()
-     *
-     * @param string $fullProjectionIdentifier
-     * @param int $sequenceNumber
-     */
-    private function saveHighestAppliedSequenceNumber(string $fullProjectionIdentifier, int $sequenceNumber)
-    {
-        if (!isset($this->projections[$fullProjectionIdentifier])) {
-            throw new \InvalidArgumentException(sprintf('No projection could be found that matches the projection identifier "%s"', $fullProjectionIdentifier), 1479133249505);
-        }
-
-        $projection = $this->getProjection($fullProjectionIdentifier);
-        if ($projection->isAsynchronous()) {
-            /** @var AsynchronousEventListenerInterface $projector */
-            $projector = $this->objectManager->get($projection->getProjectorClassName());
-            $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
-        } else {
-            $cacheId = md5($fullProjectionIdentifier);
-            $this->projectionCache->set($cacheId, $sequenceNumber);
-        }
     }
 
     /**

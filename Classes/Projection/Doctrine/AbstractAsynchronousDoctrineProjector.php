@@ -23,7 +23,6 @@ use TYPO3\Flow\Annotations as Flow;
  */
 abstract class AbstractAsynchronousDoctrineProjector extends AbstractDoctrineProjector implements AsynchronousEventListenerInterface
 {
-
     /**
      * @var DoctrineEntityManager
      */
