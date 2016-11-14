@@ -13,6 +13,7 @@ namespace Neos\Cqrs\Projection;
 
 use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventListener\EventListenerLocator;
+use Neos\Cqrs\EventListener\AppliedEventsAwareEventListener;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\EventTypesFilter;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
@@ -182,11 +183,20 @@ class ProjectionManager
      */
     private function getHighestAppliedSequenceNumber(string $fullProjectionIdentifier): int
     {
-        $cacheId = md5($fullProjectionIdentifier);
-        if (!$this->projectionCache->has($cacheId)) {
-            return 0;
+        if (!isset($this->projections[$fullProjectionIdentifier])) {
+            throw new \InvalidArgumentException(sprintf('No projection could be found that matches the projection identifier "%s"', $fullProjectionIdentifier), 1479134970534);
         }
-        return (int)$this->projectionCache->get($cacheId);
+
+        $projection = $this->getProjection($fullProjectionIdentifier);
+        if ($projection->isAppliedEventsAware()) {
+            /** @var AppliedEventsAwareEventListener $projector */
+            $projector = $this->objectManager->get($projection->getProjectorClassName());
+            $sequenceNumber = $projector->getHighestAppliedSequenceNumber();
+        } else {
+            $cacheId = md5($fullProjectionIdentifier);
+            $sequenceNumber = ($this->projectionCache->has($cacheId) ? (int)$this->projectionCache->get($cacheId) : 0);
+        }
+        return $sequenceNumber;
     }
 
     /**
@@ -199,8 +209,19 @@ class ProjectionManager
      */
     private function saveSequenceNumber(string $fullProjectionIdentifier, int $sequenceNumber)
     {
-        $cacheId = md5($fullProjectionIdentifier);
-        $this->projectionCache->set($cacheId, $sequenceNumber);
+        if (!isset($this->projections[$fullProjectionIdentifier])) {
+            throw new \InvalidArgumentException(sprintf('No projection could be found that matches the projection identifier "%s"', $fullProjectionIdentifier), 1479133249505);
+        }
+
+        $projection = $this->getProjection($fullProjectionIdentifier);
+        if ($projection->isAppliedEventsAware()) {
+            /** @var AppliedEventsAwareEventListener $projector */
+            $projector = $this->objectManager->get($projection->getProjectorClassName());
+            $projector->saveSequenceNumber($sequenceNumber);
+        } else {
+            $cacheId = md5($fullProjectionIdentifier);
+            $this->projectionCache->set($cacheId, $sequenceNumber);
+        }
     }
 
     /**
@@ -280,7 +301,7 @@ class ProjectionManager
             $packageKey = strtolower($package->getPackageKey());
             $projectionIdentifier = $packageKey . ':' . $projectionName;
             if (isset($projections[$projectionIdentifier])) {
-                throw new \RuntimeException(sprintf('The projection identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $projectionIdentifier, $projectorClassNamesByIdentifier[$projectionIdentifier], $projectorClassName), 1476198478);
+                throw new \RuntimeException(sprintf('The projection identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $projectionIdentifier, $projections[$projectionIdentifier], $projectorClassName), 1476198478);
             }
             $projections[$projectionIdentifier] = $projectorClassName;
         }
