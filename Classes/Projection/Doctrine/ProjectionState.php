@@ -28,7 +28,6 @@ class ProjectionState
     public $projectorIdentifier;
 
     /**
-    /**
      * @var integer
      */
     public $highestAppliedSequenceNumber;

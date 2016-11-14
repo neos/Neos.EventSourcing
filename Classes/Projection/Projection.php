@@ -11,7 +11,7 @@ namespace Neos\Cqrs\Projection;
  * source code.
  */
 
-use Neos\Cqrs\EventListener\AppliedEventsAwareEventListener;
+use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -77,8 +77,8 @@ class Projection
     /**
      * @return bool
      */
-    public function isAppliedEventsAware(): bool
+    public function isAsynchronous(): bool
     {
-        return is_subclass_of($this->getProjectorClassName(), AppliedEventsAwareEventListener::class);
+        return is_subclass_of($this->getProjectorClassName(), AsynchronousEventListenerInterface::class);
     }
 }

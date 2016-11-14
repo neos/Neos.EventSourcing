@@ -14,9 +14,11 @@ namespace Neos\Cqrs\Projection;
 use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventListener\EventListenerLocator;
 use Neos\Cqrs\EventListener\AppliedEventsAwareEventListener;
+use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\EventTypesFilter;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
+use Neos\Cqrs\Projection\Doctrine\AbstractAsynchronousDoctrineProjector;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cache\Frontend\VariableFrontend;
 use TYPO3\Flow\Object\ObjectManagerInterface;
@@ -142,7 +144,7 @@ class ProjectionManager
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
-            $this->saveSequenceNumber($projection->getIdentifier(), $sequenceNumber);
+            $this->saveHighestAppliedSequenceNumber($projection->getIdentifier(), $sequenceNumber);
         }
         return $eventCount;
     }
@@ -170,7 +172,7 @@ class ProjectionManager
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
-            $this->saveSequenceNumber($fullProjectionIdentifier, $sequenceNumber);
+            $this->saveHighestAppliedSequenceNumber($fullProjectionIdentifier, $sequenceNumber);
         }
         return $eventCount;
     }
@@ -188,8 +190,8 @@ class ProjectionManager
         }
 
         $projection = $this->getProjection($fullProjectionIdentifier);
-        if ($projection->isAppliedEventsAware()) {
-            /** @var AppliedEventsAwareEventListener $projector */
+        if ($projection->isAsynchronous()) {
+            /** @var AsynchronousEventListenerInterface $projector */
             $projector = $this->objectManager->get($projection->getProjectorClassName());
             $sequenceNumber = $projector->getHighestAppliedSequenceNumber();
         } else {
@@ -207,17 +209,17 @@ class ProjectionManager
      * @param string $fullProjectionIdentifier
      * @param int $sequenceNumber
      */
-    private function saveSequenceNumber(string $fullProjectionIdentifier, int $sequenceNumber)
+    private function saveHighestAppliedSequenceNumber(string $fullProjectionIdentifier, int $sequenceNumber)
     {
         if (!isset($this->projections[$fullProjectionIdentifier])) {
             throw new \InvalidArgumentException(sprintf('No projection could be found that matches the projection identifier "%s"', $fullProjectionIdentifier), 1479133249505);
         }
 
         $projection = $this->getProjection($fullProjectionIdentifier);
-        if ($projection->isAppliedEventsAware()) {
-            /** @var AppliedEventsAwareEventListener $projector */
+        if ($projection->isAsynchronous()) {
+            /** @var AsynchronousEventListenerInterface $projector */
             $projector = $this->objectManager->get($projection->getProjectorClassName());
-            $projector->saveSequenceNumber($sequenceNumber);
+            $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
         } else {
             $cacheId = md5($fullProjectionIdentifier);
             $this->projectionCache->set($cacheId, $sequenceNumber);
