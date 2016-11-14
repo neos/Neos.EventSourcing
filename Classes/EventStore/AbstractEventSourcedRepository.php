@@ -15,7 +15,6 @@ use Neos\Cqrs\Domain\EventSourcedAggregateRootInterface;
 use Neos\Cqrs\Domain\Exception\AggregateRootNotFoundException;
 use Neos\Cqrs\Domain\RepositoryInterface;
 use Neos\Cqrs\Event\EventPublisher;
-use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -55,18 +54,17 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
     }
 
     /**
+     * Return an aggregate instance specified by the identifier.
+     *
      * @param string $identifier
      * @return EventSourcedAggregateRootInterface
      * @throws AggregateRootNotFoundException
      */
-    final public function findByIdentifier($identifier)
+    public function get(string $identifier)
     {
         $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
-        try {
-            $eventStream = $this->eventStore->get(new StreamNameFilter($streamName));
-        } catch (EventStreamNotFoundException $exception) {
-            return null;
-        }
+        $eventStream = $this->eventStore->get(new StreamNameFilter($streamName));
+
         if (!class_exists($this->aggregateClassName)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root %s because its class '%s' does not exist.", $identifier, $this->aggregateClassName), 1474454928115);
         }
@@ -78,11 +76,15 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
     }
 
     /**
-     * @param EventSourcedAggregateRootInterface $aggregate
-     * @param int $expectedVersion
+     * Save the given aggregate instance
+     *
+     * For purposes of optimistic locking, an expected version number can be specified.
+     *
+     * @param EventSourcedAggregateRootInterface $aggregate The aggregate to save
+     * @param int $expectedVersion The version of the aggregate the changes to be saved are based on
      * @return void
      */
-    final public function save(EventSourcedAggregateRootInterface $aggregate, int $expectedVersion = null)
+    public function save(EventSourcedAggregateRootInterface $aggregate, int $expectedVersion = null)
     {
         $streamName = $this->streamNameResolver->getStreamNameForAggregate($aggregate);
         if ($expectedVersion === null) {
