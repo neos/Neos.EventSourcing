@@ -62,4 +62,14 @@ class StreamNameFilter implements EventStreamFilterInterface
     {
         return false;
     }
+
+    public function getMinimumSequenceNumber(): int
+    {
+        return 0;
+    }
+
+    public function hasMinimumSequenceNumber(): bool
+    {
+        return false;
+    }
 }

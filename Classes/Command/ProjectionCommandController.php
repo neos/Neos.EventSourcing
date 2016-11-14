@@ -143,7 +143,29 @@ class ProjectionCommandController extends CommandController
                     $eventsCount += $this->projectionManager->replay($projection->getIdentifier());
                 }
             }
-            $this->outputLine('Replayed %s events.', [$eventsCount]);
+            $this->outputLine('Replayed %d events.', [$eventsCount]);
+        } catch (\Exception $e) {
+            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
+            $this->quit(1);
+        }
+    }
+
+    /**
+     * Forward new events to a projection
+     *
+     * This command allows you to play all relevant unseen events for one specific projection.
+     *
+     * @param string $projection The projection identifier; see projection:list for possible options
+     * @return void
+     * @see neos.cqrs:projection:list
+     * @see neos.cqrs:projection:replay
+     */
+    public function catchUpCommand($projection)
+    {
+        try {
+            $this->outputLine('Catching up projection "%s" ...', [$projection]);
+            $eventsCount = $this->projectionManager->catchUp($projection);
+            $this->outputLine('Applied %d events.', [$eventsCount]);
         } catch (\Exception $e) {
             $this->outputLine('<error>%s</error>', [$e->getMessage()]);
             $this->quit(1);

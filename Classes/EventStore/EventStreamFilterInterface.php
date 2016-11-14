@@ -29,4 +29,8 @@ interface EventStreamFilterInterface
     public function getEventTypes(): array;
 
     public function hasEventTypes(): bool;
+
+    public function getMinimumSequenceNumber(): int;
+
+    public function hasMinimumSequenceNumber(): bool;
 }

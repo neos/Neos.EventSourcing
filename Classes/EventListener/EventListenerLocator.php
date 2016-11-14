@@ -79,6 +79,32 @@ class EventListenerLocator
     }
 
     /**
+     * Returns synchronous event listeners for the given event type
+     *
+     * @param string $eventType
+     * @return \callable[]
+     */
+    public function getSynchronousListeners(string $eventType): array
+    {
+        return array_filter($this->getListeners($eventType), function (array $listener) {
+            return (!$listener[0] instanceof AsynchronousEventListenerInterface);
+        });
+    }
+
+    /**
+     * Returns asynchronous event listeners (implementing AsyncEventListenerInterface) for the given event type
+     *
+     * @param string $eventType
+     * @return \callable[]
+     */
+    public function getAsynchronousListeners(string $eventType): array
+    {
+        return array_filter($this->getListeners($eventType), function (array $listener) {
+            return ($listener[0] instanceof AsynchronousEventListenerInterface);
+        });
+    }
+
+    /**
      * Returns a single listener for the given $eventType and $listenerClassName, or null if the given listener
      * does not handle events of the specified type.
      *
