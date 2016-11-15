@@ -13,6 +13,7 @@ namespace Neos\Cqrs\Projection;
 
 use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventListener\EventListenerLocator;
+use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\EventTypesFilter;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
@@ -141,21 +142,30 @@ class ProjectionManager
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
-            $this->saveSequenceNumber($projection->getIdentifier(), $sequenceNumber);
+
+            if ($projector instanceof AsynchronousEventListenerInterface) {
+                $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
+            }
         }
         return $eventCount;
     }
 
     /**
+     * Play all events for the given projection which haven't been applied yet.
+     *
      * @param string $projectionIdentifier
      * @return int Number of events which have been applied
      */
     public function catchUp(string $projectionIdentifier): int
     {
-        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
-        $lastAppliedSequenceNumber = $this->getHighestAppliedSequenceNumber($fullProjectionIdentifier);
-
         $projection = $this->getProjection($projectionIdentifier);
+        if (!$projection->isAsynchronous()) {
+            throw new \InvalidArgumentException(sprintf('The projection "%s" is not asynchronous, so catching up is not supported.', $projection->getIdentifier()), 1479147244634);
+        }
+
+        /** @var AsynchronousEventListenerInterface $projector */
+        $projector = $this->objectManager->get($projection->getProjectorClassName());
+        $lastAppliedSequenceNumber = $projector->getHighestAppliedSequenceNumber();
 
         $filter = new EventTypesFilter($projection->getEventTypes(), $lastAppliedSequenceNumber + 1);
         $eventCount = 0;
@@ -169,38 +179,10 @@ class ProjectionManager
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
-            $this->saveSequenceNumber($fullProjectionIdentifier, $sequenceNumber);
+
+            $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
         }
         return $eventCount;
-    }
-
-    /**
-     * Returns the last seen sequence number for the given projection - defaults to 0
-     *
-     * @param string $fullProjectionIdentifier
-     * @return int
-     */
-    private function getHighestAppliedSequenceNumber(string $fullProjectionIdentifier): int
-    {
-        $cacheId = md5($fullProjectionIdentifier);
-        if (!$this->projectionCache->has($cacheId)) {
-            return 0;
-        }
-        return (int)$this->projectionCache->get($cacheId);
-    }
-
-    /**
-     * Saves the $sequenceNumber for the given projection
-     *
-     * @see catchUp()
-     *
-     * @param string $fullProjectionIdentifier
-     * @param int $sequenceNumber
-     */
-    private function saveSequenceNumber(string $fullProjectionIdentifier, int $sequenceNumber)
-    {
-        $cacheId = md5($fullProjectionIdentifier);
-        $this->projectionCache->set($cacheId, $sequenceNumber);
     }
 
     /**
@@ -280,7 +262,7 @@ class ProjectionManager
             $packageKey = strtolower($package->getPackageKey());
             $projectionIdentifier = $packageKey . ':' . $projectionName;
             if (isset($projections[$projectionIdentifier])) {
-                throw new \RuntimeException(sprintf('The projection identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $projectionIdentifier, $projectorClassNamesByIdentifier[$projectionIdentifier], $projectorClassName), 1476198478);
+                throw new \RuntimeException(sprintf('The projection identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $projectionIdentifier, $projections[$projectionIdentifier], $projectorClassName), 1476198478);
             }
             $projections[$projectionIdentifier] = $projectorClassName;
         }
