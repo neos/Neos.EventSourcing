@@ -23,7 +23,6 @@ use TYPO3\Flow\Annotations as Flow;
  */
 abstract class AbstractBaseProjector implements ProjectorInterface
 {
-
     /**
      * Concrete projectors may override this property for setting the class name of the Read Model to a non-conventional name
      *

@@ -105,18 +105,18 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
      * @return void
      * @api
      */
-   public function reset()
-   {
-       $this->projectionPersistenceManager->drop($this->getReadModelClassName());
-   }
+    public function reset()
+    {
+        $this->projectionPersistenceManager->drop($this->getReadModelClassName());
+    }
 
-   /**
-    * If this projection is currently empty
-    *
-    * @return bool
-    */
-   public function isEmpty()
-   {
-       return $this->projectionPersistenceManager->count($this->getReadModelClassName()) === 0;
-   }
+    /**
+     * If this projection is currently empty
+     *
+     * @return bool
+     */
+    public function isEmpty()
+    {
+        return $this->projectionPersistenceManager->count($this->getReadModelClassName()) === 0;
+    }
 }
