@@ -11,6 +11,7 @@ namespace Neos\Cqrs\Command;
  * source code.
  */
 
+use Neos\Cqrs\Projection\InvalidProjectionIdentifierException;
 use Neos\Cqrs\Projection\Projection;
 use Neos\Cqrs\Projection\ProjectionManager;
 use TYPO3\Flow\Annotations as Flow;
@@ -77,7 +78,7 @@ class ProjectionCommandController extends CommandController
      */
     public function describeCommand($projection)
     {
-        $projectionDto = $this->getProjection($projection);
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
 
         $this->outputLine('<b>PROJECTION:</b>');
         $this->outputLine('  <i>%s</i>', [$projectionDto->getIdentifier()]);
@@ -107,7 +108,7 @@ class ProjectionCommandController extends CommandController
      */
     public function replayCommand($projection)
     {
-        $projectionDto = $this->getProjection($projection);
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
 
         $this->outputLine('Replaying events for projection "%s" ...', [$projectionDto->getIdentifier()]);
         $eventsCount = $this->projectionManager->replay($projectionDto->getIdentifier());
@@ -150,7 +151,7 @@ class ProjectionCommandController extends CommandController
      */
     public function catchUpCommand($projection)
     {
-        $projectionDto = $this->getProjection($projection);
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
 
         $this->outputLine('Catching up projection "%s" ...', [$projectionDto->getIdentifier()]);
         $eventsCount = $this->projectionManager->catchUp($projectionDto->getIdentifier());
@@ -205,11 +206,11 @@ class ProjectionCommandController extends CommandController
      * @param string $projectionIdentifier
      * @return Projection
      */
-    private function getProjection($projectionIdentifier): Projection
+    private function resolveProjectionOrQuit($projectionIdentifier): Projection
     {
         try {
             return $this->projectionManager->getProjection($projectionIdentifier);
-        } catch (\InvalidArgumentException $exception) {
+        } catch (InvalidProjectionIdentifierException $exception) {
             $this->outputLine('<error>%s</error>', [$exception->getMessage()]);
             $this->quit(1);
         }
