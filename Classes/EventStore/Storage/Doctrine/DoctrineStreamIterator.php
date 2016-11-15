@@ -33,7 +33,7 @@ final class DoctrineStreamIterator implements \Iterator
     /**
      * @var int
      */
-    private $currentId;
+    private $currentSequenceNumber;
 
     /**
      * @param Statement $statement
@@ -57,11 +57,12 @@ final class DoctrineStreamIterator implements \Iterator
         $metadata = json_decode($this->currentEventData['metadata'], true);
         $recordedAt = new \DateTimeImmutable($this->currentEventData['recordedat']);
         return new RawEvent(
-            $this->currentEventData['id'],
+            (int)$this->currentEventData['sequencenumber'],
             $this->currentEventData['type'],
             $payload,
             $metadata,
             (int)$this->currentEventData['version'],
+            $this->currentEventData['id'],
             $recordedAt
         );
     }
@@ -74,9 +75,9 @@ final class DoctrineStreamIterator implements \Iterator
         $this->currentEventData = $this->statement->fetch();
 
         if ($this->currentEventData !== false) {
-            $this->currentId = (integer)$this->currentEventData['id'];
+            $this->currentSequenceNumber = (integer)$this->currentEventData['sequencenumber'];
         } else {
-            $this->currentId = -1;
+            $this->currentSequenceNumber = -1;
         }
     }
 
@@ -85,11 +86,11 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function key()
     {
-        if ($this->currentId === -1) {
+        if ($this->currentSequenceNumber === -1) {
             return false;
         }
 
-        return $this->currentId;
+        return $this->currentSequenceNumber;
     }
 
     /**
@@ -106,13 +107,13 @@ final class DoctrineStreamIterator implements \Iterator
     public function rewind()
     {
         //Only perform rewind if current item is not the first element
-        if ($this->currentId === 0) {
+        if ($this->currentSequenceNumber === 0) {
             return;
         }
         $this->statement->execute();
 
         $this->currentEventData = null;
-        $this->currentId = -1;
+        $this->currentSequenceNumber = -1;
 
         $this->next();
     }

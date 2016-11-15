@@ -16,6 +16,11 @@ final class WritableEvent
     /**
      * @var string
      */
+    private $identifier;
+
+    /**
+     * @var string
+     */
     private $type;
 
     /**
@@ -28,33 +33,30 @@ final class WritableEvent
      */
     private $metadata;
 
-    public function __construct(string $type, array $data, array $metadata)
+    public function __construct(string $identifier, string $type, array $data, array $metadata)
     {
+        $this->identifier = $identifier;
         $this->type = $type;
         $this->data = $data;
         $this->metadata = $metadata;
     }
 
-    /**
-     * @return string
-     */
-    public function getType()
+    public function getIdentifier(): string
+    {
+        return $this->identifier;
+    }
+
+    public function getType(): string
     {
         return $this->type;
     }
 
-    /**
-     * @return array
-     */
-    public function getData()
+    public function getData(): array
     {
         return $this->data;
     }
 
-    /**
-     * @return array
-     */
-    public function getMetadata()
+    public function getMetadata(): array
     {
         return $this->metadata;
     }
