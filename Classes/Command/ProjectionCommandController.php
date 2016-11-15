@@ -176,13 +176,7 @@ class ProjectionCommandController extends CommandController
      */
     public function watchCommand($projection, $lookupInterval = 10)
     {
-        try {
-            $projectionDto = $this->projectionManager->getProjection($projection);
-        } catch (\InvalidArgumentException $e) {
-            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
-            $this->quit(1);
-            return;
-        }
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
 
         $this->outputLine('Watching events for projection "%s" ...', [$projectionDto->getIdentifier()]);
         do {
