@@ -102,16 +102,30 @@ class ProjectionCommandController extends CommandController
      * This command allows you to replay all relevant events for one specific projection.
      *
      * @param string $projection The projection identifier; see projection:list for possible options
+     * @param bool $verbose If specified, the progress of the replayed projection will be shown
      * @return void
      * @see neos.cqrs:projection:list
      * @see neos.cqrs:projection:replayall
      */
-    public function replayCommand($projection)
+    public function replayCommand($projection, $verbose = false)
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
         $this->outputLine('Replaying events for projection "%s" ...', [$projectionDto->getIdentifier()]);
-        $eventsCount = $this->projectionManager->replay($projectionDto->getIdentifier());
+        if ($verbose) {
+            $this->output->progressStart();
+        }
+        $eventsCount = 0;
+        $this->projectionManager->replay($projectionDto->getIdentifier(), function() use (&$eventsCount, $verbose) {
+            $eventsCount ++;
+            if ($verbose) {
+                $this->output->progressAdvance();
+            }
+        });
+        if ($verbose) {
+            $this->output->progressFinish();
+        }
+
         $this->outputLine('Replayed %s events.', [$eventsCount]);
     }
 
@@ -121,19 +135,31 @@ class ProjectionCommandController extends CommandController
      * This command allows you to replay all relevant events for all known projections.
      *
      * @param bool $onlyEmpty If specified, only projections which are currently empty will be considered
+     * @param bool $verbose If specified, the progress of the replayed projection will be shown
      * @return void
      * @see neos.cqrs:projection:replay
      * @see neos.cqrs:projection:list
      */
-    public function replayAllCommand($onlyEmpty = false)
+    public function replayAllCommand($onlyEmpty = false, $verbose = false)
     {
         $eventsCount = 0;
         foreach ($this->projectionManager->getProjections() as $projection) {
             if ($onlyEmpty && !$this->projectionManager->isProjectionEmpty($projection->getIdentifier())) {
                 $this->outputLine('Skipping non-empty projection "%s" ...', [$projection->getIdentifier()]);
-            } else {
-                $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
-                $eventsCount += $this->projectionManager->replay($projection->getIdentifier());
+                continue;
+            }
+            $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
+            if ($verbose) {
+                $this->output->progressStart();
+            }
+            $this->projectionManager->replay($projection->getIdentifier(), function() use (&$eventsCount, $verbose) {
+                $eventsCount++;
+                if ($verbose) {
+                    $this->output->progressAdvance();
+                }
+            });
+            if ($verbose) {
+                $this->output->progressFinish();
             }
         }
         $this->outputLine('Replayed %d events.', [$eventsCount]);
@@ -145,16 +171,29 @@ class ProjectionCommandController extends CommandController
      * This command allows you to play all relevant unseen events for one specific projection.
      *
      * @param string $projection The projection identifier; see projection:list for possible options
+     * @param bool $verbose If specified, the progress of the applied events will be shown
      * @return void
      * @see neos.cqrs:projection:list
      * @see neos.cqrs:projection:replay
      */
-    public function catchUpCommand($projection)
+    public function catchUpCommand($projection, $verbose = false)
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
         $this->outputLine('Catching up projection "%s" ...', [$projectionDto->getIdentifier()]);
-        $eventsCount = $this->projectionManager->catchUp($projectionDto->getIdentifier());
+        if ($verbose) {
+            $this->output->progressStart();
+        }
+        $eventsCount = 0;
+        $this->projectionManager->catchUp($projectionDto->getIdentifier(), function() use (&$eventsCount, $verbose) {
+            $eventsCount ++;
+            if ($verbose) {
+                $this->output->progressAdvance();
+            }
+        });
+        if ($verbose) {
+            $this->output->progressFinish();
+        }
         $this->outputLine('Applied %d events.', [$eventsCount]);
     }
 

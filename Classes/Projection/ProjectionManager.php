@@ -118,13 +118,13 @@ class ProjectionManager
     /**
      * Replay events of the specified projection
      *
-     * @param string $projectionIdentifier
-     * @return int Number of events which have been replayed
+     * @param string $projectionIdentifier unambiguous identifier of the projection to replay
+     * @param \Closure $progressCallback If set, this callback is invoked for every applied event during replay with the arguments $sequenceNumber and $eventStreamVersion
+     * @return void
      * @api
      */
-    public function replay(string $projectionIdentifier): int
+    public function replay(string $projectionIdentifier, \Closure $progressCallback = null)
     {
-        $eventCount = 0;
         $projection = $this->getProjection($projectionIdentifier);
 
         $projector = $this->objectManager->get($projection->getProjectorClassName());
@@ -135,28 +135,30 @@ class ProjectionManager
         try {
             $eventStream = $this->eventStore->get($filter);
         } catch (EventStreamNotFoundException $exception) {
-            return 0;
+            return;
         }
         foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
             $rawEvent = $eventAndRawEvent->getRawEvent();
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
-            $eventCount ++;
+            if ($progressCallback !== null) {
+                call_user_func($progressCallback, $sequenceNumber);
+            }
 
             if ($projector instanceof AsynchronousEventListenerInterface) {
                 $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
             }
         }
-        return $eventCount;
     }
 
     /**
      * Play all events for the given projection which haven't been applied yet.
      *
-     * @param string $projectionIdentifier
-     * @return int Number of events which have been applied
+     * @param string $projectionIdentifier unambiguous identifier of the projection to catch-up
+     * @param \Closure $progressCallback If set, this callback is invoked for every applied event during catch-up with the arguments $sequenceNumber and $eventStreamVersion
+     * @return void
      */
-    public function catchUp(string $projectionIdentifier): int
+    public function catchUp(string $projectionIdentifier, \Closure $progressCallback = null)
     {
         $projection = $this->getProjection($projectionIdentifier);
         if (!$projection->isAsynchronous()) {
@@ -168,21 +170,21 @@ class ProjectionManager
         $lastAppliedSequenceNumber = $projector->getHighestAppliedSequenceNumber();
 
         $filter = new EventTypesFilter($projection->getEventTypes(), $lastAppliedSequenceNumber + 1);
-        $eventCount = 0;
         try {
             $eventStream = $this->eventStore->get($filter);
         } catch (EventStreamNotFoundException $exception) {
-            return 0;
+            return;
         }
         foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
             $rawEvent = $eventAndRawEvent->getRawEvent();
             $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
-            $eventCount ++;
+            if ($progressCallback !== null) {
+                call_user_func($progressCallback, $sequenceNumber);
+            }
 
             $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
         }
-        return $eventCount;
     }
 
     /**
