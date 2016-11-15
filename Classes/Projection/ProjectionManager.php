@@ -160,7 +160,7 @@ class ProjectionManager
     {
         $projection = $this->getProjection($projectionIdentifier);
         if (!$projection->isAsynchronous()) {
-            throw new \InvalidArgumentException(sprintf('The projection "%s" is not based an asynchronous projection, so catching up is not supported.', $projection->getIdentifier()), 1479147244634);
+            throw new \InvalidArgumentException(sprintf('The projection "%s" is not asynchronous, so catching up is not supported.', $projection->getIdentifier()), 1479147244634);
         }
 
         /** @var AsynchronousEventListenerInterface $projector */
