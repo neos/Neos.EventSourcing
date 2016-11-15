@@ -11,7 +11,6 @@ namespace Neos\Cqrs\EventStore\Storage\Doctrine;
  * source code.
  */
 
-use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Neos\Cqrs\EventStore\RawEvent;
 
