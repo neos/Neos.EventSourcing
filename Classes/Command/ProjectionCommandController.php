@@ -16,7 +16,6 @@ use Neos\Cqrs\Projection\Projection;
 use Neos\Cqrs\Projection\ProjectionManager;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cli\CommandController;
-use TYPO3\Flow\Package\PackageManagerInterface;
 
 /**
  * CLI Command Controller for projection related commands
@@ -30,12 +29,6 @@ class ProjectionCommandController extends CommandController
      * @var ProjectionManager
      */
     protected $projectionManager;
-
-    /**
-     * @Flow\Inject
-     * @var PackageManagerInterface
-     */
-    protected $packageManager;
 
     /**
      * @var array in the format ['<shortIdentifier>' => '<fullIdentifier>', ...]
@@ -54,7 +47,7 @@ class ProjectionCommandController extends CommandController
     {
         $lastPackageKey = null;
         foreach ($this->projectionManager->getProjections() as $projection) {
-            $packageKey = $this->packageManager->getPackageByClassName($projection->getProjectorClassName())->getPackageKey();
+            $packageKey = $this->objectManager->getPackageKeyByObjectName($projection->getProjectorClassName());
             if ($packageKey !== $lastPackageKey) {
                 $lastPackageKey = $packageKey;
                 $this->outputLine();

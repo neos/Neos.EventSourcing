@@ -249,17 +249,14 @@ class ProjectionManager
     {
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
-        /** @var PackageManagerInterface $packageManager */
-        $packageManager = $objectManager->get(PackageManagerInterface::class);
         $projections = [];
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(ProjectorInterface::class) as $projectorClassName) {
-            $package = $packageManager->getPackageByClassName($projectorClassName);
             $projectionName = (new ClassReflection($projectorClassName))->getShortName();
             if (substr($projectionName, -9) === 'Projector') {
                 $projectionName = substr($projectionName, 0, -9);
             }
             $projectionName = strtolower($projectionName);
-            $packageKey = strtolower($package->getPackageKey());
+            $packageKey = strtolower($objectManager->getPackageKeyByObjectName($projectorClassName));
             $projectionIdentifier = $packageKey . ':' . $projectionName;
             if (isset($projections[$projectionIdentifier])) {
                 throw new \RuntimeException(sprintf('The projection identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $projectionIdentifier, $projections[$projectionIdentifier], $projectorClassName), 1476198478);
