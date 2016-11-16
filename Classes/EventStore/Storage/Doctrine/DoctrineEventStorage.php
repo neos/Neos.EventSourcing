@@ -76,7 +76,7 @@ class DoctrineEventStorage implements EventStorageInterface
         $this->applyEventStreamFilter($query, $filter);
 
         $streamIterator = new DoctrineStreamIterator($query->execute());
-        return new EventStream($streamIterator, $this->getStreamVersion($filter));
+        return new EventStream($streamIterator);
     }
 
     /**
