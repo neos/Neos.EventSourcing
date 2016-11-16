@@ -13,6 +13,7 @@ namespace Neos\Cqrs\EventStore;
 
 use Neos\Cqrs\Domain\AggregateRootInterface;
 use TYPO3\Flow\Annotations as Flow;
+use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Package\PackageManagerInterface;
 use TYPO3\Flow\Reflection\ClassReflection;
 use TYPO3\Flow\Utility\TypeHandling;
@@ -24,9 +25,9 @@ class EventStreamResolver
 {
     /**
      * @Flow\Inject
-     * @var PackageManagerInterface
+     * @var ObjectManagerInterface
      */
-    protected $packageManager;
+    protected $objectManager;
 
     /**
      * @param AggregateRootInterface $aggregate
@@ -44,7 +45,7 @@ class EventStreamResolver
      */
     public function getStreamNameForAggregateTypeAndIdentifier(string $aggregateClassName, string $aggregateIdentifier)
     {
-        $packageKey = $this->packageManager->getPackageByClassName($aggregateClassName)->getPackageKey();
+        $packageKey = $this->objectManager->getPackageKeyByObjectName($aggregateClassName);
         $aggregateShortClassName = (new ClassReflection($aggregateClassName))->getShortName();
         return $packageKey . ':' . $aggregateShortClassName . ':' . $aggregateIdentifier;
     }

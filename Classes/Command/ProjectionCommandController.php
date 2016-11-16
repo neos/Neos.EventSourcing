@@ -16,7 +16,7 @@ use Neos\Cqrs\Projection\Projection;
 use Neos\Cqrs\Projection\ProjectionManager;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cli\CommandController;
-use TYPO3\Flow\Package\PackageManagerInterface;
+use TYPO3\Flow\Core\Booting\Scripts;
 
 /**
  * CLI Command Controller for projection related commands
@@ -32,10 +32,10 @@ class ProjectionCommandController extends CommandController
     protected $projectionManager;
 
     /**
-     * @Flow\Inject
-     * @var PackageManagerInterface
+     * @Flow\InjectConfiguration(package="TYPO3.Flow")
+     * @var array
      */
-    protected $packageManager;
+    protected $flowSettings;
 
     /**
      * @var array in the format ['<shortIdentifier>' => '<fullIdentifier>', ...]
@@ -54,7 +54,7 @@ class ProjectionCommandController extends CommandController
     {
         $lastPackageKey = null;
         foreach ($this->projectionManager->getProjections() as $projection) {
-            $packageKey = $this->packageManager->getPackageByClassName($projection->getProjectorClassName())->getPackageKey();
+            $packageKey = $this->objectManager->getPackageKeyByObjectName($projection->getProjectorClassName());
             if ($packageKey !== $lastPackageKey) {
                 $lastPackageKey = $packageKey;
                 $this->outputLine();
@@ -159,6 +159,26 @@ class ProjectionCommandController extends CommandController
     }
 
     /**
+     * Listen to new events for a given (asynchronous) projection
+     *
+     * @param string $projection The projection identifier; see projection:list for possible options
+     * @param int $lookupInterval Pause between lookups (in seconds)
+     * @return void
+     * @see neos.cqrs:projection:list
+     * @see neos.cqrs:projection:catchup
+     */
+    public function watchCommand($projection, $lookupInterval = 10)
+    {
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
+
+        $this->outputLine('Watching events for projection "%s" ...', [$projectionDto->getIdentifier()]);
+        do {
+            Scripts::executeCommand('neos.cqrs:projection:catchup', $this->flowSettings, false, ['projection' => $projectionDto->getIdentifier()]);
+            sleep($lookupInterval);
+        } while (true);
+    }
+
+    /**
      * Returns the shortest unambiguous projection identifier for a given $fullProjectionIdentifier
      *
      * @param string $fullProjectionIdentifier
@@ -213,6 +233,7 @@ class ProjectionCommandController extends CommandController
         } catch (InvalidProjectionIdentifierException $exception) {
             $this->outputLine('<error>%s</error>', [$exception->getMessage()]);
             $this->quit(1);
+            return null;
         }
     }
 
