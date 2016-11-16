@@ -39,26 +39,11 @@ final class EventStream implements \Iterator
     private $streamIterator;
 
     /**
-     * @var integer
-     */
-    protected $version;
-
-    /**
      * @param \Iterator $streamIterator
-     * @param integer $version
      */
-    public function __construct(\Iterator $streamIterator, int $version = -1)
+    public function __construct(\Iterator $streamIterator)
     {
         $this->streamIterator = $streamIterator;
-        $this->version = $version;
-    }
-
-    /**
-     * @return integer
-     */
-    public function getVersion()
-    {
-        return $this->version;
     }
 
     /**
