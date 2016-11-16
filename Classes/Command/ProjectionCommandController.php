@@ -11,10 +11,12 @@ namespace Neos\Cqrs\Command;
  * source code.
  */
 
+use Neos\Cqrs\Projection\InvalidProjectionIdentifierException;
+use Neos\Cqrs\Projection\Projection;
 use Neos\Cqrs\Projection\ProjectionManager;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cli\CommandController;
-use TYPO3\Flow\Package\PackageManagerInterface;
+use TYPO3\Flow\Core\Booting\Scripts;
 
 /**
  * CLI Command Controller for projection related commands
@@ -30,10 +32,10 @@ class ProjectionCommandController extends CommandController
     protected $projectionManager;
 
     /**
-     * @Flow\Inject
-     * @var PackageManagerInterface
+     * @Flow\InjectConfiguration(package="TYPO3.Flow")
+     * @var array
      */
-    protected $packageManager;
+    protected $flowSettings;
 
     /**
      * @var array in the format ['<shortIdentifier>' => '<fullIdentifier>', ...]
@@ -52,7 +54,7 @@ class ProjectionCommandController extends CommandController
     {
         $lastPackageKey = null;
         foreach ($this->projectionManager->getProjections() as $projection) {
-            $packageKey = $this->packageManager->getPackageByClassName($projection->getProjectorClassName())->getPackageKey();
+            $packageKey = $this->objectManager->getPackageKeyByObjectName($projection->getProjectorClassName());
             if ($packageKey !== $lastPackageKey) {
                 $lastPackageKey = $packageKey;
                 $this->outputLine();
@@ -76,25 +78,20 @@ class ProjectionCommandController extends CommandController
      */
     public function describeCommand($projection)
     {
-        try {
-            $projection = $this->projectionManager->getProjection($projection);
-        } catch (\InvalidArgumentException $e) {
-            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
-            $this->quit(1);
-        }
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
 
         $this->outputLine('<b>PROJECTION:</b>');
-        $this->outputLine('  <i>%s</i>', [$projection->getIdentifier()]);
+        $this->outputLine('  <i>%s</i>', [$projectionDto->getIdentifier()]);
         $this->outputLine();
         $this->outputLine('<b>REPLAY:</b>');
-        $this->outputLine('  %s projection:replay %s', [$this->getFlowInvocationString(), $this->getShortProjectionIdentifier($projection->getIdentifier())]);
+        $this->outputLine('  %s projection:replay %s', [$this->getFlowInvocationString(), $this->getShortProjectionIdentifier($projectionDto->getIdentifier())]);
         $this->outputLine();
         $this->outputLine('<b>PROJECTOR:</b>');
-        $this->outputLine('  %s', [$projection->getProjectorClassName()]);
+        $this->outputLine('  %s', [$projectionDto->getProjectorClassName()]);
         $this->outputLine();
 
         $this->outputLine('<b>HANDLED EVENT TYPES:</b>');
-        foreach ($projection->getEventTypes() as $eventType) {
+        foreach ($projectionDto->getEventTypes() as $eventType) {
             $this->outputLine('  * %s', [$eventType]);
         }
     }
@@ -111,14 +108,11 @@ class ProjectionCommandController extends CommandController
      */
     public function replayCommand($projection)
     {
-        try {
-            $this->outputLine('Replaying events for projection "%s" ...', [$projection]);
-            $eventsCount = $this->projectionManager->replay($projection);
-            $this->outputLine('Replayed %s events.', [$eventsCount]);
-        } catch (\Exception $e) {
-            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
-            $this->quit(1);
-        }
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
+
+        $this->outputLine('Replaying events for projection "%s" ...', [$projectionDto->getIdentifier()]);
+        $eventsCount = $this->projectionManager->replay($projectionDto->getIdentifier());
+        $this->outputLine('Replayed %s events.', [$eventsCount]);
     }
 
     /**
@@ -134,20 +128,15 @@ class ProjectionCommandController extends CommandController
     public function replayAllCommand($onlyEmpty = false)
     {
         $eventsCount = 0;
-        try {
-            foreach ($this->projectionManager->getProjections() as $projection) {
-                if ($onlyEmpty && !$this->projectionManager->isProjectionEmpty($projection->getIdentifier())) {
-                    $this->outputLine('Skipping non-empty projection "%s" ...', [$projection->getIdentifier()]);
-                } else {
-                    $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
-                    $eventsCount += $this->projectionManager->replay($projection->getIdentifier());
-                }
+        foreach ($this->projectionManager->getProjections() as $projection) {
+            if ($onlyEmpty && !$this->projectionManager->isProjectionEmpty($projection->getIdentifier())) {
+                $this->outputLine('Skipping non-empty projection "%s" ...', [$projection->getIdentifier()]);
+            } else {
+                $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
+                $eventsCount += $this->projectionManager->replay($projection->getIdentifier());
             }
-            $this->outputLine('Replayed %d events.', [$eventsCount]);
-        } catch (\Exception $e) {
-            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
-            $this->quit(1);
         }
+        $this->outputLine('Replayed %d events.', [$eventsCount]);
     }
 
     /**
@@ -162,14 +151,31 @@ class ProjectionCommandController extends CommandController
      */
     public function catchUpCommand($projection)
     {
-        try {
-            $this->outputLine('Catching up projection "%s" ...', [$projection]);
-            $eventsCount = $this->projectionManager->catchUp($projection);
-            $this->outputLine('Applied %d events.', [$eventsCount]);
-        } catch (\Exception $e) {
-            $this->outputLine('<error>%s</error>', [$e->getMessage()]);
-            $this->quit(1);
-        }
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
+
+        $this->outputLine('Catching up projection "%s" ...', [$projectionDto->getIdentifier()]);
+        $eventsCount = $this->projectionManager->catchUp($projectionDto->getIdentifier());
+        $this->outputLine('Applied %d events.', [$eventsCount]);
+    }
+
+    /**
+     * Listen to new events for a given (asynchronous) projection
+     *
+     * @param string $projection The projection identifier; see projection:list for possible options
+     * @param int $lookupInterval Pause between lookups (in seconds)
+     * @return void
+     * @see neos.cqrs:projection:list
+     * @see neos.cqrs:projection:catchup
+     */
+    public function watchCommand($projection, $lookupInterval = 10)
+    {
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
+
+        $this->outputLine('Watching events for projection "%s" ...', [$projectionDto->getIdentifier()]);
+        do {
+            Scripts::executeCommand('neos.cqrs:projection:catchup', $this->flowSettings, false, ['projection' => $projectionDto->getIdentifier()]);
+            sleep($lookupInterval);
+        } while (true);
     }
 
     /**
@@ -211,6 +217,24 @@ class ProjectionCommandController extends CommandController
             }
         }
         return isset($this->shortProjectionIdentifiers[$fullProjectionIdentifier]) ? $this->shortProjectionIdentifiers[$fullProjectionIdentifier] : $fullProjectionIdentifier;
+    }
+
+    /**
+     * Wrapper around ProjectionManager::getProjection() to render nicer error messages in case the $projectionIdentifier
+     * is not valid.
+     *
+     * @param string $projectionIdentifier
+     * @return Projection
+     */
+    private function resolveProjectionOrQuit($projectionIdentifier): Projection
+    {
+        try {
+            return $this->projectionManager->getProjection($projectionIdentifier);
+        } catch (InvalidProjectionIdentifierException $exception) {
+            $this->outputLine('<error>%s</error>', [$exception->getMessage()]);
+            $this->quit(1);
+            return null;
+        }
     }
 
     /**

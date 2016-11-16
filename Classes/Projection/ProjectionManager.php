@@ -190,7 +190,7 @@ class ProjectionManager
      *
      * @param string $projectionIdentifier in the form "<package.key>:<projection>", "<key>:<projection>" or "<projection">"
      * @return string
-     * @throws \InvalidArgumentException if no matching projector could be found
+     * @throws InvalidProjectionIdentifierException if no matching projector could be found
      */
     private function normalizeProjectionIdentifier($projectionIdentifier)
     {
@@ -201,10 +201,10 @@ class ProjectionManager
             }
         }
         if ($matchingIdentifiers === []) {
-            throw new \InvalidArgumentException(sprintf('No projection could be found that matches the projection identifier "%s"', $projectionIdentifier), 1476368605);
+            throw new InvalidProjectionIdentifierException(sprintf('No projection could be found that matches the projection identifier "%s"', $projectionIdentifier), 1476368605);
         }
         if (count($matchingIdentifiers) !== 1) {
-            throw new \InvalidArgumentException(sprintf('More than one projection matches the projection identifier "%s":%s%s', $projectionIdentifier, chr(10), implode(', ', $matchingIdentifiers)), 1476368615);
+            throw new InvalidProjectionIdentifierException(sprintf('More than one projection matches the projection identifier "%s":%s%s', $projectionIdentifier, chr(10), implode(', ', $matchingIdentifiers)), 1476368615);
         }
         return $matchingIdentifiers[0];
     }
@@ -216,7 +216,7 @@ class ProjectionManager
      * @param string $shortIdentifier
      * @param string $fullIdentifier The full projection identifier
      * @return bool
-     * @throws \InvalidArgumentException if the given $shortIdentifier is not in the valid form
+     * @throws InvalidProjectionIdentifierException if the given $shortIdentifier is not in the valid form
      * @see normalizeProjectionIdentifier()
      */
     private function projectionIdentifiersMatch(string $shortIdentifier, string $fullIdentifier): bool
@@ -233,7 +233,7 @@ class ProjectionManager
             return $shortIdentifier === $fullIdentifierParts[1];
         }
         if ($shortIdentifierPartsCount !== 2) {
-            throw new \InvalidArgumentException(sprintf('Invalid projection identifier "%s", identifiers must have the format "<projection>" or "<package-key>:<projection>".', $shortIdentifier), 1476367741);
+            throw new InvalidProjectionIdentifierException(sprintf('Invalid projection identifier "%s", identifiers must have the format "<projection>" or "<package-key>:<projection>".', $shortIdentifier), 1476367741);
         }
         return
             $shortIdentifierParts[1] === $fullIdentifierParts[1]
@@ -249,17 +249,14 @@ class ProjectionManager
     {
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
-        /** @var PackageManagerInterface $packageManager */
-        $packageManager = $objectManager->get(PackageManagerInterface::class);
         $projections = [];
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(ProjectorInterface::class) as $projectorClassName) {
-            $package = $packageManager->getPackageByClassName($projectorClassName);
             $projectionName = (new ClassReflection($projectorClassName))->getShortName();
             if (substr($projectionName, -9) === 'Projector') {
                 $projectionName = substr($projectionName, 0, -9);
             }
             $projectionName = strtolower($projectionName);
-            $packageKey = strtolower($package->getPackageKey());
+            $packageKey = strtolower($objectManager->getPackageKeyByObjectName($projectorClassName));
             $projectionIdentifier = $packageKey . ':' . $projectionName;
             if (isset($projections[$projectionIdentifier])) {
                 throw new \RuntimeException(sprintf('The projection identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $projectionIdentifier, $projections[$projectionIdentifier], $projectorClassName), 1476198478);
