@@ -1,5 +1,5 @@
 <?php
-namespace Neos\Cqrs\Command;
+namespace Neos\Cqrs\CommandLineInterface\Command;
 
 /*
  * This file is part of the Neos.EventStore.DatabaseStorageAdapter package.
