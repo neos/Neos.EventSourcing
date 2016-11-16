@@ -42,10 +42,12 @@ abstract class AbstractEventSourcedAggregateRoot extends AbstractAggregateRoot i
     public static function reconstituteFromEventStream(string $identifier, EventStream $stream)
     {
         $instance = new static($identifier);
+        $lastAppliedEventVersion = -1;
         foreach ($stream as $eventAndRawEvent) {
             $instance->apply($eventAndRawEvent->getEvent());
+            $lastAppliedEventVersion = $eventAndRawEvent->getRawEvent()->getVersion();
         }
-        $instance->reconstitutionVersion = $stream->getVersion();
+        $instance->reconstitutionVersion = $lastAppliedEventVersion;
         return $instance;
     }
 }
