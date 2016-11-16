@@ -62,12 +62,12 @@ final class DoctrineStreamIterator implements \Iterator
         $metadata = json_decode($currentEventData['metadata'], true);
         $recordedAt = new \DateTimeImmutable($currentEventData['recordedat']);
         return new RawEvent(
-            $currentEventData['id'],
+            $currentEventData['sequencenumber'],
             $currentEventData['type'],
             $payload,
             $metadata,
             (int)$currentEventData['version'],
-            $this->currentEventData['id'],
+            $currentEventData['id'],
             $recordedAt
         );
     }
@@ -90,7 +90,7 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function key()
     {
-        return $this->innerIterator->valid() ? $this->innerIterator->current()['id'] : null;
+        return $this->innerIterator->valid() ? $this->innerIterator->current()['sequencenumber'] : null;
     }
 
     /**
