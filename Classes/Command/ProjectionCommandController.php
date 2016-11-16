@@ -182,7 +182,7 @@ class ProjectionCommandController extends CommandController
         do {
             Scripts::executeCommand('neos.cqrs:projection:catchup', $this->flowSettings, false, ['projection' => $projectionDto->getIdentifier()]);
             sleep($lookupInterval);
-        } while(true);
+        } while (true);
     }
 
     /**
