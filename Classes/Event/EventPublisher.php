@@ -20,6 +20,7 @@ use Neos\Cqrs\EventStore\WritableEvents;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Property\PropertyMapper;
 use TYPO3\Flow\Property\PropertyMappingConfiguration;
+use TYPO3\Flow\Utility\Algorithms;
 
 /**
  * @Flow\Scope("singleton")
@@ -94,7 +95,8 @@ class EventPublisher
             $metadata = [];
             $this->emitBeforePublishingEvent($event, $metadata);
             $data = $this->propertyMapper->convert($event, 'array');
-            $convertedEvents->append(new WritableEvent($type, $data, $metadata));
+            $eventIdentifier = Algorithms::generateUUID();
+            $convertedEvents->append(new WritableEvent($eventIdentifier, $type, $data, $metadata));
         }
         $rawEvents = $this->eventStore->commit($streamName, $convertedEvents, $expectedVersion);
 
