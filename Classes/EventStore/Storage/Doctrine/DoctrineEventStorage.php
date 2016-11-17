@@ -75,8 +75,8 @@ class DoctrineEventStorage implements EventStorageInterface
             ->orderBy('sequencenumber', 'ASC');
         $this->applyEventStreamFilter($query, $filter);
 
-        $streamIterator = new DoctrineStreamIterator($query->execute());
-        return new EventStream($streamIterator);
+        $streamIterator = new DoctrineStreamIterator($query);
+        return new EventStream($streamIterator, $this->getStreamVersion($filter));
     }
 
     /**
@@ -167,7 +167,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $query->setParameter('eventTypes', $filter->getEventTypes(), Connection::PARAM_STR_ARRAY);
         }
         if ($filter->hasMinimumSequenceNumber()) {
-            $query->andWhere('id >= :minimumSequenceNumber');
+            $query->andWhere('sequencenumber >= :minimumSequenceNumber');
             $query->setParameter('minimumSequenceNumber', $filter->getMinimumSequenceNumber());
         }
     }
