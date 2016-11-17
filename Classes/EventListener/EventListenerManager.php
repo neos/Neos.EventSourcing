@@ -113,7 +113,7 @@ class EventListenerManager
     public function getSynchronousListeners(): array
     {
         return array_filter($this->getListeners(), function (array $listener) {
-            return (!$listener[0] instanceof AsynchronousEventListenerInterface);
+            return (!is_array($listener) || !$listener[0] instanceof AsynchronousEventListenerInterface);
         });
     }
 
@@ -126,7 +126,7 @@ class EventListenerManager
     public function getSynchronousListenersByEventType(string $eventType): array
     {
         return array_filter($this->getListenersByEventType($eventType), function (array $listener) {
-            return (!$listener[0] instanceof AsynchronousEventListenerInterface);
+            return (!is_array($listener) || !$listener[0] instanceof AsynchronousEventListenerInterface);
         });
     }
 
@@ -138,7 +138,7 @@ class EventListenerManager
     public function getAsynchronousListeners(): array
     {
         return array_filter($this->getListeners(), function (array $listener) {
-            return ($listener[0] instanceof AsynchronousEventListenerInterface);
+            return (is_array($listener) && $listener[0] instanceof AsynchronousEventListenerInterface);
         });
     }
 
@@ -151,7 +151,7 @@ class EventListenerManager
     public function getAsynchronousListenersByEventType(string $eventType): array
     {
         return array_filter($this->getListenersByEventType($eventType), function (array $listener) {
-            return ($listener[0] instanceof AsynchronousEventListenerInterface);
+            return (is_array($listener) && $listener[0] instanceof AsynchronousEventListenerInterface);
         });
     }
 
@@ -197,8 +197,8 @@ class EventListenerManager
     {
         $distinctListenerObjectsByClassName = [];
         foreach ($this->getAsynchronousListeners() as $listener) {
-            // Let's ignore asynchronous projectors for now, since we have another catch up method for them in ProjectionManager
-            if ($listener[0] instanceof ProjectorInterface) {
+            // Let's ignore asynchronous projectors for now, since we have another catch up method for them in ProjectionManager.
+            if (!is_array($listener) || $listener[0] instanceof ProjectorInterface) {
                 continue;
             }
             $distinctListenerObjectsByClassName[get_class($listener[0])] = $listener[0];
@@ -222,9 +222,8 @@ class EventListenerManager
 
                 /** @var AsynchronousEventListenerInterface $listenerObject */
                 $listenerObject = $listener[0];
-
                 if ($listenerObject instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
-                    $listenerObject->beforeInvokingEventListenerMethod($listener[1], $event, $rawEvent);
+                    $listenerObject->beforeInvokingEventListenerMethod($event, $rawEvent);
                 }
                 call_user_func($listener, $event, $rawEvent);
 

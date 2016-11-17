@@ -107,7 +107,7 @@ class EventPublisher
             $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
             $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
             foreach ($this->eventListenerLocator->getSynchronousListenersByEventType($rawEvent->getType()) as $listener) {
-                if ($listener[0] instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
+                if (is_array($listener) && $listener[0] instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
                     $listener[0]->beforeInvokingEventListenerMethod($listener[1], $event, $rawEvent);
                 }
                 call_user_func($listener, $event, $rawEvent);

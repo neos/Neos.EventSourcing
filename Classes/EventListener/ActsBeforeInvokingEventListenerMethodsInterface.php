@@ -24,10 +24,9 @@ interface ActsBeforeInvokingEventListenerMethodsInterface extends EventListenerI
     /**
      * Called before a listener method is invoked
      *
-     * @param string $eventListenerMethodName Name of the method the Event Publisher will call
      * @param EventInterface $event The event to be dispatched
      * @param RawEvent $rawEvent The raw event to be dispatched
      * @return void
      */
-    public function beforeInvokingEventListenerMethod(string $eventListenerMethodName, EventInterface $event, RawEvent $rawEvent);
+    public function beforeInvokingEventListenerMethod(EventInterface $event, RawEvent $rawEvent);
 }

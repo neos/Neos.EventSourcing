@@ -37,22 +37,23 @@ abstract class AbstractProcessManager implements EventListenerInterface, ActsBef
     /**
      * Return the process configuration for the concrete process manager
      *
-     * This method must return an array which contains (short) event names and a correlating closure which
+     * This method must return an array which contains the event class names and a correlating closure which
      * returns a process state identifier. This process state identifier will be used throughout all event listener
      * methods in the process manager to always retrieve the correct state.
      *
-     * The "short event name" is the same used in the "when<ShortName>()" method name of the event listener method.
+     * The event class name is the fully qualified class name of the respective event. It is the same used in the
+     * first type hint of the related event listener method.
      *
      * The following example uses the organization's identifier as the process state identifier:
      *
      *     return [
-     *         'OrganizationHasBeenCreated' => function(OrganizationHasBeenCreated $event) {
+     *         OrganizationHasBeenCreated::class  => function(OrganizationHasBeenCreated $event) {
      *             return $event->getIdentifier();
      *         },
-     *         'MemberHasBeenAddedToOrganization' => function(MemberHasBeenAddedToOrganization $event) {
+     *         MemberHasBeenAddedToOrganization::class => function(MemberHasBeenAddedToOrganization $event) {
      *             return $event->getOrganizationIdentifier();
      *         },
-     *         'NewDeploymentKeyHasBeenGenerated' => function(NewDeploymentKeyHasBeenGenerated $event) {
+     *         NewDeploymentKeyHasBeenGenerated::class => function(NewDeploymentKeyHasBeenGenerated $event) {
      *             return $event->getOrganizationIdentifier();
      *         }
      *
@@ -63,20 +64,19 @@ abstract class AbstractProcessManager implements EventListenerInterface, ActsBef
     /**
      * Prepare the process state
      *
-     * @param string $eventListenerMethodName
      * @param EventInterface $event
      * @param RawEvent $rawEvent
      * @throws ProcessManagerException
      */
-    public function beforeInvokingEventListenerMethod(string $eventListenerMethodName, EventInterface $event, RawEvent $rawEvent)
+    public function beforeInvokingEventListenerMethod(EventInterface $event, RawEvent $rawEvent)
     {
         $configuration = $this->getProcessConfiguration();
-        $eventName = substr($eventListenerMethodName, 4);
-        if (!isset($configuration[$eventName])) {
-            throw new ProcessManagerException(sprintf('The event listener method "%s" does not have a matching process configuration with key "%s". Check the array returned by getProcessConfiguration() in class %s.', $eventListenerMethodName, $eventName, get_class($this)), 1479290834150);
+        $eventClassName = get_class($event);
+        if (!isset($configuration[$eventClassName])) {
+            throw new ProcessManagerException(sprintf('The event listener "%s" does not have a process configuration with key "%s". Check the array returned by getProcessConfiguration().', get_class($this), $eventClassName, get_class($this)), 1479290834150);
         }
 
-        $stateIdentifier = $configuration[$eventName]($event);
+        $stateIdentifier = $configuration[$eventClassName]($event);
         $this->state = $this->stateRepository->get($stateIdentifier, get_class($this));
         if ($this->state === null) {
             $this->state = new State($stateIdentifier, get_class($this));
