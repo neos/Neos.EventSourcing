@@ -11,7 +11,7 @@ namespace Neos\Cqrs\Event;
  * source code.
  */
 
-use Neos\Cqrs\EventListener\EventListenerInvocationInterface;
+use Neos\Cqrs\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
 use Neos\Cqrs\EventListener\EventListenerLocator;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\ExpectedVersion;
@@ -107,11 +107,10 @@ class EventPublisher
             $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
             $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
             foreach ($this->eventListenerLocator->getSynchronousListeners($rawEvent->getType()) as $listener) {
-                if ($listener[0] instanceof EventListenerInvocationInterface) {
-                    $listener[0]->invokeEventListenerMethod($listener[1], $event, $rawEvent);
-                } else {
-                    call_user_func($listener, $event, $rawEvent);
+                if ($listener[0] instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
+                    $listener[0]->beforeInvokingEventListenerMethod($listener[1], $event, $rawEvent);
                 }
+                call_user_func($listener, $event, $rawEvent);
             }
         }
     }

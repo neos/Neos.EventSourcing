@@ -12,7 +12,7 @@ namespace Neos\Cqrs\ProcessManager;
  */
 use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\EventListener\EventListenerInterface;
-use Neos\Cqrs\EventListener\EventListenerInvocationInterface;
+use Neos\Cqrs\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
 use Neos\Cqrs\EventStore\RawEvent;
 use Neos\Cqrs\ProcessManager\State\State;
 use Neos\Cqrs\ProcessManager\State\StateRepository;
@@ -21,7 +21,7 @@ use TYPO3\Flow\Annotations as Flow;
 /**
  * Base implementation for a process manager
  */
-abstract class AbstractProcessManager implements EventListenerInterface, EventListenerInvocationInterface
+abstract class AbstractProcessManager implements EventListenerInterface, ActsBeforeInvokingEventListenerMethodsInterface
 {
     /**
      * @Flow\Inject
@@ -61,14 +61,14 @@ abstract class AbstractProcessManager implements EventListenerInterface, EventLi
     abstract protected function getProcessConfiguration(): array;
 
     /**
-     * Prepare the process state and then call the intended event listener method
+     * Prepare the process state
      *
      * @param string $eventListenerMethodName
      * @param EventInterface $event
      * @param RawEvent $rawEvent
      * @throws ProcessManagerException
      */
-    public function invokeEventListenerMethod(string $eventListenerMethodName, EventInterface $event, RawEvent $rawEvent)
+    public function beforeInvokingEventListenerMethod(string $eventListenerMethodName, EventInterface $event, RawEvent $rawEvent)
     {
         $configuration = $this->getProcessConfiguration();
         $eventName = substr($eventListenerMethodName, 4);
@@ -81,7 +81,5 @@ abstract class AbstractProcessManager implements EventListenerInterface, EventLi
         if ($this->state === null) {
             $this->state = new State($stateIdentifier, get_class($this));
         }
-
-        call_user_func([$this, $eventListenerMethodName], $event, $rawEvent);
     }
 }
