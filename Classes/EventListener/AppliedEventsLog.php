@@ -1,5 +1,5 @@
 <?php
-namespace Neos\Cqrs\Projection\Doctrine;
+namespace Neos\Cqrs\EventListener;
 
 /*
  * This file is part of the Neos.Cqrs package.
@@ -15,17 +15,17 @@ use TYPO3\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Model for storing the projection state of a given Doctrine-based projector
+ * Model for storing the applied events state of a given asynchronous event listener
  *
  * @Flow\Entity
  */
-class ProjectionState
+class AppliedEventsLog
 {
     /**
      * @ORM\Id
      * @var string
      */
-    public $projectorIdentifier;
+    public $eventListenerIdentifier;
 
     /**
      * @var integer

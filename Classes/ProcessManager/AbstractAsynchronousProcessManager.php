@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Projection\Doctrine;
+namespace Neos\Cqrs\ProcessManager;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventStore package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -16,11 +16,9 @@ use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
- * A base class for Doctrine-based projectors
- *
- * @api
+ * Base implementation for a process manager
  */
-abstract class AbstractAsynchronousDoctrineProjector extends AbstractDoctrineProjector implements AsynchronousEventListenerInterface
+abstract class AbstractAsynchronousProcessManager extends AbstractProcessManager implements AsynchronousEventListenerInterface
 {
     /**
      * @var AppliedEventsLogRepository

@@ -12,7 +12,7 @@ namespace Neos\Cqrs\Projection;
  */
 
 use Neos\Cqrs\Event\EventTypeResolver;
-use Neos\Cqrs\EventListener\EventListenerLocator;
+use Neos\Cqrs\EventListener\EventListenerManager;
 use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\EventTypesFilter;
@@ -20,7 +20,6 @@ use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cache\Frontend\VariableFrontend;
 use TYPO3\Flow\Object\ObjectManagerInterface;
-use TYPO3\Flow\Package\PackageManagerInterface;
 use TYPO3\Flow\Reflection\ClassReflection;
 use TYPO3\Flow\Reflection\ReflectionService;
 
@@ -46,9 +45,9 @@ class ProjectionManager
 
     /**
      * @Flow\Inject
-     * @var EventListenerLocator
+     * @var EventListenerManager
      */
-    protected $eventListenerLocator;
+    protected $eventListenerManager;
 
     /**
      * @Flow\Inject
@@ -97,7 +96,7 @@ class ProjectionManager
     {
         $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
         $projectorClassName = $this->projections[$fullProjectionIdentifier];
-        $eventTypes = $this->eventListenerLocator->getEventTypesByListenerClassName($projectorClassName);
+        $eventTypes = $this->eventListenerManager->getEventTypesByListenerClassName($projectorClassName);
         return new Projection($fullProjectionIdentifier, $projectorClassName, $eventTypes);
     }
 
@@ -139,7 +138,7 @@ class ProjectionManager
         }
         foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
             $rawEvent = $eventAndRawEvent->getRawEvent();
-            $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
+            $listener = $this->eventListenerManager->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
 
@@ -176,7 +175,7 @@ class ProjectionManager
         }
         foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
             $rawEvent = $eventAndRawEvent->getRawEvent();
-            $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
+            $listener = $this->eventListenerManager->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             $eventCount ++;
 

@@ -12,7 +12,7 @@ namespace Neos\Cqrs\Event;
  */
 
 use Neos\Cqrs\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
-use Neos\Cqrs\EventListener\EventListenerLocator;
+use Neos\Cqrs\EventListener\EventListenerManager;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\ExpectedVersion;
 use Neos\Cqrs\EventStore\WritableEvent;
@@ -38,7 +38,7 @@ class EventPublisher
     private $eventStore;
 
     /**
-     * @var EventListenerLocator
+     * @var EventListenerManager
      */
     private $eventListenerLocator;
 
@@ -54,11 +54,11 @@ class EventPublisher
 
     /**
      * @param EventStore $eventStore
-     * @param EventListenerLocator $eventListenerLocator
+     * @param EventListenerManager $eventListenerLocator
      * @param PropertyMapper $propertyMapper
      * @param EventTypeResolver $eventTypeResolver
      */
-    public function __construct(EventStore $eventStore, EventListenerLocator $eventListenerLocator, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
+    public function __construct(EventStore $eventStore, EventListenerManager $eventListenerLocator, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
     {
         $this->eventStore = $eventStore;
         $this->eventListenerLocator = $eventListenerLocator;
@@ -106,7 +106,7 @@ class EventPublisher
         foreach ($rawEvents as $rawEvent) {
             $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
             $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
-            foreach ($this->eventListenerLocator->getSynchronousListeners($rawEvent->getType()) as $listener) {
+            foreach ($this->eventListenerLocator->getSynchronousListenersByEventType($rawEvent->getType()) as $listener) {
                 if ($listener[0] instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
                     $listener[0]->beforeInvokingEventListenerMethod($listener[1], $event, $rawEvent);
                 }

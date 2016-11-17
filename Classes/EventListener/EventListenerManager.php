@@ -13,8 +13,12 @@ namespace Neos\Cqrs\EventListener;
 
 use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventTypeResolver;
+use Neos\Cqrs\EventStore\EventStore;
+use Neos\Cqrs\EventStore\EventTypesFilter;
+use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Cqrs\EventStore\RawEvent;
 use Neos\Cqrs\Exception;
+use Neos\Cqrs\Projection\ProjectorInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Reflection\ReflectionService;
@@ -24,7 +28,7 @@ use TYPO3\Flow\Reflection\ReflectionService;
  *
  * @Flow\Scope("singleton")
  */
-class EventListenerLocator
+class EventListenerManager
 {
     /**
      * @var ObjectManagerInterface
@@ -39,16 +43,23 @@ class EventListenerLocator
     /**
      * @var array in the format ['<eventClassName>' => ['<listenerClassName>' => '<listenerMethodName>', '<listenerClassName2>' => '<listenerMethodName2>', ...]]
      */
-    private $mapping = [];
+    private $eventClassNamesAndListeners = [];
+
+    /**
+     * @var EventStore
+     */
+    private $eventStore;
 
     /**
      * @param ObjectManagerInterface $objectManager
      * @param EventTypeResolver $eventTypeService
+     * @param EventStore $eventStore
      */
-    public function __construct(ObjectManagerInterface $objectManager, EventTypeResolver $eventTypeService)
+    public function __construct(ObjectManagerInterface $objectManager, EventTypeResolver $eventTypeService, EventStore $eventStore)
     {
         $this->objectManager = $objectManager;
         $this->eventTypeService = $eventTypeService;
+        $this->eventStore = $eventStore;
     }
 
     /**
@@ -56,7 +67,23 @@ class EventListenerLocator
      */
     public function initializeObject()
     {
-        $this->mapping = self::detectListeners($this->objectManager);
+        $this->eventClassNamesAndListeners = self::detectListeners($this->objectManager);
+    }
+
+    /**
+     * Returns all known event listeners
+     *
+     * @return \callable[]
+     */
+    public function getListeners(): array
+    {
+        $listeners = [];
+        foreach ($this->eventClassNamesAndListeners as $eventClassName => $listenersForEventType) {
+            array_walk($this->eventClassNamesAndListeners[$eventClassName], function ($listenerMethodName, $listenerClassName) use (&$listeners) {
+                $listeners[] = [$this->objectManager->get($listenerClassName), $listenerMethodName];
+            });
+        }
+        return $listeners;
     }
 
     /**
@@ -65,17 +92,29 @@ class EventListenerLocator
      * @param string $eventType
      * @return \callable[]
      */
-    public function getListeners(string $eventType): array
+    public function getListenersByEventType(string $eventType): array
     {
         $eventClassName = $this->eventTypeService->getEventClassNameByType($eventType);
-        if (!isset($this->mapping[$eventClassName])) {
+        if (!isset($this->eventClassNamesAndListeners[$eventClassName])) {
             return [];
         }
         $listeners = [];
-        array_walk($this->mapping[$eventClassName], function ($listenerMethodName, $listenerClassName) use (&$listeners) {
+        array_walk($this->eventClassNamesAndListeners[$eventClassName], function ($listenerMethodName, $listenerClassName) use (&$listeners) {
             $listeners[] = [$this->objectManager->get($listenerClassName), $listenerMethodName];
         });
         return $listeners;
+    }
+
+    /**
+     * Returns all known synchronous event listeners
+     *
+     * @return \callable[]
+     */
+    public function getSynchronousListeners(): array
+    {
+        return array_filter($this->getListeners(), function (array $listener) {
+            return (!$listener[0] instanceof AsynchronousEventListenerInterface);
+        });
     }
 
     /**
@@ -84,10 +123,22 @@ class EventListenerLocator
      * @param string $eventType
      * @return \callable[]
      */
-    public function getSynchronousListeners(string $eventType): array
+    public function getSynchronousListenersByEventType(string $eventType): array
     {
-        return array_filter($this->getListeners($eventType), function (array $listener) {
+        return array_filter($this->getListenersByEventType($eventType), function (array $listener) {
             return (!$listener[0] instanceof AsynchronousEventListenerInterface);
+        });
+    }
+
+    /**
+     * Returns all known asynchronous event listeners (implementing AsyncEventListenerInterface)
+     *
+     * @return \callable[]
+     */
+    public function getAsynchronousListeners(): array
+    {
+        return array_filter($this->getListeners(), function (array $listener) {
+            return ($listener[0] instanceof AsynchronousEventListenerInterface);
         });
     }
 
@@ -97,9 +148,9 @@ class EventListenerLocator
      * @param string $eventType
      * @return \callable[]
      */
-    public function getAsynchronousListeners(string $eventType): array
+    public function getAsynchronousListenersByEventType(string $eventType): array
     {
-        return array_filter($this->getListeners($eventType), function (array $listener) {
+        return array_filter($this->getListenersByEventType($eventType), function (array $listener) {
             return ($listener[0] instanceof AsynchronousEventListenerInterface);
         });
     }
@@ -115,10 +166,10 @@ class EventListenerLocator
     public function getListener(string $eventType, string $listenerClassName)
     {
         $eventClassName = $this->eventTypeService->getEventClassNameByType($eventType);
-        if (!isset($this->mapping[$eventClassName][$listenerClassName])) {
+        if (!isset($this->eventClassNamesAndListeners[$eventClassName][$listenerClassName])) {
             return null;
         }
-        return [$this->objectManager->get($listenerClassName), $this->mapping[$eventClassName][$listenerClassName]];
+        return [$this->objectManager->get($listenerClassName), $this->eventClassNamesAndListeners[$eventClassName][$listenerClassName]];
     }
 
     /**
@@ -128,7 +179,7 @@ class EventListenerLocator
     public function getEventTypesByListenerClassName(string $listenerClassName): array
     {
         $eventTypes = [];
-        array_walk($this->mapping, function ($listenerMappings, $eventClassName) use (&$eventTypes, $listenerClassName) {
+        array_walk($this->eventClassNamesAndListeners, function ($listenerMappings, $eventClassName) use (&$eventTypes, $listenerClassName) {
             $eventType = $this->eventTypeService->getEventTypeByClassName($eventClassName);
             foreach (array_keys($listenerMappings) as $listenerMappingClassName) {
                 if ($listenerMappingClassName === $listenerClassName) {
@@ -137,6 +188,51 @@ class EventListenerLocator
             }
         });
         return $eventTypes;
+    }
+
+    /**
+     * @return int
+     */
+    public function catchUp(): int
+    {
+        $distinctListenerObjectsByClassName = [];
+        foreach ($this->getAsynchronousListeners() as $listener) {
+            // Let's ignore asynchronous projectors for now, since we have another catch up method for them in ProjectionManager
+            if ($listener[0] instanceof ProjectorInterface) {
+                continue;
+            }
+            $distinctListenerObjectsByClassName[get_class($listener[0])] = $listener[0];
+        }
+
+        $eventCount = 0;
+        foreach ($distinctListenerObjectsByClassName as $listenerClassName => $listenerObject) {
+            $lastAppliedSequenceNumber = $listenerObject->getHighestAppliedSequenceNumber();
+
+            $filter = new EventTypesFilter($this->getEventTypesByListenerClassName($listenerClassName), $lastAppliedSequenceNumber + 1);
+            try {
+                $eventStream = $this->eventStore->get($filter);
+            } catch (EventStreamNotFoundException $exception) {
+                continue;
+            }
+
+            foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
+                $event = $eventAndRawEvent->getEvent();
+                $rawEvent = $eventAndRawEvent->getRawEvent();
+                $listener = $this->getListener($rawEvent->getType(), $listenerClassName);
+
+                /** @var AsynchronousEventListenerInterface $listenerObject */
+                $listenerObject = $listener[0];
+
+                if ($listenerObject instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
+                    $listenerObject->beforeInvokingEventListenerMethod($listener[1], $event, $rawEvent);
+                }
+                call_user_func($listener, $event, $rawEvent);
+
+                $eventCount ++;
+                $listenerObject->saveHighestAppliedSequenceNumber($sequenceNumber);
+            }
+        }
+        return $eventCount;
     }
 
     /**
