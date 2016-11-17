@@ -116,7 +116,7 @@ class ProjectionCommandController extends CommandController
             $this->output->progressStart();
         }
         $eventsCount = 0;
-        $this->projectionManager->replay($projectionDto->getIdentifier(), function() use (&$eventsCount, $quiet) {
+        $this->projectionManager->replay($projectionDto->getIdentifier(), function () use (&$eventsCount, $quiet) {
             $eventsCount ++;
             if (!$quiet) {
                 $this->output->progressAdvance();
@@ -156,7 +156,7 @@ class ProjectionCommandController extends CommandController
                 $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
                 $this->output->progressStart();
             }
-            $this->projectionManager->replay($projection->getIdentifier(), function() use (&$eventsCount, $quiet) {
+            $this->projectionManager->replay($projection->getIdentifier(), function () use (&$eventsCount, $quiet) {
                 $eventsCount++;
                 if (!$quiet) {
                     $this->output->progressAdvance();
@@ -190,7 +190,7 @@ class ProjectionCommandController extends CommandController
             $this->output->progressStart();
         }
         $eventsCount = 0;
-        $this->projectionManager->catchUp($projectionDto->getIdentifier(), function() use (&$eventsCount, $quiet) {
+        $this->projectionManager->catchUp($projectionDto->getIdentifier(), function () use (&$eventsCount, $quiet) {
             $eventsCount ++;
             if (!$quiet) {
                 $this->output->progressAdvance();
