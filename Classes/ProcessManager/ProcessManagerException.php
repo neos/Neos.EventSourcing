@@ -13,7 +13,7 @@ namespace Neos\Cqrs\ProcessManager;
 use Neos\Cqrs\Exception;
 
 /**
- * Exception
+ * ProcessManagerException
  */
 class ProcessManagerException extends Exception
 {
