@@ -102,31 +102,30 @@ class ProjectionCommandController extends CommandController
      * This command allows you to replay all relevant events for one specific projection.
      *
      * @param string $projection The projection identifier; see projection:list for possible options
-     * @param bool $verbose If specified, the progress of the replayed projection will be shown
+     * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
      * @see neos.cqrs:projection:list
      * @see neos.cqrs:projection:replayall
      */
-    public function replayCommand($projection, $verbose = false)
+    public function replayCommand($projection, $quiet = false)
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
-        $this->outputLine('Replaying events for projection "%s" ...', [$projectionDto->getIdentifier()]);
-        if ($verbose) {
+        if (!$quiet) {
+            $this->outputLine('Replaying events for projection "%s" ...', [$projectionDto->getIdentifier()]);
             $this->output->progressStart();
         }
         $eventsCount = 0;
-        $this->projectionManager->replay($projectionDto->getIdentifier(), function() use (&$eventsCount, $verbose) {
+        $this->projectionManager->replay($projectionDto->getIdentifier(), function() use (&$eventsCount, $quiet) {
             $eventsCount ++;
-            if ($verbose) {
+            if (!$quiet) {
                 $this->output->progressAdvance();
             }
         });
-        if ($verbose) {
+        if (!$quiet) {
             $this->output->progressFinish();
+            $this->outputLine('Replayed %s events.', [$eventsCount]);
         }
-
-        $this->outputLine('Replayed %s events.', [$eventsCount]);
     }
 
     /**
@@ -135,34 +134,41 @@ class ProjectionCommandController extends CommandController
      * This command allows you to replay all relevant events for all known projections.
      *
      * @param bool $onlyEmpty If specified, only projections which are currently empty will be considered
-     * @param bool $verbose If specified, the progress of the replayed projection will be shown
+     * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
      * @see neos.cqrs:projection:replay
      * @see neos.cqrs:projection:list
      */
-    public function replayAllCommand($onlyEmpty = false, $verbose = false)
+    public function replayAllCommand($onlyEmpty = false, $quiet = false)
     {
+        if (!$quiet) {
+            $this->outputLine('Replaying all%s projections', [$onlyEmpty ? ' empty' : '']);
+        }
         $eventsCount = 0;
         foreach ($this->projectionManager->getProjections() as $projection) {
             if ($onlyEmpty && !$this->projectionManager->isProjectionEmpty($projection->getIdentifier())) {
-                $this->outputLine('Skipping non-empty projection "%s" ...', [$projection->getIdentifier()]);
+                if (!$quiet) {
+                    $this->outputLine('Skipping non-empty projection "%s" ...', [$projection->getIdentifier()]);
+                }
                 continue;
             }
-            $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
-            if ($verbose) {
+            if (!$quiet) {
+                $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
                 $this->output->progressStart();
             }
-            $this->projectionManager->replay($projection->getIdentifier(), function() use (&$eventsCount, $verbose) {
+            $this->projectionManager->replay($projection->getIdentifier(), function() use (&$eventsCount, $quiet) {
                 $eventsCount++;
-                if ($verbose) {
+                if (!$quiet) {
                     $this->output->progressAdvance();
                 }
             });
-            if ($verbose) {
+            if (!$quiet) {
                 $this->output->progressFinish();
             }
         }
-        $this->outputLine('Replayed %d events.', [$eventsCount]);
+        if (!$quiet) {
+            $this->outputLine('Replayed %d events.', [$eventsCount]);
+        }
     }
 
     /**
@@ -171,30 +177,29 @@ class ProjectionCommandController extends CommandController
      * This command allows you to play all relevant unseen events for one specific projection.
      *
      * @param string $projection The projection identifier; see projection:list for possible options
-     * @param bool $verbose If specified, the progress of the applied events will be shown
+     * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
      * @see neos.cqrs:projection:list
      * @see neos.cqrs:projection:replay
      */
-    public function catchUpCommand($projection, $verbose = false)
+    public function catchUpCommand($projection, $quiet = false)
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
-
-        $this->outputLine('Catching up projection "%s" ...', [$projectionDto->getIdentifier()]);
-        if ($verbose) {
+        if (!$quiet) {
+            $this->outputLine('Catching up projection "%s" ...', [$projectionDto->getIdentifier()]);
             $this->output->progressStart();
         }
         $eventsCount = 0;
-        $this->projectionManager->catchUp($projectionDto->getIdentifier(), function() use (&$eventsCount, $verbose) {
+        $this->projectionManager->catchUp($projectionDto->getIdentifier(), function() use (&$eventsCount, $quiet) {
             $eventsCount ++;
-            if ($verbose) {
+            if (!$quiet) {
                 $this->output->progressAdvance();
             }
         });
-        if ($verbose) {
+        if (!$quiet) {
             $this->output->progressFinish();
+            $this->outputLine('Applied %d events.', [$eventsCount]);
         }
-        $this->outputLine('Applied %d events.', [$eventsCount]);
     }
 
     /**
@@ -202,17 +207,27 @@ class ProjectionCommandController extends CommandController
      *
      * @param string $projection The projection identifier; see projection:list for possible options
      * @param int $lookupInterval Pause between lookups (in seconds)
+     * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
      * @see neos.cqrs:projection:list
      * @see neos.cqrs:projection:catchup
      */
-    public function watchCommand($projection, $lookupInterval = 10)
+    public function watchCommand($projection, $lookupInterval = 10, $quiet = false)
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
-        $this->outputLine('Watching events for projection "%s" ...', [$projectionDto->getIdentifier()]);
+        if (!$quiet) {
+            $this->outputLine('Watching events for projection "%s" ...', [$projectionDto->getIdentifier()]);
+        }
         do {
-            Scripts::executeCommand('neos.cqrs:projection:catchup', $this->flowSettings, false, ['projection' => $projectionDto->getIdentifier()]);
+            $catchupCommandArguments = ['projection' => $projectionDto->getIdentifier()];
+            if ($quiet) {
+                $catchupCommandArguments['quiet'] = true;
+            }
+            Scripts::executeCommand('neos.cqrs:projection:catchup', $this->flowSettings, !$quiet, $catchupCommandArguments);
+            if (!$quiet) {
+                $this->outputLine();
+            }
             sleep($lookupInterval);
         } while (true);
     }
