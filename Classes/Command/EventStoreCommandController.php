@@ -12,7 +12,6 @@ namespace Neos\Cqrs\Command;
  */
 
 use Doctrine\DBAL\Exception\ConnectionException;
-use Neos\Cqrs\EventListener\EventListenerManager;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Schema\EventStoreSchema;
 use TYPO3\Flow\Annotations as Flow;
@@ -30,12 +29,6 @@ class EventStoreCommandController extends CommandController
      * @Flow\Inject
      */
     protected $connectionFactory;
-
-    /**
-     * @Flow\Inject
-     * @var EventListenerManager
-     */
-    protected $eventListenerManager;
 
     /**
      * @var array
@@ -119,18 +112,5 @@ class EventStoreCommandController extends CommandController
             $this->outputLine('%s', [ $exception->getMessage() ]);
             $this->quit(1);
         }
-    }
-
-    /**
-     * Forward new events to listeners
-     *
-     * This command allows you to play all relevant unseen events for all asynchronous event listeners.
-     *
-     * @return void
-     */
-    public function catchUpCommand()
-    {
-        $eventsCount = $this->eventListenerManager->catchUp();
-        $this->outputLine('Applied %d events.', [$eventsCount]);
     }
 }

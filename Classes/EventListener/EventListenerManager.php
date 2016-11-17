@@ -191,14 +191,16 @@ class EventListenerManager
     }
 
     /**
+     * Iterate over all relevant event listeners and play back events to them which haven't been applied previously.
+     *
+     * @param \Closure $progressCallback Call back which is triggered on each event listener being invoked
      * @return int
      */
-    public function catchUp(): int
+    public function catchUp(\Closure $progressCallback): int
     {
         $distinctListenerObjectsByClassName = [];
         foreach ($this->getAsynchronousListeners() as $listener) {
-            // Let's ignore asynchronous projectors for now, since we have another catch up method for them in ProjectionManager.
-            if (!is_array($listener) || $listener[0] instanceof ProjectorInterface) {
+            if (!is_array($listener)) {
                 continue;
             }
             $distinctListenerObjectsByClassName[get_class($listener[0])] = $listener[0];
@@ -225,6 +227,8 @@ class EventListenerManager
                 if ($listenerObject instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
                     $listenerObject->beforeInvokingEventListenerMethod($event, $rawEvent);
                 }
+
+                $progressCallback($listenerClassName, $rawEvent->getType(), $eventCount);
                 call_user_func($listener, $event, $rawEvent);
 
                 $eventCount ++;
