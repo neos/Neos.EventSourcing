@@ -11,7 +11,7 @@ namespace Neos\Cqrs\EventStore\Storage\Doctrine;
  * source code.
  */
 
-use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\Query\QueryBuilder;
 use Neos\Cqrs\EventStore\RawEvent;
 
 /**
@@ -21,28 +21,35 @@ final class DoctrineStreamIterator implements \Iterator
 {
 
     /**
-     * @var Statement
+     * The number of records to fetch per batch
+     *
+     * @var int
      */
-    private $statement;
+    const BATCH_SIZE = 100;
 
     /**
-     * @var array|false
+     * @var QueryBuilder
      */
-    private $currentEventData;
+    private $queryBuilder;
 
     /**
      * @var int
      */
-    private $currentId;
+    private $currentOffset = 0;
 
     /**
-     * @param Statement $statement
+     * @var \ArrayIterator
      */
-    public function __construct(Statement $statement)
-    {
-        $this->statement = $statement;
+    private $innerIterator;
 
-        $this->rewind();
+    /**
+     * @param QueryBuilder $queryBuilder
+     */
+    public function __construct(QueryBuilder $queryBuilder)
+    {
+        $this->queryBuilder = clone $queryBuilder;
+        $this->queryBuilder->setMaxResults(self::BATCH_SIZE);
+        $this->fetchBatch();
     }
 
     /**
@@ -50,18 +57,17 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function current()
     {
-        if ($this->currentEventData === false) {
-            return null;
-        }
-        $payload = json_decode($this->currentEventData['payload'], true);
-        $metadata = json_decode($this->currentEventData['metadata'], true);
-        $recordedAt = new \DateTimeImmutable($this->currentEventData['recordedat']);
+        $currentEventData = $this->innerIterator->current();
+        $payload = json_decode($currentEventData['payload'], true);
+        $metadata = json_decode($currentEventData['metadata'], true);
+        $recordedAt = new \DateTimeImmutable($currentEventData['recordedat']);
         return new RawEvent(
-            $this->currentEventData['id'],
-            $this->currentEventData['type'],
+            $currentEventData['sequencenumber'],
+            $currentEventData['type'],
             $payload,
             $metadata,
-            (int)$this->currentEventData['version'],
+            (int)$currentEventData['version'],
+            $currentEventData['id'],
             $recordedAt
         );
     }
@@ -71,13 +77,12 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function next()
     {
-        $this->currentEventData = $this->statement->fetch();
-
-        if ($this->currentEventData !== false) {
-            $this->currentId = (integer)$this->currentEventData['id'];
-        } else {
-            $this->currentId = -1;
+        $this->currentOffset ++;
+        $this->innerIterator->next();
+        if ($this->innerIterator->valid()) {
+            return;
         }
+        $this->fetchBatch();
     }
 
     /**
@@ -85,11 +90,7 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function key()
     {
-        if ($this->currentId === -1) {
-            return false;
-        }
-
-        return $this->currentId;
+        return $this->innerIterator->valid() ? $this->innerIterator->current()['sequencenumber'] : null;
     }
 
     /**
@@ -97,7 +98,7 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function valid()
     {
-        return $this->currentEventData !== false;
+        return $this->innerIterator->valid();
     }
 
     /**
@@ -105,15 +106,22 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function rewind()
     {
-        //Only perform rewind if current item is not the first element
-        if ($this->currentId === 0) {
+        if ($this->currentOffset === 0) {
             return;
         }
-        $this->statement->execute();
+        $this->currentOffset = 0;
+        $this->fetchBatch();
+    }
 
-        $this->currentEventData = null;
-        $this->currentId = -1;
-
-        $this->next();
+    /**
+     * Fetches a batch of maximum BATCH_SIZE records
+     *
+     * @return void
+     */
+    private function fetchBatch()
+    {
+        $this->queryBuilder->setFirstResult($this->currentOffset);
+        $rawResult = $this->queryBuilder->execute()->fetchAll();
+        $this->innerIterator = new \ArrayIterator($rawResult);
     }
 }

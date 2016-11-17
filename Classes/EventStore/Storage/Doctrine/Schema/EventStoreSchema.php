@@ -29,9 +29,9 @@ final class EventStoreSchema
     {
         $table = $schema->createTable($name);
 
-        // The stream id, usually in the format "<BoundedContext>:<StreamName>"
-        $table->addColumn('id', Type::INTEGER, array('autoincrement' => true));
-        // The stream id, usually in the format "<BoundedContext>:<StreamName>"
+        // The monotonic sequence number
+        $table->addColumn('sequencenumber', Type::INTEGER, array('autoincrement' => true));
+        // The stream name, usually in the format "<BoundedContext>:<StreamName>"
         $table->addColumn('stream', Type::STRING, ['length' => 255]);
         // Version of the event in the respective stream
         $table->addColumn('version', Type::BIGINT, ['unsigned' => true]);
@@ -41,11 +41,14 @@ final class EventStoreSchema
         $table->addColumn('payload', Type::TEXT);
         // The event metadata as JSON
         $table->addColumn('metadata', Type::TEXT);
+        // The unique event id, usually a UUID
+        $table->addColumn('id', Type::STRING, ['length' => 255]);
         // Timestamp of the the event publishing
         $table->addColumn('recordedat', Type::DATETIME);
 
-        $table->setPrimaryKey(['id']);
-        $table->addUniqueIndex(['stream', 'version'], 'stream_version');
+        $table->setPrimaryKey(['sequencenumber']);
+        $table->addUniqueIndex(['id'], 'id_uniq');
+        $table->addUniqueIndex(['stream', 'version'], 'stream_version_uniq');
     }
 
     /**

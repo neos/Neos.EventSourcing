@@ -72,11 +72,11 @@ class DoctrineEventStorage implements EventStorageInterface
         $query = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->connectionFactory->getStreamTableName())
-            ->orderBy('id', 'ASC');
+            ->orderBy('sequencenumber', 'ASC');
         $this->applyEventStreamFilter($query, $filter);
 
-        $streamIterator = new DoctrineStreamIterator($query->execute());
-        return new EventStream($streamIterator);
+        $streamIterator = new DoctrineStreamIterator($query);
+        return new EventStream($streamIterator, $this->getStreamVersion($filter));
     }
 
     /**
@@ -97,6 +97,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $this->connection->insert(
                 $this->connectionFactory->getStreamTableName(),
                 [
+                    'id' => $event->getIdentifier(),
                     'stream' => $streamName,
                     'version' => ++$actualVersion,
                     'type' => $event->getType(),
@@ -109,8 +110,8 @@ class DoctrineEventStorage implements EventStorageInterface
                     'recordedat' => Type::DATETIME,
                 ]
             );
-            $eventIdentifier = $this->connection->lastInsertId();
-            $rawEvents[] = new RawEvent($eventIdentifier, $event->getType(), $event->getData(), $event->getMetadata(), $actualVersion, $this->now);
+            $sequenceNumber = $this->connection->lastInsertId();
+            $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $event->getMetadata(), $actualVersion, $event->getIdentifier(), $this->now);
         }
         $this->connection->commit();
         return $rawEvents;
@@ -166,7 +167,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $query->setParameter('eventTypes', $filter->getEventTypes(), Connection::PARAM_STR_ARRAY);
         }
         if ($filter->hasMinimumSequenceNumber()) {
-            $query->andWhere('id >= :minimumSequenceNumber');
+            $query->andWhere('sequencenumber >= :minimumSequenceNumber');
             $query->setParameter('minimumSequenceNumber', $filter->getMinimumSequenceNumber());
         }
     }
