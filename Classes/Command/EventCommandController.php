@@ -11,7 +11,7 @@ namespace Neos\Cqrs\Command;
  * source code.
  */
 
-use Neos\Cqrs\EventListener\EventListenerManager;
+use Neos\Cqrs\Event\EventPublisher;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cli\CommandController;
 use TYPO3\Flow\Core\Booting\Scripts;
@@ -25,9 +25,9 @@ class EventCommandController extends CommandController
 {
     /**
      * @Flow\Inject
-     * @var EventListenerManager
+     * @var EventPublisher
      */
-    protected $eventListenerManager;
+    protected $eventPublisher;
 
     /**
      * @Flow\InjectConfiguration(package="TYPO3.Flow")
@@ -47,7 +47,7 @@ class EventCommandController extends CommandController
      */
     public function catchUpCommand($verbose = false, $quiet = false)
     {
-        $progressCallback = function ($listenerClassName, $eventType, $eventCount) use ($quiet, $verbose) {
+        $progressCallback = function ($listenerClassName, $eventType) use ($quiet, $verbose) {
             if (!$quiet) {
                 if ($verbose) {
                     $this->outputLine('%s -> %s', [$listenerClassName, $eventType]);
@@ -57,7 +57,7 @@ class EventCommandController extends CommandController
             }
         };
 
-        $eventsCount = $this->eventListenerManager->catchUp($progressCallback);
+        $eventsCount = $this->eventPublisher->catchUp($progressCallback);
         if ($verbose) {
             $this->outputLine('Applied %d events.', [$eventsCount]);
         }

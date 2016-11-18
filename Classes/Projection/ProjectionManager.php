@@ -12,7 +12,7 @@ namespace Neos\Cqrs\Projection;
  */
 
 use Neos\Cqrs\Event\EventTypeResolver;
-use Neos\Cqrs\EventListener\EventListenerManager;
+use Neos\Cqrs\EventListener\EventListenerLocator;
 use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\EventTypesFilter;
@@ -45,9 +45,9 @@ class ProjectionManager
 
     /**
      * @Flow\Inject
-     * @var EventListenerManager
+     * @var EventListenerLocator
      */
-    protected $eventListenerManager;
+    protected $eventListenerLocator;
 
     /**
      * @Flow\Inject
@@ -96,7 +96,7 @@ class ProjectionManager
     {
         $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
         $projectorClassName = $this->projections[$fullProjectionIdentifier];
-        $eventTypes = $this->eventListenerManager->getEventTypesByListenerClassName($projectorClassName);
+        $eventTypes = $this->eventListenerLocator->getEventTypesByListenerClassName($projectorClassName);
         return new Projection($fullProjectionIdentifier, $projectorClassName, $eventTypes);
     }
 
@@ -138,7 +138,7 @@ class ProjectionManager
         }
         foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
             $rawEvent = $eventAndRawEvent->getRawEvent();
-            $listener = $this->eventListenerManager->getListener($rawEvent->getType(), $projection->getProjectorClassName());
+            $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             if ($progressCallback !== null) {
                 call_user_func($progressCallback, $sequenceNumber);
@@ -176,7 +176,7 @@ class ProjectionManager
         }
         foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
             $rawEvent = $eventAndRawEvent->getRawEvent();
-            $listener = $this->eventListenerManager->getListener($rawEvent->getType(), $projection->getProjectorClassName());
+            $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
             call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
             if ($progressCallback !== null) {
                 call_user_func($progressCallback, $sequenceNumber);

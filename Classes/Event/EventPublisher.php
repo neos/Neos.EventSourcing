@@ -12,8 +12,11 @@ namespace Neos\Cqrs\Event;
  */
 
 use Neos\Cqrs\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
-use Neos\Cqrs\EventListener\EventListenerManager;
+use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
+use Neos\Cqrs\EventListener\EventListenerLocator;
 use Neos\Cqrs\EventStore\EventStore;
+use Neos\Cqrs\EventStore\EventTypesFilter;
+use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Cqrs\EventStore\ExpectedVersion;
 use Neos\Cqrs\EventStore\WritableEvent;
 use Neos\Cqrs\EventStore\WritableEvents;
@@ -38,7 +41,7 @@ class EventPublisher
     private $eventStore;
 
     /**
-     * @var EventListenerManager
+     * @var EventListenerLocator
      */
     private $eventListenerLocator;
 
@@ -54,11 +57,11 @@ class EventPublisher
 
     /**
      * @param EventStore $eventStore
-     * @param EventListenerManager $eventListenerLocator
+     * @param EventListenerLocator $eventListenerLocator
      * @param PropertyMapper $propertyMapper
      * @param EventTypeResolver $eventTypeResolver
      */
-    public function __construct(EventStore $eventStore, EventListenerManager $eventListenerLocator, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
+    public function __construct(EventStore $eventStore, EventListenerLocator $eventListenerLocator, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
     {
         $this->eventStore = $eventStore;
         $this->eventListenerLocator = $eventListenerLocator;
@@ -108,11 +111,59 @@ class EventPublisher
             $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
             foreach ($this->eventListenerLocator->getSynchronousListenersByEventType($rawEvent->getType()) as $listener) {
                 if (is_array($listener) && $listener[0] instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
-                    $listener[0]->beforeInvokingEventListenerMethod($listener[1], $event, $rawEvent);
+                    $listener[0]->beforeInvokingEventListenerMethod($event, $rawEvent);
                 }
                 call_user_func($listener, $event, $rawEvent);
             }
         }
+    }
+
+    /**
+     * Iterate over all relevant event listeners and play back events to them which haven't been applied previously.
+     *
+     * @param \Closure $progressCallback Call back which is triggered on each event listener being invoked
+     * @return int
+     */
+    public function catchUp(\Closure $progressCallback): int
+    {
+        $distinctListenerObjectsByClassName = [];
+        foreach ($this->eventListenerLocator->getAsynchronousListeners() as $listener) {
+            if (!is_array($listener)) {
+                continue;
+            }
+            $distinctListenerObjectsByClassName[get_class($listener[0])] = $listener[0];
+        }
+
+        $eventCount = 0;
+        foreach ($distinctListenerObjectsByClassName as $listenerClassName => $listenerObject) {
+            $lastAppliedSequenceNumber = $listenerObject->getHighestAppliedSequenceNumber();
+
+            $filter = new EventTypesFilter($this->eventListenerLocator->getEventTypesByListenerClassName($listenerClassName), $lastAppliedSequenceNumber + 1);
+            try {
+                $eventStream = $this->eventStore->get($filter);
+            } catch (EventStreamNotFoundException $exception) {
+                continue;
+            }
+
+            foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
+                $event = $eventAndRawEvent->getEvent();
+                $rawEvent = $eventAndRawEvent->getRawEvent();
+                $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $listenerClassName);
+
+                /** @var AsynchronousEventListenerInterface $listenerObject */
+                $listenerObject = $listener[0];
+                if ($listenerObject instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
+                    $listenerObject->beforeInvokingEventListenerMethod($event, $rawEvent);
+                }
+
+                $progressCallback($listenerClassName, $rawEvent->getType(), $eventCount);
+                call_user_func($listener, $event, $rawEvent);
+
+                $eventCount ++;
+                $listenerObject->saveHighestAppliedSequenceNumber($sequenceNumber);
+            }
+        }
+        return $eventCount;
     }
 
     /**

@@ -14,11 +14,8 @@ namespace Neos\Cqrs\EventListener;
 use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventStore\EventStore;
-use Neos\Cqrs\EventStore\EventTypesFilter;
-use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Cqrs\EventStore\RawEvent;
 use Neos\Cqrs\Exception;
-use Neos\Cqrs\Projection\ProjectorInterface;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Reflection\ReflectionService;
@@ -28,7 +25,7 @@ use TYPO3\Flow\Reflection\ReflectionService;
  *
  * @Flow\Scope("singleton")
  */
-class EventListenerManager
+class EventListenerLocator
 {
     /**
      * @var ObjectManagerInterface
@@ -188,54 +185,6 @@ class EventListenerManager
             }
         });
         return $eventTypes;
-    }
-
-    /**
-     * Iterate over all relevant event listeners and play back events to them which haven't been applied previously.
-     *
-     * @param \Closure $progressCallback Call back which is triggered on each event listener being invoked
-     * @return int
-     */
-    public function catchUp(\Closure $progressCallback): int
-    {
-        $distinctListenerObjectsByClassName = [];
-        foreach ($this->getAsynchronousListeners() as $listener) {
-            if (!is_array($listener)) {
-                continue;
-            }
-            $distinctListenerObjectsByClassName[get_class($listener[0])] = $listener[0];
-        }
-
-        $eventCount = 0;
-        foreach ($distinctListenerObjectsByClassName as $listenerClassName => $listenerObject) {
-            $lastAppliedSequenceNumber = $listenerObject->getHighestAppliedSequenceNumber();
-
-            $filter = new EventTypesFilter($this->getEventTypesByListenerClassName($listenerClassName), $lastAppliedSequenceNumber + 1);
-            try {
-                $eventStream = $this->eventStore->get($filter);
-            } catch (EventStreamNotFoundException $exception) {
-                continue;
-            }
-
-            foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
-                $event = $eventAndRawEvent->getEvent();
-                $rawEvent = $eventAndRawEvent->getRawEvent();
-                $listener = $this->getListener($rawEvent->getType(), $listenerClassName);
-
-                /** @var AsynchronousEventListenerInterface $listenerObject */
-                $listenerObject = $listener[0];
-                if ($listenerObject instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
-                    $listenerObject->beforeInvokingEventListenerMethod($event, $rawEvent);
-                }
-
-                $progressCallback($listenerClassName, $rawEvent->getType(), $eventCount);
-                call_user_func($listener, $event, $rawEvent);
-
-                $eventCount ++;
-                $listenerObject->saveHighestAppliedSequenceNumber($sequenceNumber);
-            }
-        }
-        return $eventCount;
     }
 
     /**
