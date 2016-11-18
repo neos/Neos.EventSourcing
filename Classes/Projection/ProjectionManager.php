@@ -20,7 +20,6 @@ use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Cache\Frontend\VariableFrontend;
 use TYPO3\Flow\Object\ObjectManagerInterface;
-use TYPO3\Flow\Package\PackageManagerInterface;
 use TYPO3\Flow\Reflection\ClassReflection;
 use TYPO3\Flow\Reflection\ReflectionService;
 
