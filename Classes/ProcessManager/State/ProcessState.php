@@ -16,7 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
 use TYPO3\Flow\Object\ObjectManagerInterface;
 
 /**
- * Process Manager State
+ * Process State
  *
  * All methods which change the data of this state will trigger automatic persistence. This is necessary in order to
  * support rows of commands and events handled by a single process manager which are executed synchronously within
@@ -24,7 +24,7 @@ use TYPO3\Flow\Object\ObjectManagerInterface;
  *
  * @Flow\Entity
  */
-class State
+class ProcessState
 {
     /**
      * @ORM\Id

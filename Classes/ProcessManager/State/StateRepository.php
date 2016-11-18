@@ -17,7 +17,7 @@ use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Log\SystemLoggerInterface;
 
 /**
- * A repository specialized on Process Manager States
+ * A repository specialized on Process States
  *
  * @Flow\Scope("singleton")
  */
@@ -50,23 +50,23 @@ final class StateRepository
      */
     public function get(string $identifier, string $processManagerClassName)
     {
-        return $this->entityManager->find(State::class, ['identifier' => $identifier, 'processManagerClassName' => $processManagerClassName]);
+        return $this->entityManager->find(ProcessState::class, ['identifier' => $identifier, 'processManagerClassName' => $processManagerClassName]);
     }
 
     /**
-     * @param State $state The State to save
+     * @param ProcessState $state The State to save
      * @return void
      */
-    public function save(State $state)
+    public function save(ProcessState $state)
     {
         $this->entityManager->persist($state);
         $this->entityManager->flush();
     }
 
     /**
-     * @param State $state
+     * @param ProcessState $state
      */
-    public function remove(State $state)
+    public function remove(ProcessState $state)
     {
         $this->entityManager->remove($state);
         $this->entityManager->flush();

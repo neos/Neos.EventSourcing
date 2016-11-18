@@ -14,7 +14,7 @@ use Neos\Cqrs\Event\EventInterface;
 use Neos\Cqrs\EventListener\EventListenerInterface;
 use Neos\Cqrs\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
 use Neos\Cqrs\EventStore\RawEvent;
-use Neos\Cqrs\ProcessManager\State\State;
+use Neos\Cqrs\ProcessManager\State\ProcessState;
 use Neos\Cqrs\ProcessManager\State\StateRepository;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -30,9 +30,9 @@ abstract class AbstractProcessManager implements EventListenerInterface, ActsBef
     protected $stateRepository;
 
     /**
-     * @var State
+     * @var ProcessState
      */
-    protected $state;
+    protected $processState;
 
     /**
      * Return the process configuration for the concrete process manager
@@ -77,9 +77,9 @@ abstract class AbstractProcessManager implements EventListenerInterface, ActsBef
         }
 
         $stateIdentifier = $configuration[$eventClassName]($event);
-        $this->state = $this->stateRepository->get($stateIdentifier, get_class($this));
-        if ($this->state === null) {
-            $this->state = new State($stateIdentifier, get_class($this));
+        $this->processState = $this->stateRepository->get($stateIdentifier, get_class($this));
+        if ($this->processState === null) {
+            $this->processState = new ProcessState($stateIdentifier, get_class($this));
         }
     }
 }
