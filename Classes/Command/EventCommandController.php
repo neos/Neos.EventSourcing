@@ -40,27 +40,27 @@ class EventCommandController extends CommandController
      *
      * This command allows you to play all relevant unseen events for all asynchronous event listeners.
      *
+     * @param bool $verbose If specified, this command will display information about the events being applied
      * @param bool $quiet If specified, this command won't produce any output apart from errors
      * @return void
      * @see neos.cqrs:event:watch
      */
-    public function catchUpCommand($quiet = false)
+    public function catchUpCommand($verbose = false, $quiet = false)
     {
-        $progressCallback = function ($listenerClassName, $eventType, $eventCount) use ($quiet) {
+        $progressCallback = function ($listenerClassName, $eventType, $eventCount) use ($quiet, $verbose) {
             if (!$quiet) {
-                $this->output->progressAdvance();
+                if ($verbose) {
+                    $this->outputLine('%s -> %s', [$listenerClassName, $eventType]);
+                } else {
+                    $this->output('*');
+                }
             }
         };
 
-        $this->outputLine('Catching up on events ...');
-        if (!$quiet) {
-            $this->output->progressStart();
-        }
         $eventsCount = $this->eventListenerManager->catchUp($progressCallback);
-        if (!$quiet) {
-            $this->output->progressFinish();
+        if ($verbose) {
+            $this->outputLine('Applied %d events.', [$eventsCount]);
         }
-        $this->outputLine('Applied %d events.', [$eventsCount]);
     }
 
     /**
@@ -71,23 +71,29 @@ class EventCommandController extends CommandController
      * interfaces.
      *
      * @param int $lookupInterval Pause between lookups (in seconds)
+     * @param bool $verbose If specified, this command will display information about the events being applied
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
      * @see neos.cqrs:event:catchup
      */
-    public function watchCommand($lookupInterval = 10, $quiet = false)
+    public function watchCommand($lookupInterval = 10, $verbose = false, $quiet = false)
     {
-        if (!$quiet) {
+        if ($verbose) {
             $this->outputLine('Watching events ...');
         }
+
         do {
-            $catchupCommandArguments = [];
-            if ($quiet) {
-                $catchupCommandArguments['quiet'] = true;
-            }
+            $catchupCommandArguments = [
+                'quiet' => $quiet ? 'yes' : 'no',
+                'verbose' => $verbose ? 'yes' : 'no'
+            ];
             Scripts::executeCommand('neos.cqrs:event:catchup', $this->flowSettings, !$quiet, $catchupCommandArguments);
             if (!$quiet) {
-                $this->outputLine();
+                if ($verbose) {
+                    $this->outputLine();
+                } else {
+                    $this->output('.');
+                }
             }
             sleep($lookupInterval);
         } while (true);
