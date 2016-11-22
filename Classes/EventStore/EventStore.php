@@ -40,7 +40,7 @@ class EventStore
     {
         $eventStream = $this->storage->load($filter);
         if (!$eventStream->valid()) {
-            throw new EventStreamNotFoundException('Invalid event stream', 1477497156);
+            throw new EventStreamNotFoundException(sprintf('The event stream "%s" does not appear to be valid.', $filter->getStreamName()), 1477497156);
         }
         return $eventStream;
     }
