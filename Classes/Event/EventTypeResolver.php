@@ -15,7 +15,7 @@ use Neos\Cqrs\Exception;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ReflectionService;
-use Neos\Flow\Utility\TypeHandling;
+use Neos\Utility\TypeHandling;
 
 /**
  * Event Type Resolver
