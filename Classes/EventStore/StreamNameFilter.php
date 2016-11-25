@@ -12,7 +12,7 @@ namespace Neos\Cqrs\EventStore;
  */
 
 use Neos\Cqrs\Exception;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 class StreamNameFilter implements EventStreamFilterInterface
 {

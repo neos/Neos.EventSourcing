@@ -12,8 +12,8 @@ namespace Neos\Cqrs;
  */
 
 use Neos\Cqrs\Projection\Doctrine\DoctrineProjectionPersistenceManager;
-use TYPO3\Flow\Core\Bootstrap;
-use TYPO3\Flow\Package\Package as BasePackage;
+use Neos\Flow\Core\Bootstrap;
+use Neos\Flow\Package\Package as BasePackage;
 
 /**
  * The Neos.Cqrs Package

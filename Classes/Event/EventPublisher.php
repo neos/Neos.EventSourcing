@@ -20,10 +20,10 @@ use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Cqrs\EventStore\ExpectedVersion;
 use Neos\Cqrs\EventStore\WritableEvent;
 use Neos\Cqrs\EventStore\WritableEvents;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Property\PropertyMapper;
-use TYPO3\Flow\Property\PropertyMappingConfiguration;
-use TYPO3\Flow\Utility\Algorithms;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Property\PropertyMapper;
+use Neos\Flow\Property\PropertyMappingConfiguration;
+use Neos\Flow\Utility\Algorithms;
 
 /**
  * @Flow\Scope("singleton")

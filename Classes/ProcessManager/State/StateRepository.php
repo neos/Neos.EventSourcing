@@ -13,8 +13,8 @@ namespace Neos\Cqrs\ProcessManager\State;
 
 use Doctrine\Common\Persistence\ObjectManager as DoctrineObjectManager;
 use Doctrine\ORM\EntityManager as DoctrineEntityManager;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Log\SystemLoggerInterface;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Log\SystemLoggerInterface;
 
 /**
  * A repository specialized on Process States

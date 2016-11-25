@@ -5,7 +5,7 @@ Neos\Cqrs\Projection\ProjectionManager:
   properties:
     'projectionCache':
       object:
-        factoryObjectName: TYPO3\Flow\Cache\CacheManager
+        factoryObjectName: Neos\Flow\Cache\CacheManager
         factoryMethodName: getCache
         arguments:
           1:

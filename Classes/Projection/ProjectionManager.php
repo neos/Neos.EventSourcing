@@ -17,11 +17,11 @@ use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\EventTypesFilter;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Cache\Frontend\VariableFrontend;
-use TYPO3\Flow\ObjectManagement\ObjectManagerInterface;
-use TYPO3\Flow\Reflection\ClassReflection;
-use TYPO3\Flow\Reflection\ReflectionService;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Cache\Frontend\VariableFrontend;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
+use Neos\Flow\Reflection\ClassReflection;
+use Neos\Flow\Reflection\ReflectionService;
 
 /**
  * Central authority for managing projections

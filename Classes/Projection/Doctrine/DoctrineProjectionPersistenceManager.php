@@ -16,8 +16,8 @@ use Doctrine\ORM\EntityManager as DoctrineEntityManager;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\UnitOfWork;
 use Neos\Cqrs\Exception;
-use TYPO3\Flow\Log\SystemLoggerInterface;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Log\SystemLoggerInterface;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * A persistence manager for Doctrine-based projectors

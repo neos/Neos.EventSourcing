@@ -14,8 +14,8 @@ namespace Neos\Cqrs\Command;
 use Doctrine\DBAL\Exception\ConnectionException;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\Cqrs\EventStore\Storage\Doctrine\Schema\EventStoreSchema;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Cli\CommandController;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Cli\CommandController;
 
 /**
  * CLI Command Controller for storage related commands of the Neos Event Store

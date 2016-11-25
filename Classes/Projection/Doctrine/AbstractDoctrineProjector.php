@@ -13,7 +13,7 @@ namespace Neos\Cqrs\Projection\Doctrine;
 
 use Neos\Cqrs\Exception;
 use Neos\Cqrs\Projection\AbstractBaseProjector;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * A base class for Doctrine-based projectors
@@ -77,7 +77,7 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
      *
      * @param object $object The modified object
      * @return void
-     * @throws \TYPO3\Flow\Persistence\Exception\IllegalObjectTypeException
+     * @throws \Neos\Flow\Persistence\Exception\IllegalObjectTypeException
      * @api
      */
     protected function update($object)

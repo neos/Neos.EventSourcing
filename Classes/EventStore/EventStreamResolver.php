@@ -12,11 +12,11 @@ namespace Neos\Cqrs\EventStore;
  */
 
 use Neos\Cqrs\Domain\AggregateRootInterface;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\ObjectManagement\ObjectManagerInterface;
-use TYPO3\Flow\Package\PackageManagerInterface;
-use TYPO3\Flow\Reflection\ClassReflection;
-use TYPO3\Flow\Utility\TypeHandling;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
+use Neos\Flow\Package\PackageManagerInterface;
+use Neos\Flow\Reflection\ClassReflection;
+use Neos\Flow\Utility\TypeHandling;
 
 /**
  * @Flow\Scope("singleton")

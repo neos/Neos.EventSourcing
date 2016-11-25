@@ -12,10 +12,10 @@ namespace Neos\Cqrs\TypeConverter;
  */
 
 use Neos\Cqrs\Event\EventInterface;
-use TYPO3\Flow\Property\PropertyMappingConfigurationInterface;
-use TYPO3\Flow\Property\TypeConverter\AbstractTypeConverter;
-use TYPO3\Flow\Reflection\ObjectAccess;
-use TYPO3\Flow\Utility\TypeHandling;
+use Neos\Flow\Property\PropertyMappingConfigurationInterface;
+use Neos\Flow\Property\TypeConverter\AbstractTypeConverter;
+use Neos\Flow\Reflection\ObjectAccess;
+use Neos\Flow\Utility\TypeHandling;
 
 /**
  * Simple TypeConverter that can turn instances of EventInterface to an array that contains all properties recursively
@@ -43,7 +43,7 @@ class EventToArrayConverter extends AbstractTypeConverter
      * @param string $targetType
      * @param array $convertedChildProperties
      * @param PropertyMappingConfigurationInterface $configuration
-     * @return array|\TYPO3\Flow\Error\Error
+     * @return array|\Neos\Flow\Error\Error
      */
     public function convertFrom($source, $targetType, array $convertedChildProperties = [], PropertyMappingConfigurationInterface $configuration = null)
     {

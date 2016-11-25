@@ -11,7 +11,7 @@ namespace Neos\Cqrs\Event\Exception;
  * source code.
  */
 
-use TYPO3\Flow\Exception;
+use Neos\Flow\Exception;
 
 /**
  * EventBusException

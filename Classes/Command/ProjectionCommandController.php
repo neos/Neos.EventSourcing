@@ -14,9 +14,9 @@ namespace Neos\Cqrs\Command;
 use Neos\Cqrs\Projection\InvalidProjectionIdentifierException;
 use Neos\Cqrs\Projection\Projection;
 use Neos\Cqrs\Projection\ProjectionManager;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Cli\CommandController;
-use TYPO3\Flow\Core\Booting\Scripts;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Cli\CommandController;
+use Neos\Flow\Core\Booting\Scripts;
 
 /**
  * CLI Command Controller for projection related commands
@@ -32,7 +32,7 @@ class ProjectionCommandController extends CommandController
     protected $projectionManager;
 
     /**
-     * @Flow\InjectConfiguration(package="TYPO3.Flow")
+     * @Flow\InjectConfiguration(package="Neos.Flow")
      * @var array
      */
     protected $flowSettings;

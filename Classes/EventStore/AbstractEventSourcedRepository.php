@@ -15,7 +15,7 @@ use Neos\Cqrs\Domain\EventSourcedAggregateRootInterface;
 use Neos\Cqrs\Domain\Exception\AggregateRootNotFoundException;
 use Neos\Cqrs\Domain\RepositoryInterface;
 use Neos\Cqrs\Event\EventPublisher;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * Base implementation for an event-sourced repository

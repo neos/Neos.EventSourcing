@@ -16,9 +16,9 @@ use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\RawEvent;
 use Neos\Cqrs\Exception;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\ObjectManagement\ObjectManagerInterface;
-use TYPO3\Flow\Reflection\ReflectionService;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
+use Neos\Flow\Reflection\ReflectionService;
 
 /**
  * EventListenerLocator

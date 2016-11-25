@@ -11,9 +11,9 @@ namespace Neos\Cqrs\Projection\Doctrine;
  * source code.
  */
 
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Persistence\Doctrine\Query;
-use TYPO3\Flow\Persistence\QueryResultInterface;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Persistence\Doctrine\Query;
+use Neos\Flow\Persistence\QueryResultInterface;
 
 /**
  * A base class for Doctrine-based Finders
@@ -31,8 +31,8 @@ abstract class AbstractDoctrineFinder
     /**
      * Concrete projectors may override this property for setting the default sorting order of query results.
      *
-     *  'foo' => \TYPO3\Flow\Persistence\QueryInterface::ORDER_ASCENDING,
-     *  'bar' => \TYPO3\Flow\Persistence\QueryInterface::ORDER_DESCENDING
+     *  'foo' => \Neos\Flow\Persistence\QueryInterface::ORDER_ASCENDING,
+     *  'bar' => \Neos\Flow\Persistence\QueryInterface::ORDER_DESCENDING
      *
      * @var array
      * @api

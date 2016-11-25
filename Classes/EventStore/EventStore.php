@@ -13,7 +13,7 @@ namespace Neos\Cqrs\EventStore;
 
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * @Flow\Scope("singleton")

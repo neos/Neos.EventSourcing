@@ -24,9 +24,9 @@ use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
 use Neos\Cqrs\EventStore\RawEvent;
 use Neos\Cqrs\EventStore\StreamNameFilter;
 use Neos\Cqrs\EventStore\WritableEvents;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Property\PropertyMapper;
-use TYPO3\Flow\Utility\Now;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Property\PropertyMapper;
+use Neos\Flow\Utility\Now;
 
 /**
  * Database event storage, for testing purpose

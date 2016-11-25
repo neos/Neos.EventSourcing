@@ -11,9 +11,9 @@ namespace Neos\Cqrs\ProcessManager\State;
  * source code.
  */
 
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
-use TYPO3\Flow\ObjectManagement\ObjectManagerInterface;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 
 /**
  * Process State

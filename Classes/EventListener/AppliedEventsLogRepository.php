@@ -12,7 +12,7 @@ namespace Neos\Cqrs\EventListener;
  */
 
 use Doctrine\Common\Persistence\ObjectManager as EntityManager;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * A generic Doctrine-based repository for applied events logs.

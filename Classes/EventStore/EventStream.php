@@ -12,9 +12,9 @@ namespace Neos\Cqrs\EventStore;
  */
 
 use Neos\Cqrs\Event\EventTypeResolver;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Property\PropertyMapper;
-use TYPO3\Flow\Property\PropertyMappingConfiguration;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Property\PropertyMapper;
+use Neos\Flow\Property\PropertyMappingConfiguration;
 
 /**
  * EventStream

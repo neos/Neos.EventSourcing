@@ -16,7 +16,7 @@ use Neos\Cqrs\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
 use Neos\Cqrs\EventStore\RawEvent;
 use Neos\Cqrs\ProcessManager\State\ProcessState;
 use Neos\Cqrs\ProcessManager\State\StateRepository;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * Base implementation for a process manager

@@ -13,7 +13,7 @@ namespace Neos\Cqrs\Projection\Doctrine;
 
 use Neos\Cqrs\EventListener\AppliedEventsLogRepository;
 use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * A base class for Doctrine-based projectors

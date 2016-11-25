@@ -13,7 +13,7 @@ namespace Neos\Cqrs\Domain;
 
 use Neos\Cqrs\Event\AggregateEventInterface;
 use Neos\Cqrs\Event\EventInterface;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * Base class for an aggregate root

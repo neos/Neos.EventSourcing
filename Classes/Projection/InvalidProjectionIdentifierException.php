@@ -12,7 +12,7 @@ namespace Neos\Cqrs\Projection;
  */
 
 use Neos\Cqrs\Exception;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * An invalid projection identifier exception (thrown if the given identifier does not exist or is ambiguous)
