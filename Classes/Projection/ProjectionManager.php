@@ -18,7 +18,7 @@ use Neos\Cqrs\EventStore\EventStore;
 use Neos\Cqrs\EventStore\EventTypesFilter;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Cache\Frontend\VariableFrontend;
+use Neos\Cache\Frontend\VariableFrontend;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ClassReflection;
 use Neos\Flow\Reflection\ReflectionService;
