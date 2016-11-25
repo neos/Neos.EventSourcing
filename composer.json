@@ -13,5 +13,10 @@
         "psr-4": {
             "Neos\\Cqrs\\": "Classes"
         }
+    },
+    "extra": {
+        "applied-flow-migrations": [
+            "TYPO3.FLOW3-201201261636"
+        ]
     }
 }
