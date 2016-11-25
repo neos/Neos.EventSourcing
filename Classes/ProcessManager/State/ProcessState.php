@@ -28,6 +28,7 @@ class ProcessState
 {
     /**
      * @ORM\Id
+     * @ORM\Column(length=40)
      * @var string
      */
     protected $identifier;
