@@ -62,16 +62,19 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     private $connection;
 
-    protected function initializeObject()
+    protected $streamTableName;
+
+    public function __construct(array $options)
     {
-        $this->connection = $this->connectionFactory->get();
+        $this->connection = ConnectionFactory::create($options);
+        $this->streamTableName = $options['streamTableName'];
     }
 
     public function load(EventStreamFilterInterface $filter): EventStream
     {
         $query = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->connectionFactory->getStreamTableName())
+            ->from($this->streamTableName)
             ->orderBy('sequencenumber', 'ASC');
         $this->applyEventStreamFilter($query, $filter);
 
@@ -95,7 +98,7 @@ class DoctrineEventStorage implements EventStorageInterface
         $rawEvents = [];
         foreach ($events as $event) {
             $this->connection->insert(
-                $this->connectionFactory->getStreamTableName(),
+                $this->streamTableName,
                 [
                     'id' => $event->getIdentifier(),
                     'stream' => $streamName,
@@ -125,7 +128,7 @@ class DoctrineEventStorage implements EventStorageInterface
     {
         $query = $this->connection->createQueryBuilder()
             ->select('MAX(version)')
-            ->from($this->connectionFactory->getStreamTableName());
+            ->from($this->streamTableName);
         $this->applyEventStreamFilter($query, $filter);
         $version = $query->execute()->fetchColumn();
         return $version !== null ? (int)$version : -1;

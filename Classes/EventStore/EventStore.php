@@ -16,7 +16,9 @@ use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
 use Neos\Flow\Annotations as Flow;
 
 /**
- * @Flow\Scope("singleton")
+ * main api to store and fetch events.
+ *
+ * Do not instantiate directly, instead use EventStoreManager
  */
 class EventStore
 {

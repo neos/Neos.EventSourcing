@@ -2,16 +2,20 @@
 Neos:
   Cqrs:
     EventStore:
-      storage:
-        options:
-          eventTableName: neos_cqrs_events
-          backendOptions:
-            driver: pdo_mysql
-            host: 127.0.0.1
-            dbname: null
-            user: null
-            password: null
-            charset: utf8
+      stores:
+        'default':
+          boundedContexts:
+            '*': true
+            storage: 'Neos\Cqrs\EventStore\Storage\Doctrine\DoctrineEventStorage'
+            storageOptions:
+              eventTableName: neos_cqrs_events
+              backendOptions:
+                driver: pdo_mysql
+                host: 127.0.0.1
+                dbname: null
+                user: null
+                password: null
+                charset: utf8
   Flow:
     persistence:
       doctrine:

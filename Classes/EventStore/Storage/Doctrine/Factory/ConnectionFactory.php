@@ -25,43 +25,21 @@ use Neos\Flow\Annotations as Flow;
 class ConnectionFactory
 {
     /**
-     * @var array
-     * @Flow\InjectConfiguration(path="EventStore.storage.options")
-     */
-    protected $configuration;
-
-    /**
-     * @var Connection
-     */
-    protected $connection;
-
-    /**
      * @return Connection
      */
-    public function get()
+    public static function create($options)
     {
-        if ($this->connection !== null) {
-            return $this->connection;
-        }
         $config = new Configuration();
-        $connectionParams = $this->configuration['backendOptions'];
-        $this->connection = DriverManager::getConnection($connectionParams, $config);
+        $connectionParams = $options['backendOptions'];
+        $connection = DriverManager::getConnection($connectionParams, $config);
 
-        if (isset($this->configuration['mappingTypes']) && is_array($this->configuration['mappingTypes'])) {
-            foreach ($this->configuration['mappingTypes'] as $typeName => $typeConfiguration) {
+        if (isset($options['mappingTypes']) && is_array($options['mappingTypes'])) {
+            foreach ($options['mappingTypes'] as $typeName => $typeConfiguration) {
                 Type::addType($typeName, $typeConfiguration['className']);
-                $this->connection->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
+                $connection->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
             }
         }
 
-        return $this->connection;
-    }
-
-    /**
-     * @return string
-     */
-    public function getStreamTableName()
-    {
-        return $this->configuration['eventTableName'];
+        return $connection;
     }
 }

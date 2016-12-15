@@ -14,7 +14,7 @@ namespace Neos\Cqrs\Projection;
 use Neos\Cqrs\Event\EventTypeResolver;
 use Neos\Cqrs\EventListener\EventListenerLocator;
 use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
-use Neos\Cqrs\EventStore\EventStore;
+use Neos\Cqrs\EventStore\EventStoreManager;
 use Neos\Cqrs\EventStore\EventTypesFilter;
 use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Flow\Annotations as Flow;
@@ -57,9 +57,9 @@ class ProjectionManager
 
     /**
      * @Flow\Inject
-     * @var EventStore
+     * @var EventStoreManager
      */
-    protected $eventStore;
+    protected $eventStoreManager;
 
     /**
      * @var array in the format ['<projectionIdentifier>' => '<projectorClassName>', ...]
@@ -132,7 +132,8 @@ class ProjectionManager
         $filter = new EventTypesFilter($projection->getEventTypes());
 
         try {
-            $eventStream = $this->eventStore->get($filter);
+            $eventStore = $this->eventStoreManager->getEventStoreForEventTypes($projection->getEventTypes());
+            $eventStream = $eventStore->get($filter);
         } catch (EventStreamNotFoundException $exception) {
             return;
         }
@@ -170,7 +171,8 @@ class ProjectionManager
 
         $filter = new EventTypesFilter($projection->getEventTypes(), $lastAppliedSequenceNumber + 1);
         try {
-            $eventStream = $this->eventStore->get($filter);
+            $eventStore = $this->eventStoreManager->getEventStoreForEventTypes($projection->getEventTypes());
+            $eventStream = $eventStore->get($filter);
         } catch (EventStreamNotFoundException $exception) {
             return;
         }
