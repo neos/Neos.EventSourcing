@@ -12,9 +12,9 @@ namespace Neos\Cqrs\Event;
  */
 
 /**
- * Interface for events which explicitly provide the name of the event stream they are listening to.
+ * Interface for event classes which explicitly provide the identifier for the event type they are representing.
  */
-interface ProvidesEventTypeIdentifierInterface
+interface ProvidesEventTypeInterface
 {
     /**
      * Returns the identifier of the event type the event class represents.
@@ -23,5 +23,5 @@ interface ProvidesEventTypeIdentifierInterface
      *
      * @return string
      */
-    public static function getEventTypeIdentifier(): string;
+    public static function getEventType(): string;
 }
