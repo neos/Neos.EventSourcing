@@ -23,5 +23,5 @@ interface ProvidesEventTypeIdentifierInterface
      *
      * @return string
      */
-    static public function getEventTypeIdentifier(): string;
+    public static function getEventTypeIdentifier(): string;
 }
