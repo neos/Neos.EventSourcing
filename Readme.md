@@ -1,17 +1,17 @@
-# CQRS for Flow Framework
+# Event Sourcing and CQRS for Flow Framework
 
 _This package is currently under development and not fully working, please don't use it in production._
 
-The goal of the project is to provide infrastructure to support CQRS/ES project based on Flow Framework
+The goal of the project is to provide the infrastructure for ES/CQRS for applications based on Flow Framework.
 
 # Requirements
 
 * PHP 7
-* Flow 3.3 LTS
+* Flow 4.0
 
 # Packages
 
-The features are splitted in differents packages:
+The features are split into different packages:
 
 * **[Neos.Cqrs](https://github.com/neos/Neos.Cqrs)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
 * **[Neos.Cqrs.MonitoringHelper](https://github.com/neos/Neos.Cqrs.MonitoringHelper)**: aspect to monitor performance of the ```Neos.Cqrs``` infrastructure
@@ -173,6 +173,23 @@ infrastructure helpers (monitoring, debugging, ...).
         {
             return $this->amount;
         }
+    }
+
+An event class can also represent an event type from a remote system. The implementation is the same like a regular
+local event, except that it is mapped to an event type which is not supported by the automatic event class to
+event type mapping. Usually the event type identifier mapped to an event class follows the pattern
+`PackageKey:ShortEventTypeName`. A class representing a remote event can explicitly provide a custom event type:
+
+    final class SomethingHappenedElsewhere implements EventInterface, ProvidesEventTypeIdentifierInterface
+    {
+        /**
+         * @return string
+         */
+        static public function getEventTypeIdentifier(): string
+        {
+            return 'NotAcme.SomeRemotePAckage:SomethingHappened';
+        }
+        …
     }
 
 ### Generic Fault (WIP)
