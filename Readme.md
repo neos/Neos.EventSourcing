@@ -180,14 +180,14 @@ local event, except that it is mapped to an event type which is not supported by
 event type mapping. Usually the event type identifier mapped to an event class follows the pattern
 `PackageKey:ShortEventTypeName`. A class representing a remote event can explicitly provide a custom event type:
 
-    final class SomethingHappenedElsewhere implements EventInterface, ProvidesEventTypeIdentifierInterface
+    final class SomethingHappenedElsewhere implements EventInterface, ProvidesEventTypeInterface
     {
         /**
          * @return string
          */
-        static public function getEventTypeIdentifier(): string
+        static public function getEventType(): string
         {
-            return 'NotAcme.SomeRemotePAckage:SomethingHappened';
+            return 'NotAcme.SomeRemotePackage:SomethingHappened';
         }
         …
     }

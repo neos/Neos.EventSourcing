@@ -144,7 +144,7 @@ class EventTypeResolver
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventInterface::class) as $eventClassName) {
             if (is_subclass_of($eventClassName, ProvidesEventTypeInterface::class)) {
-                $eventTypeIdentifier = $eventClassName::getEventTypeIdentifier();
+                $eventTypeIdentifier = $eventClassName::getEventType();
             } else {
                 $type = $buildEventType($eventClassName);
                 $eventTypeIdentifier = $buildEventType($eventClassName);
