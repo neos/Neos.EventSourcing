@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Domain;
+namespace Neos\EventSourcing\Domain;
 
 /*
- * This file is part of the Neos.EventStore package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,14 +11,13 @@ namespace Neos\Cqrs\Domain;
  * source code.
  */
 
-use Neos\Cqrs\EventStore\EventStream;
+use Neos\EventSourcing\EventStore\EventStream;
 
 /**
  * Contract for event-sourced aggregate roots
  */
 interface EventSourcedAggregateRootInterface extends AggregateRootInterface
 {
-
     /**
      * The version of the event stream at time of reconstitution
      * This is used to avoid race conditions

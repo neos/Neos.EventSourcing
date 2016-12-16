@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Projection\Doctrine;
+namespace Neos\EventSourcing\Projection\Doctrine;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -15,7 +15,7 @@ use Doctrine\Common\Persistence\ObjectManager as DoctrineObjectManager;
 use Doctrine\ORM\EntityManager as DoctrineEntityManager;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\UnitOfWork;
-use Neos\Cqrs\Exception;
+use Neos\EventSourcing\Exception;
 use Neos\Flow\Log\SystemLoggerInterface;
 use Neos\Flow\Annotations as Flow;
 

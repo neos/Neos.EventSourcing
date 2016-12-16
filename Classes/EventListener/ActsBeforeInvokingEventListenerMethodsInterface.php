@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventListener;
+namespace Neos\EventSourcing\EventListener;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -10,8 +10,8 @@ namespace Neos\Cqrs\EventListener;
  * information, please view the LICENSE file which was distributed with this
  * source code.
  */
-use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\EventStore\RawEvent;
+use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\EventStore\RawEvent;
 
 /**
  * ActsBeforeInvokingEventListenerMethodsInterface

@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Command;
+namespace Neos\EventSourcing\Command;
 
 /*
- * This file is part of the Neos.EventStore.DatabaseStorageAdapter package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,9 +11,9 @@ namespace Neos\Cqrs\Command;
  * source code.
  */
 
-use Neos\Cqrs\Projection\InvalidProjectionIdentifierException;
-use Neos\Cqrs\Projection\Projection;
-use Neos\Cqrs\Projection\ProjectionManager;
+use Neos\EventSourcing\Projection\InvalidProjectionIdentifierException;
+use Neos\EventSourcing\Projection\Projection;
+use Neos\EventSourcing\Projection\ProjectionManager;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 use Neos\Flow\Core\Booting\Scripts;
@@ -74,7 +74,7 @@ class ProjectionCommandController extends CommandController
      *
      * @param string $projection The projection identifier; see projection:list for possible options
      * @return void
-     * @see neos.cqrs:projection:list
+     * @see neos.eventsourcing:projection:list
      */
     public function describeCommand($projection)
     {
@@ -104,8 +104,8 @@ class ProjectionCommandController extends CommandController
      * @param string $projection The projection identifier; see projection:list for possible options
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
-     * @see neos.cqrs:projection:list
-     * @see neos.cqrs:projection:replayall
+     * @see neos.eventsourcing:projection:list
+     * @see neos.eventsourcing:projection:replayall
      */
     public function replayCommand($projection, $quiet = false)
     {
@@ -136,8 +136,8 @@ class ProjectionCommandController extends CommandController
      * @param bool $onlyEmpty If specified, only projections which are currently empty will be considered
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
-     * @see neos.cqrs:projection:replay
-     * @see neos.cqrs:projection:list
+     * @see neos.eventsourcing:projection:replay
+     * @see neos.eventsourcing:projection:list
      */
     public function replayAllCommand($onlyEmpty = false, $quiet = false)
     {
@@ -179,8 +179,8 @@ class ProjectionCommandController extends CommandController
      * @param string $projection The projection identifier; see projection:list for possible options
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
-     * @see neos.cqrs:projection:list
-     * @see neos.cqrs:projection:replay
+     * @see neos.eventsourcing:projection:list
+     * @see neos.eventsourcing:projection:replay
      */
     public function catchUpCommand($projection, $quiet = false)
     {
@@ -209,8 +209,8 @@ class ProjectionCommandController extends CommandController
      * @param int $lookupInterval Pause between lookups (in seconds)
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
-     * @see neos.cqrs:projection:list
-     * @see neos.cqrs:projection:catchup
+     * @see neos.eventsourcing:projection:list
+     * @see neos.eventsourcing:projection:catchup
      */
     public function watchCommand($projection, $lookupInterval = 10, $quiet = false)
     {
@@ -224,7 +224,7 @@ class ProjectionCommandController extends CommandController
             if ($quiet) {
                 $catchupCommandArguments['quiet'] = true;
             }
-            Scripts::executeCommand('neos.cqrs:projection:catchup', $this->flowSettings, !$quiet, $catchupCommandArguments);
+            Scripts::executeCommand('neos.eventsourcing:projection:catchup', $this->flowSettings, !$quiet, $catchupCommandArguments);
             if (!$quiet) {
                 $this->outputLine();
             }

@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs;
+namespace Neos\EventSourcing;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,12 +11,12 @@ namespace Neos\Cqrs;
  * source code.
  */
 
-use Neos\Cqrs\Projection\Doctrine\DoctrineProjectionPersistenceManager;
+use Neos\EventSourcing\Projection\Doctrine\DoctrineProjectionPersistenceManager;
 use Neos\Flow\Core\Bootstrap;
 use Neos\Flow\Package\Package as BasePackage;
 
 /**
- * The Neos.Cqrs Package
+ * The Neos.EventSourcing Package
  */
 class Package extends BasePackage
 {
