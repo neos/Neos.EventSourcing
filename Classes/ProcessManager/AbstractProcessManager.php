@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\ProcessManager;
+namespace Neos\EventSourcing\ProcessManager;
 
 /*
- * This file is part of the Neos.EventStore package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -10,12 +10,12 @@ namespace Neos\Cqrs\ProcessManager;
  * information, please view the LICENSE file which was distributed with this
  * source code.
  */
-use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\EventListener\EventListenerInterface;
-use Neos\Cqrs\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
-use Neos\Cqrs\EventStore\RawEvent;
-use Neos\Cqrs\ProcessManager\State\ProcessState;
-use Neos\Cqrs\ProcessManager\State\StateRepository;
+use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\EventListener\EventListenerInterface;
+use Neos\EventSourcing\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
+use Neos\EventSourcing\EventStore\RawEvent;
+use Neos\EventSourcing\ProcessManager\State\ProcessState;
+use Neos\EventSourcing\ProcessManager\State\StateRepository;
 use Neos\Flow\Annotations as Flow;
 
 /**

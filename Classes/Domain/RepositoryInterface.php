@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Domain;
+namespace Neos\EventSourcing\Domain;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *

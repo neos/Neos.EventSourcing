@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\ProcessManager;
+namespace Neos\EventSourcing\ProcessManager;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -10,7 +10,7 @@ namespace Neos\Cqrs\ProcessManager;
  * information, please view the LICENSE file which was distributed with this
  * source code.
  */
-use Neos\Cqrs\Exception;
+use Neos\EventSourcing\Exception;
 
 /**
  * ProcessManagerException

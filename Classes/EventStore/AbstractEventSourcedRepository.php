@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventStore;
+namespace Neos\EventSourcing\EventStore;
 
 /*
- * This file is part of the Neos.EventStore package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,10 +11,10 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\Domain\EventSourcedAggregateRootInterface;
-use Neos\Cqrs\Domain\Exception\AggregateRootNotFoundException;
-use Neos\Cqrs\Domain\RepositoryInterface;
-use Neos\Cqrs\Event\EventPublisher;
+use Neos\EventSourcing\Domain\EventSourcedAggregateRootInterface;
+use Neos\EventSourcing\Domain\Exception\AggregateRootNotFoundException;
+use Neos\EventSourcing\Domain\RepositoryInterface;
+use Neos\EventSourcing\Event\EventPublisher;
 use Neos\Flow\Annotations as Flow;
 
 /**

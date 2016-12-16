@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Command;
+namespace Neos\EventSourcing\Command;
 
 /*
- * This file is part of the Neos.EventStore.DatabaseStorageAdapter package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,7 +11,7 @@ namespace Neos\Cqrs\Command;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventPublisher;
+use Neos\EventSourcing\Event\EventPublisher;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 use Neos\Flow\Core\Booting\Scripts;
@@ -43,7 +43,7 @@ class EventCommandController extends CommandController
      * @param bool $verbose If specified, this command will display information about the events being applied
      * @param bool $quiet If specified, this command won't produce any output apart from errors
      * @return void
-     * @see neos.cqrs:event:watch
+     * @see neos.eventsourcing:event:watch
      */
     public function catchUpCommand($verbose = false, $quiet = false)
     {
@@ -74,7 +74,7 @@ class EventCommandController extends CommandController
      * @param bool $verbose If specified, this command will display information about the events being applied
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
-     * @see neos.cqrs:event:catchup
+     * @see neos.eventsourcing:event:catchup
      */
     public function watchCommand($lookupInterval = 10, $verbose = false, $quiet = false)
     {
@@ -87,7 +87,7 @@ class EventCommandController extends CommandController
                 'quiet' => $quiet ? 'yes' : 'no',
                 'verbose' => $verbose ? 'yes' : 'no'
             ];
-            Scripts::executeCommand('neos.cqrs:event:catchup', $this->flowSettings, !$quiet, $catchupCommandArguments);
+            Scripts::executeCommand('neos.eventsourcing:event:catchup', $this->flowSettings, !$quiet, $catchupCommandArguments);
             if (!$quiet) {
                 if ($verbose) {
                     $this->outputLine();

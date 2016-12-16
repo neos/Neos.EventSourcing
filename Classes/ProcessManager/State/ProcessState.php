@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\ProcessManager\State;
+namespace Neos\EventSourcing\ProcessManager\State;
 
 /*
- * This file is part of the Neos.EventStore package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *

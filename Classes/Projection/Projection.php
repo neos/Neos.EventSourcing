@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Projection;
+namespace Neos\EventSourcing\Projection;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,7 +11,7 @@ namespace Neos\Cqrs\Projection;
  * source code.
  */
 
-use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
+use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
 use Neos\Flow\Annotations as Flow;
 
 /**

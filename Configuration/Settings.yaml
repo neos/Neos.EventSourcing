@@ -1,10 +1,10 @@
 
 Neos:
-  Cqrs:
+  EventSourcing:
     EventStore:
       storage:
         options:
-          eventTableName: neos_cqrs_events
+          eventTableName: neos_eventsourcing_eventstore_events
           backendOptions:
             driver: pdo_mysql
             host: 127.0.0.1
@@ -17,4 +17,4 @@ Neos:
       doctrine:
         migrations:
           ignoredTables:
-            neos_cqrs_events: true
+            neos_eventsourcing_eventstore_events: true

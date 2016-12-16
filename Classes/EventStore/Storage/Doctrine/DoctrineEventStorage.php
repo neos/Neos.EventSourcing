@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventStore\Storage\Doctrine;
+namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
 
 /*
- * This file is part of the Neos.EventStore.DatabaseStorageAdapter package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -14,16 +14,16 @@ namespace Neos\Cqrs\EventStore\Storage\Doctrine;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Types\Type;
-use Neos\Cqrs\Event\EventTypeResolver;
-use Neos\Cqrs\EventStore\EventStream;
-use Neos\Cqrs\EventStore\EventStreamFilterInterface;
-use Neos\Cqrs\EventStore\Exception\ConcurrencyException;
-use Neos\Cqrs\EventStore\ExpectedVersion;
-use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
-use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
-use Neos\Cqrs\EventStore\RawEvent;
-use Neos\Cqrs\EventStore\StreamNameFilter;
-use Neos\Cqrs\EventStore\WritableEvents;
+use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\EventStore\EventStream;
+use Neos\EventSourcing\EventStore\EventStreamFilterInterface;
+use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
+use Neos\EventSourcing\EventStore\ExpectedVersion;
+use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
+use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
+use Neos\EventSourcing\EventStore\RawEvent;
+use Neos\EventSourcing\EventStore\StreamNameFilter;
+use Neos\EventSourcing\EventStore\WritableEvents;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Property\PropertyMapper;
 use Neos\Flow\Utility\Now;

@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\TypeConverter;
+namespace Neos\EventSourcing\TypeConverter;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,7 +11,7 @@ namespace Neos\Cqrs\TypeConverter;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventInterface;
+use Neos\EventSourcing\Event\EventInterface;
 use Neos\Flow\Property\PropertyMappingConfigurationInterface;
 use Neos\Flow\Property\TypeConverter\AbstractTypeConverter;
 use Neos\Utility\ObjectAccess;

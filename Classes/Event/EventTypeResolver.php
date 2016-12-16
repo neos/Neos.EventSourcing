@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Event;
+namespace Neos\EventSourcing\Event;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,7 +11,7 @@ namespace Neos\Cqrs\Event;
  * source code.
  */
 
-use Neos\Cqrs\Exception;
+use Neos\EventSourcing\Exception;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ReflectionService;
