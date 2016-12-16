@@ -122,7 +122,7 @@ class EventTypeResolver
     }
 
     /**
-     * Create mapping between Event classname and Event type
+     * Create mapping between Event class name and Event type
      *
      * @param ObjectManagerInterface $objectManager
      * @return array
@@ -143,11 +143,16 @@ class EventTypeResolver
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventInterface::class) as $eventClassName) {
-            $type = $buildEventType($eventClassName);
-            if (in_array($type, $mapping)) {
-                throw new Exception(sprintf('Duplicate event type "%s"', $type), 1474710799);
+            if (is_subclass_of($eventClassName, ProvidesEventTypeInterface::class)) {
+                $eventTypeIdentifier = $eventClassName::getEventType();
+            } else {
+                $type = $buildEventType($eventClassName);
+                $eventTypeIdentifier = $buildEventType($eventClassName);
+                if (in_array($type, $mapping)) {
+                    throw new Exception(sprintf('Duplicate event type "%s"', $type), 1474710799);
+                }
             }
-            $mapping[$eventClassName] = $buildEventType($eventClassName);
+            $mapping[$eventClassName] = $eventTypeIdentifier;
         }
         return $mapping;
     }
