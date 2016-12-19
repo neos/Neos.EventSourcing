@@ -113,4 +113,31 @@ class EventStoreCommandController extends CommandController
             $this->quit(1);
         }
     }
+
+    /**
+     * Display Event Store connection status
+     *
+     * This command displays some basic status about the connection of the configured Event Store.
+     *
+     * @return void
+     */
+    public function statusCommand()
+    {
+        try {
+            $connection = $this->connectionFactory->get();
+        } catch (ConnectionException $exception) {
+            $this->outputLine('<error>Connection failed</error>');
+            $this->outputLine('%s', [ $exception->getMessage() ]);
+            $this->quit(1);
+        }
+
+        $this->outputLine('<success>Connection was successful</success>');
+        $this->output->outputTable([
+            ['Host', $connection->getHost()],
+            ['Port', $connection->getPort()],
+            ['Database', $connection->getDatabase()],
+            ['Username', $connection->getUsername()],
+            ['Driver', $connection->getDriver()->getName()]
+        ]);
+    }
 }
