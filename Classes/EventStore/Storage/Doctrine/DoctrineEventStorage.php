@@ -62,19 +62,29 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     private $connection;
 
-    protected $streamTableName;
+    protected $eventTableName;
+
+    /**
+     * @var array
+     */
+    private $options;
 
     public function __construct(array $options)
     {
-        $this->connection = ConnectionFactory::create($options);
-        $this->streamTableName = $options['streamTableName'];
+        $this->options = $options;
+        $this->eventTableName = $options['eventTableName'];
+    }
+
+    public function initializeObject()
+    {
+        $this->connection = $this->connectionFactory->create($this->options);
     }
 
     public function load(EventStreamFilterInterface $filter): EventStream
     {
         $query = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->streamTableName)
+            ->from($this->eventTableName)
             ->orderBy('sequencenumber', 'ASC');
         $this->applyEventStreamFilter($query, $filter);
 
@@ -98,7 +108,7 @@ class DoctrineEventStorage implements EventStorageInterface
         $rawEvents = [];
         foreach ($events as $event) {
             $this->connection->insert(
-                $this->streamTableName,
+                $this->eventTableName,
                 [
                     'id' => $event->getIdentifier(),
                     'stream' => $streamName,
@@ -128,7 +138,7 @@ class DoctrineEventStorage implements EventStorageInterface
     {
         $query = $this->connection->createQueryBuilder()
             ->select('MAX(version)')
-            ->from($this->streamTableName);
+            ->from($this->eventTableName);
         $this->applyEventStreamFilter($query, $filter);
         $version = $query->execute()->fetchColumn();
         return $version !== null ? (int)$version : -1;
@@ -173,5 +183,21 @@ class DoctrineEventStorage implements EventStorageInterface
             $query->andWhere('sequencenumber >= :minimumSequenceNumber');
             $query->setParameter('minimumSequenceNumber', $filter->getMinimumSequenceNumber());
         }
+    }
+
+    /**
+     * @return Connection
+     */
+    public function getConnection(): Connection
+    {
+        return $this->connection;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getEventTableName()
+    {
+        return $this->eventTableName;
     }
 }

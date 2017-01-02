@@ -16,6 +16,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
 use Neos\Flow\Annotations as Flow;
+use Neos\Utility\Arrays;
 
 /**
  * ConnectionFactory
@@ -24,13 +25,21 @@ use Neos\Flow\Annotations as Flow;
  */
 class ConnectionFactory
 {
+
+    /**
+     * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence.backendOptions")
+     */
+    protected $defaultFlowDatabaseConfiguration;
+
     /**
      * @return Connection
      */
-    public static function create($options)
+    public function create($options)
     {
         $config = new Configuration();
-        $connectionParams = $options['backendOptions'];
+        $connectionParams = $options['backendOptions'] ?? [];
+        $connectionParams = Arrays::arrayMergeRecursiveOverrule($this->defaultFlowDatabaseConfiguration, $connectionParams);
+
         $connection = DriverManager::getConnection($connectionParams, $config);
 
         if (isset($options['mappingTypes']) && is_array($options['mappingTypes'])) {

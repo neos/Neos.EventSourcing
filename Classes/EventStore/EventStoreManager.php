@@ -63,13 +63,23 @@ class EventStoreManager
     public function getEventStoreForBoundedContext($boundedContext)
     {
         $eventStoreIdentifier = $this->resolveEventStoreIdentifierForBoundedContext($boundedContext);
+        return $this->getEventStore($eventStoreIdentifier);
+    }
+
+    protected function getEventStore($eventStoreIdentifier)
+    {
         if (!isset($this->initializedEventStores[$eventStoreIdentifier])) {
             $storage = $this->configuration[$eventStoreIdentifier]['storage'];
             $storageOptions = $this->configuration[$eventStoreIdentifier]['storageOptions'];
-            $this->initializedEventStores[$eventStoreIdentifier] = new EventStore(new $storage($storageOptions));
+
+            $storageInstance = new $storage($storageOptions);
+            $this->initializedEventStores[$eventStoreIdentifier] = [
+                'storage' => $storageInstance,
+                'eventStore' => new EventStore($storageInstance)
+            ];
         }
 
-        return $this->initializedEventStores[$eventStoreIdentifier];
+        return $this->initializedEventStores[$eventStoreIdentifier]['eventStore'];
     }
 
     public function initializeFromConfig()
@@ -100,5 +110,17 @@ class EventStoreManager
         }
 
         return $this->eventStoreIdentifiersPerBoundedContext[$boundedContext] ?? $this->eventStoreIdentifiersPerBoundedContext['*'];
+    }
+
+    public function getAllConfiguredStorageBackends()
+    {
+        $storages = [];
+        foreach (array_keys($this->configuration) as $eventStoreIdentifier) {
+            $this->getEventStore($eventStoreIdentifier); // init if not exists
+
+
+            $storages[$eventStoreIdentifier] = $this->initializedEventStores[$eventStoreIdentifier]['storage'];
+        }
+        return $storages;
     }
 }
