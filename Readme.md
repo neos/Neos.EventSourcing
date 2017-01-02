@@ -9,6 +9,41 @@ The goal of the project is to provide the infrastructure for ES/CQRS for applica
 * PHP 7
 * Flow 4.0
 
+# Configuration
+
+To be able to send events to a different DB, the ES package uses its own DB connection. These are the defaults which you will need to override:
+```
+Neos:
+  EventSourcing:
+    EventStore:
+      storage:
+        options:
+          eventTableName: neos_eventsourcing_eventstore_events
+          backendOptions:
+            driver: pdo_mysql
+            host: 127.0.0.1
+            dbname: null
+            user: null
+            password: null
+            charset: utf8
+```
+
+If you want the package to use the same DB connection your main application uses and want to save on typing, you can use YAML path references to point the ES storage config to the main one.
+```
+Neos:
+  Flow:
+    persistence:
+      # Add the "&mybackend" reference here (name it however you want, just keep the & in the beginning)
+      backendOptions: &mybackened
+        # Your usual DB credentials / config here [...]
+
+  EventSourcing:
+    EventStore:
+      storage:
+        options:
+          backendOptions: *mybackend
+```
+
 # Packages
 
 The features are split into different packages:
