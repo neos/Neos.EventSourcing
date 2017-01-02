@@ -1,7 +1,7 @@
-Neos\Cqrs\EventStore\Storage\EventStorageInterface:
-  className: Neos\Cqrs\EventStore\Storage\Doctrine\DoctrineEventStorage
+Neos\EventSourcing\EventStore\Storage\EventStorageInterface:
+  className: Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage
 
-Neos\Cqrs\Projection\ProjectionManager:
+Neos\EventSourcing\Projection\ProjectionManager:
   properties:
     'projectionCache':
       object:
@@ -9,4 +9,4 @@ Neos\Cqrs\Projection\ProjectionManager:
         factoryMethodName: getCache
         arguments:
           1:
-            value: 'Neos_Cqrs_ProjectionCache'
+            value: 'Neos_EventSourcing_ProjectionCache'

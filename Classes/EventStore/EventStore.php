@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventStore;
+namespace Neos\EventSourcing\EventStore;
 
 /*
- * This file is part of the Neos.EventStore package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,8 +11,8 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
-use Neos\Cqrs\EventStore\Storage\EventStorageInterface;
+use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
+use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\Flow\Annotations as Flow;
 
 /**

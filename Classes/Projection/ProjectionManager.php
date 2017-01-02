@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Projection;
+namespace Neos\EventSourcing\Projection;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,12 +11,12 @@ namespace Neos\Cqrs\Projection;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventTypeResolver;
-use Neos\Cqrs\EventListener\EventListenerLocator;
-use Neos\Cqrs\EventListener\AsynchronousEventListenerInterface;
-use Neos\Cqrs\EventStore\EventStoreManager;
-use Neos\Cqrs\EventStore\EventTypesFilter;
-use Neos\Cqrs\EventStore\Exception\EventStreamNotFoundException;
+use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\EventListener\EventListenerLocator;
+use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
+use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\EventTypesFilter;
+use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\Flow\Annotations as Flow;
 use Neos\Cache\Frontend\VariableFrontend;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;

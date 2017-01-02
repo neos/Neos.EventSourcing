@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventStore;
+namespace Neos\EventSourcing\EventStore;
 
 /*
- * This file is part of the Neos.EventStore package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,7 +11,7 @@ namespace Neos\Cqrs\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\Exception;
+use Neos\EventSourcing\Exception;
 use Neos\Flow\Annotations as Flow;
 
 class StreamNameFilter implements EventStreamFilterInterface

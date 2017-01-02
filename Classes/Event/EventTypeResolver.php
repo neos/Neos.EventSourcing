@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Event;
+namespace Neos\EventSourcing\Event;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,7 +11,7 @@ namespace Neos\Cqrs\Event;
  * source code.
  */
 
-use Neos\Cqrs\Exception;
+use Neos\EventSourcing\Exception;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ReflectionService;
@@ -122,7 +122,7 @@ class EventTypeResolver
     }
 
     /**
-     * Create mapping between Event classname and Event type
+     * Create mapping between Event class name and Event type
      *
      * @param ObjectManagerInterface $objectManager
      * @return array
@@ -143,11 +143,16 @@ class EventTypeResolver
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventInterface::class) as $eventClassName) {
-            $type = $buildEventType($eventClassName);
-            if (in_array($type, $mapping)) {
-                throw new Exception(sprintf('Duplicate event type "%s"', $type), 1474710799);
+            if (is_subclass_of($eventClassName, ProvidesEventTypeInterface::class)) {
+                $eventTypeIdentifier = $eventClassName::getEventType();
+            } else {
+                $type = $buildEventType($eventClassName);
+                $eventTypeIdentifier = $buildEventType($eventClassName);
+                if (in_array($type, $mapping)) {
+                    throw new Exception(sprintf('Duplicate event type "%s"', $type), 1474710799);
+                }
             }
-            $mapping[$eventClassName] = $buildEventType($eventClassName);
+            $mapping[$eventClassName] = $eventTypeIdentifier;
         }
         return $mapping;
     }

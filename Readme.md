@@ -2,22 +2,22 @@
 
 _This package is currently under development and not fully working, please don't use it in production._
 
-The goal of the project is to provide infrastructure to support CQRS/ES project based on Flow Framework
+The goal of the project is to provide the infrastructure for ES/CQRS for applications based on Flow Framework.
 
 # Requirements
 
 * PHP 7
-* Flow 3.3 LTS
+* Flow 4.0
 
 # Packages
 
-The features are splitted in differents packages:
+The features are split into different packages:
 
-* **[Neos.Cqrs](https://github.com/neos/Neos.Cqrs)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
-* **[Neos.Cqrs.MonitoringHelper](https://github.com/neos/Neos.Cqrs.MonitoringHelper)**: aspect to monitor performance of the ```Neos.Cqrs``` infrastructure
-* **[Neos.EventStore](https://github.com/neos/Neos.EventStore)**: event store to support event sourcing
-* **[Neos.EventStore.InMemoryStorageAdapter](https://github.com/neos/Neos.EventStore.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
-* **[Neos.EventStore.DatabaseStorageAdapter](https://github.com/neos/Neos.EventStore.DatabaseStorageAdapter)**: doctrine dbal based event storage
+* **[Neos.EventSourcing](https://github.com/neos/Neos.EventSourcing)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
+* **[Neos.EventSourcing.MonitoringHelper](https://github.com/neos/Neos.EventSourcing.MonitoringHelper)**: aspect to monitor performance of the ```Neos.EventSourcing``` infrastructure
+* **[Neos.EventSourcing](https://github.com/neos/Neos.EventSourcing)**: event store to support event sourcing
+* **[Neos.EventSourcing.InMemoryStorageAdapter](https://github.com/neos/Neos.EventSourcing.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
+* **[Neos.EventSourcing.DatabaseStorageAdapter](https://github.com/neos/Neos.EventSourcing.DatabaseStorageAdapter)**: doctrine dbal based event storage
 
 More storage can be added later (Redis, ...).
 
@@ -52,7 +52,7 @@ This is a PSR-4 package structure:
 
 # Components
 
-Currently most components are included in the ```Neos.Cqrs``` package. In the future some components can be split into
+Currently most components are included in the ```Neos.EventSourcing``` package. In the future some components can be split into
 separate packages for more flexibility.
 
 ## Command
@@ -175,6 +175,23 @@ infrastructure helpers (monitoring, debugging, ...).
         }
     }
 
+An event class can also represent an event type from a remote system. The implementation is the same like a regular
+local event, except that it is mapped to an event type which is not supported by the automatic event class to
+event type mapping. Usually the event type identifier mapped to an event class follows the pattern
+`PackageKey:ShortEventTypeName`. A class representing a remote event can explicitly provide a custom event type:
+
+    final class SomethingHappenedElsewhere implements EventInterface, ProvidesEventTypeInterface
+    {
+        /**
+         * @return string
+         */
+        static public function getEventType(): string
+        {
+            return 'NotAcme.SomeRemotePackage:SomethingHappened';
+        }
+        …
+    }
+
 ### Generic Fault (WIP)
 
 * [x] **GenericFault**: event triggered by the EventBus is an event handler throw an exception
@@ -212,7 +229,7 @@ All the wiring between event is done automatically, if you respect the following
 
 ## EventStore
 
-See package **Neos.EventStore**.
+See package **Neos.EventSourcing**.
 
 ## Message
 
@@ -260,7 +277,7 @@ use TYPO3\Media\Domain\Model\AssetInterface;
 use TYPO3\Media\Domain\Repository\AssetRepository;
 use TYPO3\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
-use Neos\Cqrs\Annotations as CQRS;
+use Neos\EventSourcing\Annotations as CQRS;
 
 /**
  * General purpose Organization Read Model
@@ -345,7 +362,7 @@ namespace Acme\Application\Projection\Organization;
 use Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenCreated;
 use Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenDeleted;
 use Acme\Domain\Aggregate\Organization\Event\OrganizationLogoHasBeenChanged;
-use Neos\Cqrs\Projection\Doctrine\AbstractDoctrineProjector;
+use Neos\EventSourcing\Projection\Doctrine\AbstractDoctrineProjector;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
@@ -400,7 +417,7 @@ The corresponding Finder class providing the query methods may look as simple as
 ```php
 namespace Acme\Application\Projection\Organization;
 
-use Neos\Cqrs\Projection\Doctrine\AbstractDoctrineFinder;
+use Neos\EventSourcing\Projection\Doctrine\AbstractDoctrineFinder;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Persistence\QueryInterface;
 

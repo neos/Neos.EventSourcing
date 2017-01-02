@@ -1,14 +1,14 @@
 
 Neos:
-  Cqrs:
+  EventSourcing:
     EventStore:
       stores:
         'default':
           boundedContexts:
             '*': true
-          storage: 'Neos\Cqrs\EventStore\Storage\Doctrine\DoctrineEventStorage'
+          storage: 'Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage'
           storageOptions:
-            eventTableName: neos_cqrs_events
+            eventTableName: neos_eventsourcing_eventstore_events
 #            backendOptions:
 #              driver: pdo_mysql
 #              host: 127.0.0.1
@@ -21,4 +21,4 @@ Neos:
       doctrine:
         migrations:
           ignoredTables:
-            neos_cqrs_events: true
+            neos_eventsourcing_eventstore_events: true

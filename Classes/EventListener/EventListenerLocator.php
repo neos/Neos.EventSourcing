@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventListener;
+namespace Neos\EventSourcing\EventListener;
 
 /*
- * This file is part of the Neos.Cqrs package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,11 +11,11 @@ namespace Neos\Cqrs\EventListener;
  * source code.
  */
 
-use Neos\Cqrs\Event\EventInterface;
-use Neos\Cqrs\Event\EventTypeResolver;
-use Neos\Cqrs\EventStore\EventStore;
-use Neos\Cqrs\EventStore\RawEvent;
-use Neos\Cqrs\Exception;
+use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\EventStore\EventStore;
+use Neos\EventSourcing\EventStore\RawEvent;
+use Neos\EventSourcing\Exception;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ReflectionService;

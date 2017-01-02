@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventStore\Storage\Doctrine;
+namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
 
 /*
- * This file is part of the Neos.EventStore.DatabaseStorageAdapter package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -12,7 +12,7 @@ namespace Neos\Cqrs\EventStore\Storage\Doctrine;
  */
 
 use Doctrine\DBAL\Query\QueryBuilder;
-use Neos\Cqrs\EventStore\RawEvent;
+use Neos\EventSourcing\EventStore\RawEvent;
 
 /**
  * Stream Iterator for the doctrine based EventStore

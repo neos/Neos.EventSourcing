@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\Command;
+namespace Neos\EventSourcing\Command;
 
 /*
- * This file is part of the Neos.EventStore.DatabaseStorageAdapter package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -12,10 +12,8 @@ namespace Neos\Cqrs\Command;
  */
 
 use Doctrine\DBAL\Exception\ConnectionException;
-use Neos\Cqrs\EventStore\EventStoreManager;
-use Neos\Cqrs\EventStore\Storage\Doctrine\DoctrineEventStorage;
-use Neos\Cqrs\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
-use Neos\Cqrs\EventStore\Storage\Doctrine\Schema\EventStoreSchema;
+use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\Storage\Doctrine\Schema\EventStoreSchema;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 

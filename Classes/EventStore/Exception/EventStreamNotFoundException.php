@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventStore\Exception;
+namespace Neos\EventSourcing\EventStore\Exception;
 
 /*
- * This file is part of the Neos.EventStore package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,7 +11,7 @@ namespace Neos\Cqrs\EventStore\Exception;
  * source code.
  */
 
-use Neos\Cqrs\RuntimeException;
+use Neos\EventSourcing\RuntimeException;
 
 class EventStreamNotFoundException extends RuntimeException
 {

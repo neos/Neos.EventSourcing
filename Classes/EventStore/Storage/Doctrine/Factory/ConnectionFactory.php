@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventStore\Storage\Doctrine\Factory;
+namespace Neos\EventSourcing\EventStore\Storage\Doctrine\Factory;
 
 /*
- * This file is part of the Neos.EventStore.DatabaseStorageAdapter package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *

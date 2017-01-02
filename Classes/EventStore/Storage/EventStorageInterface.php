@@ -1,8 +1,8 @@
 <?php
-namespace Neos\Cqrs\EventStore\Storage;
+namespace Neos\EventSourcing\EventStore\Storage;
 
 /*
- * This file is part of the Neos.EventStore package.
+ * This file is part of the Neos.EventSourcing package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -11,11 +11,11 @@ namespace Neos\Cqrs\EventStore\Storage;
  * source code.
  */
 
-use Neos\Cqrs\EventStore\EventStream;
-use Neos\Cqrs\EventStore\EventStreamFilterInterface;
-use Neos\Cqrs\EventStore\ExpectedVersion;
-use Neos\Cqrs\EventStore\RawEvent;
-use Neos\Cqrs\EventStore\WritableEvents;
+use Neos\EventSourcing\EventStore\EventStream;
+use Neos\EventSourcing\EventStore\EventStreamFilterInterface;
+use Neos\EventSourcing\EventStore\ExpectedVersion;
+use Neos\EventSourcing\EventStore\RawEvent;
+use Neos\EventSourcing\EventStore\WritableEvents;
 
 /**
  * EventStorageInterface

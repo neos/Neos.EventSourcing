@@ -1,5 +1,5 @@
 <?php
-namespace Neos\Cqrs\EventStore;
+namespace Neos\EventSourcing\EventStore;
 
 /*
  * This file is part of the Neos.EventStore package.
