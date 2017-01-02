@@ -13,6 +13,7 @@ namespace Neos\EventSourcing\Command;
 
 use Doctrine\DBAL\Exception\ConnectionException;
 use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Schema\EventStoreSchema;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;

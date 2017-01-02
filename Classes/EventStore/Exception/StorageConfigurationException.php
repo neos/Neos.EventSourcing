@@ -1,5 +1,5 @@
 <?php
-namespace Neos\Cqrs\EventStore\Exception;
+namespace Neos\EventSourcing\EventStore\Exception;
 
 /*
  * This file is part of the Neos.EventStore package.
@@ -11,7 +11,7 @@ namespace Neos\Cqrs\EventStore\Exception;
  * source code.
  */
 
-use Neos\Cqrs\RuntimeException;
+use Neos\EventSourcing\RuntimeException;
 
 class StorageConfigurationException extends RuntimeException
 {

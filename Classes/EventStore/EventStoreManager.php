@@ -11,7 +11,7 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
-use Neos\Cqrs\EventStore\Exception\StorageConfigurationException;
+use Neos\EventSourcing\EventStore\Exception\StorageConfigurationException;
 use Neos\Flow\Annotations as Flow;
 
 /**
