@@ -20,6 +20,7 @@ use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\WritableEvent;
 use Neos\EventSourcing\EventStore\WritableEvents;
+use Neos\EventSourcing\Projection\ProjectorInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Property\PropertyMapper;
 use Neos\Flow\Property\PropertyMappingConfiguration;
@@ -133,6 +134,9 @@ class EventPublisher
         $distinctListenerObjectsByClassName = [];
         foreach ($this->eventListenerLocator->getAsynchronousListeners() as $listener) {
             if (!is_array($listener)) {
+                continue;
+            }
+            if ($listener[0] instanceof ProjectorInterface) {
                 continue;
             }
             $distinctListenerObjectsByClassName[get_class($listener[0])] = $listener[0];
