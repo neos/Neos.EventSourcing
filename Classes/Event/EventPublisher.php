@@ -142,9 +142,11 @@ class EventPublisher
         foreach ($distinctListenerObjectsByClassName as $listenerClassName => $listenerObject) {
             $lastAppliedSequenceNumber = $listenerObject->getHighestAppliedSequenceNumber();
 
-            $filter = new EventTypesFilter($this->eventListenerLocator->getEventTypesByListenerClassName($listenerClassName), $lastAppliedSequenceNumber + 1);
+            $eventTypes = $this->eventListenerLocator->getEventTypesByListenerClassName($listenerClassName);
+            $filter = new EventTypesFilter($eventTypes, $lastAppliedSequenceNumber + 1);
             try {
-                $eventStream = $this->eventStore->get($filter);
+                $eventStore = $this->eventStoreManager->getEventStoreForEventTypes($eventTypes);
+                $eventStream = $eventStore->get($filter);
             } catch (EventStreamNotFoundException $exception) {
                 continue;
             }
