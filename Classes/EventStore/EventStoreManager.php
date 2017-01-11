@@ -53,7 +53,7 @@ class EventStoreManager
             $tempResult = $this->getEventStoreForBoundedContext($boundedContext);
 
             if ($result !== NULL && $tempResult !== $result) {
-                throw new StorageConfigurationException("TODO (excpetion type): different event stores per bounded context.");
+                throw new StorageConfigurationException("TODO (excpetion type): different event stores per bounded context." . implode(", ", $eventTypes));
             }
             $result = $tempResult;
         }
