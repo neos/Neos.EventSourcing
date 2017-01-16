@@ -34,7 +34,7 @@ Neos:
   Flow:
     persistence:
       # Add the "&mybackend" reference here (name it however you want, just keep the & in the beginning)
-      backendOptions: &mybackened
+      backendOptions: &mybackend
         # Your usual DB credentials / config here [...]
 
   EventSourcing:
