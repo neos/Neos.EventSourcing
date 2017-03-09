@@ -53,7 +53,8 @@ final class EventStream implements \Iterator
     {
         $configuration = new PropertyMappingConfiguration();
         $configuration->allowAllProperties();
-        $configuration->forProperty('*')->allowAllProperties();
+        $configuration->skipUnknownProperties();
+        $configuration->forProperty('*')->allowAllProperties()->skipUnknownProperties();
 
         /** @var RawEvent $rawEvent */
         $rawEvent = $this->streamIterator->current();
