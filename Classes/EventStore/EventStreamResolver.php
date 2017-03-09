@@ -14,7 +14,6 @@ namespace Neos\EventSourcing\EventStore;
 use Neos\EventSourcing\Domain\AggregateRootInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
-use Neos\Flow\Package\PackageManagerInterface;
 use Neos\Flow\Reflection\ClassReflection;
 use Neos\Utility\TypeHandling;
 
