@@ -11,7 +11,6 @@ namespace Neos\EventSourcing\Domain;
  * source code.
  */
 
-use Neos\EventSourcing\Event\AggregateEventInterface;
 use Neos\EventSourcing\Event\EventInterface;
 use Neos\Flow\Annotations as Flow;
 
@@ -20,32 +19,10 @@ use Neos\Flow\Annotations as Flow;
  */
 abstract class AbstractAggregateRoot implements AggregateRootInterface
 {
-
-    /**
-     * @var string
-     */
-    private $identifier;
-
     /**
      * @var EventInterface[]
      */
     private $events = [];
-
-    /**
-     * @param string $identifier
-     */
-    protected function __construct(string $identifier)
-    {
-        $this->identifier = $identifier;
-    }
-
-    /**
-     * @return string
-     */
-    final public function getIdentifier(): string
-    {
-        return $this->identifier;
-    }
 
     /**
      * Apply an event to the current aggregate root
@@ -57,9 +34,6 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      */
     final public function recordThat(EventInterface $event)
     {
-        if ($event instanceof AggregateEventInterface) {
-            $event->setIdentifier($this->getIdentifier());
-        }
         $this->apply($event);
         $this->events[] = $event;
     }
