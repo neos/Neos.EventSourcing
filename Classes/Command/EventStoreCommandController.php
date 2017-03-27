@@ -50,6 +50,12 @@ class EventStoreCommandController extends CommandController
         try {
             $connection = $this->connectionFactory->get();
 
+            if ($connection->getSchemaManager()->tablesExist([$this->connectionFactory->getStreamTableName()])) {
+                $this->outputLine('The table %s already exists, not changing anything.', [$this->connectionFactory->getStreamTableName()]);
+                $this->quit(1);
+                exit;
+            }
+
             $schema = $connection->getSchemaManager()->createSchema();
             $toSchema = clone $schema;
 
@@ -129,7 +135,11 @@ class EventStoreCommandController extends CommandController
             $this->outputLine('<error>Connection failed</error>');
             $this->outputLine('%s', [ $exception->getMessage() ]);
             $this->quit(1);
+            exit;
         }
+
+        $tableName = $this->connectionFactory->getStreamTableName();
+        $tableExists = ($connection->getSchemaManager()->tablesExist([$tableName]));
 
         $this->outputLine('<success>Connection was successful</success>');
         $this->output->outputTable([
@@ -137,7 +147,8 @@ class EventStoreCommandController extends CommandController
             ['Port', $connection->getPort()],
             ['Database', $connection->getDatabase()],
             ['Username', $connection->getUsername()],
-            ['Driver', $connection->getDriver()->getName()]
+            ['Driver', $connection->getDriver()->getName()],
+            ['Table', $tableName . ($tableExists ? ' (<success>exists</success>)' : ' (<error>missing</error>)')]
         ]);
     }
 }
