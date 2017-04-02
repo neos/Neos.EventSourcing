@@ -50,7 +50,7 @@ The features are split into different packages:
 
 * **[Neos.EventSourcing](https://github.com/neos/Neos.EventSourcing)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
 * **[Neos.EventSourcing.MonitoringHelper](https://github.com/neos/Neos.EventSourcing.MonitoringHelper)**: aspect to monitor performance of the ```Neos.EventSourcing``` infrastructure
-* **[Neos.EventSourcing](https://github.com/neos/Neos.EventSourcing)**: event store to support event sourcing
+* **[Neos.EventStore](https://github.com/neos/Neos.EventStore)**: event store to support event sourcing
 * **[Neos.EventSourcing.InMemoryStorageAdapter](https://github.com/neos/Neos.EventSourcing.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
 * **[Neos.EventSourcing.DatabaseStorageAdapter](https://github.com/neos/Neos.EventSourcing.DatabaseStorageAdapter)**: doctrine dbal based event storage
 
