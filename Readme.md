@@ -407,11 +407,6 @@ use TYPO3\Flow\Annotations as Flow;
  */
 class OrganizationProjector extends AbstractDoctrineProjector
 {
-    /**
-     * @Flow\Inject
-     * @var OrganizationFinder
-     */
-    protected $organizationFinder;
 
     /**
      * @param OrganizationHasBeenCreated $event
@@ -430,7 +425,7 @@ class OrganizationProjector extends AbstractDoctrineProjector
      */
     public function whenOrganizationHasBeenDeleted(OrganizationHasBeenDeleted $event)
     {
-        $organization = $this->organizationFinder->findOneByIdentifier($event->getIdentifier());
+        $organization = $this->get($event->getIdentifier());
         $this->remove($organization);
     }
 
@@ -440,7 +435,7 @@ class OrganizationProjector extends AbstractDoctrineProjector
      */
     public function whenOrganizationLogoHasBeenChanged(OrganizationLogoHasBeenChanged $event)
     {
-        $organization = $this->organizationFinder->findOneByIdentifier($event->getIdentifier());
+        $organization = $this->get($event->getIdentifier());
         $organization->logoIdentifier = $event->getLogoIdentifier();
         $this->update($organization);
     }
