@@ -4,6 +4,11 @@ _This package is currently under development and not fully working, please don't
 
 The goal of the project is to provide the infrastructure for ES/CQRS for applications based on Flow Framework.
 
+# DISCLAIMER
+
+**Please note:** This documentation (as well as the inline docs) are not up to date with the implementation of this package unfortunately.
+We are about to change that. Please bear with us in the meantime and [get in touch](https://www.neos.io/docs-and-support/support.html) if you have any questions!
+
 # Requirements
 
 * PHP 7
