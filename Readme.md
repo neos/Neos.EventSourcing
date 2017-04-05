@@ -17,6 +17,7 @@ We are about to change that. Please bear with us in the meantime and [get in tou
 # Configuration
 
 To be able to send events to a different DB, the ES package uses its own DB connection. These are the defaults which you will need to override:
+
 ```
 Neos:
   EventSourcing:
@@ -99,56 +100,59 @@ separate packages for more flexibility.
 
 ### Command
 
-    final class ConfirmOrder
+```php
+final class ConfirmOrder
+{
+    /**
+     * @var string
+     */
+    protected $identifier;
+
+    /**
+     * @param string $identifier
+     * @param float $duration
+     */
+    public function __construct(string $identifier)
     {
-        /**
-         * @var string
-         */
-        protected $identifier;
-
-        /**
-         * @param string $identifier
-         * @param float $duration
-         */
-        public function __construct(string $identifier)
-        {
-            $this->identifier = $identifier;
-        }
-
-        /**
-         * @return string
-         */
-        public function getIdentifier(): string
-        {
-            return $this->identifier;
-        }
+        $this->identifier = $identifier;
     }
+
+    /**
+     * @return string
+     */
+    public function getIdentifier(): string
+    {
+        return $this->identifier;
+    }
+}
+```
 
 ### CommandHandler
 
+```php
+/**
+ * @Flow\Scope("singleton")
+ */
+class ButtonCommandHandler
+{
     /**
-     * @Flow\Scope("singleton")
+     * @var ButtonRepository
+     * @Flow\Inject
      */
-    class ButtonCommandHandler
+    protected $buttonRepository;
+
+    /**
+     * @param CreateButton $command
+     */
+    public function handleCreateButton(CreateButton $command)
     {
-        /**
-         * @var ButtonRepository
-         * @Flow\Inject
-         */
-        protected $buttonRepository;
+        $button = new Button($command->getIdentifier(), $command->getPublicIdentifier());
+        $button->changeLabel($command->getLabel());
 
-        /**
-         * @param CreateButton $command
-         */
-        public function handleCreateButton(CreateButton $command)
-        {
-            $button = new Button($command->getIdentifier(), $command->getPublicIdentifier());
-            $button->changeLabel($command->getLabel());
-
-            $this->buttonRepository->save($button);
-        }
-
+        $this->buttonRepository->save($button);
     }
+}
+```
 
 ### Monitoring
 
@@ -177,60 +181,64 @@ check ```Settings.yaml``` for the configuration.
 This interface contains no methods, so you are free to focus on your domain. The interface is used by Flow to provide
 infrastructure helpers (monitoring, debugging, ...).
 
-    class ProductedOrdered implements EventInterface
+```php
+class ProductedOrdered implements EventInterface
+{
+    /**
+     * @var string
+     */
+    protected $productIdentifier;
+
+    /**
+     * @var integer
+     */
+    protected $amount;
+
+    /**
+     * @param string $publicIdentifier
+     */
+    public function __construct(string $productIdentifier, int $amount)
     {
-        /**
-         * @var string
-         */
-        protected $productIdentifier;
-
-        /**
-         * @var integer
-         */
-        protected $amount;
-
-        /**
-         * @param string $publicIdentifier
-         */
-        public function __construct(string $productIdentifier, int $amount)
-        {
-            $this->productIdentifier = $productIdentifier;
-            $this->amount = $amount;
-        }
-
-        /**
-         * @return string
-         */
-        public function getProductIdentifier(): string
-        {
-            return $this->productIdentifier;
-        }
-
-        /**
-         * @return string
-         */
-        public function getAmount(): int
-        {
-            return $this->amount;
-        }
+        $this->productIdentifier = $productIdentifier;
+        $this->amount = $amount;
     }
+
+    /**
+     * @return string
+     */
+    public function getProductIdentifier(): string
+    {
+        return $this->productIdentifier;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAmount(): int
+    {
+        return $this->amount;
+    }
+}
+```
 
 An event class can also represent an event type from a remote system. The implementation is the same like a regular
 local event, except that it is mapped to an event type which is not supported by the automatic event class to
 event type mapping. Usually the event type identifier mapped to an event class follows the pattern
 `PackageKey:ShortEventTypeName`. A class representing a remote event can explicitly provide a custom event type:
 
-    final class SomethingHappenedElsewhere implements EventInterface, ProvidesEventTypeInterface
+```php
+final class SomethingHappenedElsewhere implements EventInterface, ProvidesEventTypeInterface
+{
+    /**
+     * @return string
+     */
+    static public function getEventType(): string
     {
-        /**
-         * @return string
-         */
-        static public function getEventType(): string
-        {
-            return 'NotAcme.SomeRemotePackage:SomethingHappened';
-        }
-        …
+        return 'NotAcme.SomeRemotePackage:SomethingHappened';
     }
+    …
+}
+```
 
 ### Generic Fault (WIP)
 
@@ -240,23 +248,25 @@ event type mapping. Usually the event type identifier mapped to an event class f
 
 Your must implement the ```EventListenerInterface```:
 
-    class ConsoleOutputListener implements EventListenerInterface
-    {
-        /**
-         * @var SystemLoggerInterface
-         * @Flow\Inject
-         */
-        protected $systemLogger;
+```php
+class ConsoleOutputListener implements EventListenerInterface
+{
+    /**
+     * @var SystemLoggerInterface
+     * @Flow\Inject
+     */
+    protected $systemLogger;
 
-        /**
-         * @param ButtonTagged $event
-         * @param EventMetadata $metadata
-         */
-        public function onButtonTagged(ButtonTagged $event, EventMetadata $metadata)
-        {
-            $this->systemLogger->log('--- ConsoleOutputListener say something has been tagged ---');
-        }
+    /**
+     * @param ButtonTagged $event
+     * @param EventMetadata $metadata
+     */
+    public function onButtonTagged(ButtonTagged $event, EventMetadata $metadata)
+    {
+        $this->systemLogger->log('--- ConsoleOutputListener say something has been tagged ---');
     }
+}
+```
 
 The event handler locator can throw an exception if something is wrong with your command handler definition. In that
 case please check your system log for more information.
@@ -472,7 +482,7 @@ class OrganizationFinder extends AbstractDoctrineFinder
      */
     protected $defaultOrderings = [ 'name' => QueryInterface::ORDER_ASCENDING ];
 }
-``
+```
 
 ... todo: more explanations
 
