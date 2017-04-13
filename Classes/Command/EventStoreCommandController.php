@@ -12,7 +12,8 @@ namespace Neos\EventSourcing\Command;
  */
 
 use Doctrine\DBAL\Exception\ConnectionException;
-use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
+use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Schema\EventStoreSchema;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
@@ -25,10 +26,10 @@ use Neos\Flow\Cli\CommandController;
 class EventStoreCommandController extends CommandController
 {
     /**
-     * @var ConnectionFactory
+     * @var EventStoreManager
      * @Flow\Inject
      */
-    protected $connectionFactory;
+    protected $eventStoreManager;
 
     /**
      * @var array
@@ -46,35 +47,40 @@ class EventStoreCommandController extends CommandController
      */
     public function createSchemaCommand()
     {
-        $this->outputLine('Creating Event Store database tables in database "%s" on host %s connecting with user "%s" ...', [ $this->configuration['backendOptions']['dbname'], $this->configuration['backendOptions']['host'], $this->configuration['backendOptions']['user']]);
-        try {
-            $connection = $this->connectionFactory->get();
+        $storageBackends = $this->eventStoreManager->getAllConfiguredStorageBackends();
+        foreach ($storageBackends as $storageBackendIdentifier => $storageBackend) {
+            if ($storageBackend instanceof DoctrineEventStorage) {
 
-            if ($connection->getSchemaManager()->tablesExist([$this->connectionFactory->getStreamTableName()])) {
-                $this->outputLine('The table %s already exists, not changing anything.', [$this->connectionFactory->getStreamTableName()]);
-                $this->quit(1);
-                exit;
+                $connection = $storageBackend->getConnection();
+                if ($connection->getSchemaManager()->tablesExist([$this->connectionFactory->getStreamTableName()])) {
+                    $this->outputLine('The table %s already exists, not changing anything.', [$this->connectionFactory->getStreamTableName()]);
+                    continue;
+                }
+
+                $this->outputLine('Creating Event Store "%s" database table in database "%s" on host %s....', [$storageBackendIdentifier, $connection->getDatabase(), $connection->getHost()]);
+                try {
+                    $schema = $connection->getSchemaManager()->createSchema();
+                    $toSchema = clone $schema;
+
+                    EventStoreSchema::createStream($toSchema, $storageBackend->getEventTableName());
+
+                    $connection->beginTransaction();
+                    $statements = $schema->getMigrateToSql($toSchema, $connection->getDatabasePlatform());
+                    foreach ($statements as $statement) {
+                        $this->outputLine('<info>++</info> %s', [$statement]);
+                        $connection->exec($statement);
+                    }
+                    $connection->commit();
+
+                    $this->outputLine();
+                } catch (ConnectionException $exception) {
+                    $this->outputLine('<error>Connection failed</error>');
+                    $this->outputLine('%s', [ $exception->getMessage() ]);
+                    $this->quit(1);
+                }
             }
-
-            $schema = $connection->getSchemaManager()->createSchema();
-            $toSchema = clone $schema;
-
-            EventStoreSchema::createStream($toSchema, $this->connectionFactory->getStreamTableName());
-
-            $connection->beginTransaction();
-            $statements = $schema->getMigrateToSql($toSchema, $connection->getDatabasePlatform());
-            foreach ($statements as $statement) {
-                $this->outputLine('<info>++</info> %s', [$statement]);
-                $connection->exec($statement);
-            }
-            $connection->commit();
-
-            $this->outputLine();
-        } catch (ConnectionException $exception) {
-            $this->outputLine('<error>Connection failed</error>');
-            $this->outputLine('%s', [ $exception->getMessage() ]);
-            $this->quit(1);
         }
+
     }
 
     /**

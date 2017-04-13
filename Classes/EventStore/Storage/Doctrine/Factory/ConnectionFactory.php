@@ -16,6 +16,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
 use Neos\Flow\Annotations as Flow;
+use Neos\Utility\Arrays;
 
 /**
  * ConnectionFactory
@@ -24,44 +25,30 @@ use Neos\Flow\Annotations as Flow;
  */
 class ConnectionFactory
 {
-    /**
-     * @var array
-     * @Flow\InjectConfiguration(path="EventStore.storage.options")
-     */
-    protected $configuration;
 
     /**
-     * @var Connection
+     * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence.backendOptions")
      */
-    protected $connection;
+    protected $defaultFlowDatabaseConfiguration;
 
     /**
      * @return Connection
      */
-    public function get()
+    public function create($options)
     {
-        if ($this->connection !== null) {
-            return $this->connection;
-        }
         $config = new Configuration();
-        $connectionParams = $this->configuration['backendOptions'];
-        $this->connection = DriverManager::getConnection($connectionParams, $config);
+        $connectionParams = $options['backendOptions'] ?? [];
+        $connectionParams = Arrays::arrayMergeRecursiveOverrule($this->defaultFlowDatabaseConfiguration, $connectionParams);
 
-        if (isset($this->configuration['mappingTypes']) && is_array($this->configuration['mappingTypes'])) {
-            foreach ($this->configuration['mappingTypes'] as $typeName => $typeConfiguration) {
+        $connection = DriverManager::getConnection($connectionParams, $config);
+
+        if (isset($options['mappingTypes']) && is_array($options['mappingTypes'])) {
+            foreach ($options['mappingTypes'] as $typeName => $typeConfiguration) {
                 Type::addType($typeName, $typeConfiguration['className']);
-                $this->connection->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
+                $connection->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
             }
         }
 
-        return $this->connection;
-    }
-
-    /**
-     * @return string
-     */
-    public function getStreamTableName()
-    {
-        return $this->configuration['eventTableName'];
+        return $connection;
     }
 }

@@ -24,9 +24,9 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
 {
     /**
      * @Flow\Inject
-     * @var EventStore
+     * @var EventStoreManager
      */
-    protected $eventStore;
+    protected $eventStoreManager;
 
     /**
      * @Flow\Inject
@@ -63,7 +63,8 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
     public function get(string $identifier)
     {
         $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
-        $eventStream = $this->eventStore->get(new StreamNameFilter($streamName));
+        $eventStore = $this->eventStoreManager->getEventStoreForAggregateStreamName($streamName);
+        $eventStream = $eventStore->get(new StreamNameFilter($streamName));
 
         if (!class_exists($this->aggregateClassName)) {
             throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root %s because its class '%s' does not exist.", $identifier, $this->aggregateClassName), 1474454928115);
