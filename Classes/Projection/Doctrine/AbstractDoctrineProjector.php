@@ -50,7 +50,7 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
      * For use in the concrete projector.
      *
      * @param mixed $identifier
-     * @return object an instance of $this->readModelClassName or NULL if no matching object could be found
+     * @return object|null an instance of $this->readModelClassName or NULL if no matching object could be found
      * @api
      */
     public function get($identifier)

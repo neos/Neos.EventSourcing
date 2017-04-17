@@ -195,7 +195,7 @@ class ProjectionManager
      * @return string
      * @throws InvalidProjectionIdentifierException if no matching projector could be found
      */
-    private function normalizeProjectionIdentifier($projectionIdentifier)
+    private function normalizeProjectionIdentifier(string $projectionIdentifier)
     {
         $matchingIdentifiers = [];
         foreach (array_keys($this->projections) as $fullProjectionIdentifier) {

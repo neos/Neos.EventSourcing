@@ -73,7 +73,7 @@ abstract class AbstractProcessManager implements EventListenerInterface, ActsBef
         $configuration = $this->getProcessConfiguration();
         $eventClassName = get_class($event);
         if (!isset($configuration[$eventClassName])) {
-            throw new ProcessManagerException(sprintf('The event listener "%s" does not have a process configuration with key "%s". Check the array returned by getProcessConfiguration().', get_class($this), $eventClassName, get_class($this)), 1479290834150);
+            throw new ProcessManagerException(sprintf('The event listener "%s" does not have a process configuration with key "%s". Check the array returned by getProcessConfiguration().', get_class($this), $eventClassName), 1479290834150);
         }
 
         $stateIdentifier = $configuration[$eventClassName]($event, $rawEvent);
