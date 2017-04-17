@@ -58,7 +58,7 @@ class DoctrineProjectionPersistenceManager
      *
      * @param string $className
      * @param mixed $identifier
-     * @return object
+     * @return object|null
      */
     public function get(string $className, $identifier)
     {
