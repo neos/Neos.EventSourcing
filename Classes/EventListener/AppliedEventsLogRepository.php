@@ -66,7 +66,6 @@ class AppliedEventsLogRepository
         }
         $appliedEventsLog->highestAppliedSequenceNumber = $sequenceNumber;
         $this->entityManager->persist($appliedEventsLog);
-        $this->entityManager->flush();
     }
 
     /**

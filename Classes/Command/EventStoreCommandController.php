@@ -11,10 +11,11 @@ namespace Neos\EventSourcing\Command;
  * source code.
  */
 
-use Doctrine\DBAL\Exception\ConnectionException;
+use Neos\Error\Messages\Error;
+use Neos\Error\Messages\Notice;
+use Neos\Error\Messages\Result;
+use Neos\Error\Messages\Warning;
 use Neos\EventSourcing\EventStore\EventStoreManager;
-use Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage;
-use Neos\EventSourcing\EventStore\Storage\Doctrine\Schema\EventStoreSchema;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 
@@ -38,123 +39,102 @@ class EventStoreCommandController extends CommandController
     protected $configuration;
 
     /**
-     * Create Event Store database tables
+     * Sets up the specified Event Store backend
      *
-     * This command creates the necessary database tables for the Event Store. It uses the Doctrine connection
-     * parameters which were defined for Flow.
+     * This command initializes the given Event Store adapters (i.e. creates required tables if it is database
+     * driven and/or validates the configuration against the actual backend)
      *
+     * @param string $eventStore The identifier of the Event Store to set up
      * @return void
      */
-    public function createSchemaCommand()
+    public function setupCommand($eventStore)
     {
-        $storageBackends = $this->eventStoreManager->getAllConfiguredStorageBackends();
-        foreach ($storageBackends as $storageBackendIdentifier => $storageBackend) {
-            if ($storageBackend instanceof DoctrineEventStorage) {
-
-                $connection = $storageBackend->getConnection();
-                if ($connection->getSchemaManager()->tablesExist([$this->connectionFactory->getStreamTableName()])) {
-                    $this->outputLine('The table %s already exists, not changing anything.', [$this->connectionFactory->getStreamTableName()]);
-                    continue;
-                }
-
-                $this->outputLine('Creating Event Store "%s" database table in database "%s" on host %s....', [$storageBackendIdentifier, $connection->getDatabase(), $connection->getHost()]);
-                try {
-                    $schema = $connection->getSchemaManager()->createSchema();
-                    $toSchema = clone $schema;
-
-                    EventStoreSchema::createStream($toSchema, $storageBackend->getEventTableName());
-
-                    $connection->beginTransaction();
-                    $statements = $schema->getMigrateToSql($toSchema, $connection->getDatabasePlatform());
-                    foreach ($statements as $statement) {
-                        $this->outputLine('<info>++</info> %s', [$statement]);
-                        $connection->exec($statement);
-                    }
-                    $connection->commit();
-
-                    $this->outputLine();
-                } catch (ConnectionException $exception) {
-                    $this->outputLine('<error>Connection failed</error>');
-                    $this->outputLine('%s', [ $exception->getMessage() ]);
-                    $this->quit(1);
-                }
-            }
+        $eventStores = $this->eventStoreManager->getAllEventStores();
+        if (!isset($eventStores[$eventStore])) {
+            $this->outputLine('<error>There is no Event Store "%s" configured</error>', [$eventStore]);
+            $this->quit(1);
         }
-
+        $this->outputLine('Setting up Event Store "%s"', [$eventStore]);
+        $result = $eventStores[$eventStore]->setup();
+        $this->renderResult($result);
     }
 
     /**
-     * Drop Event Store database tables
+     * Sets up all configured Event Store backends
      *
-     * This command <b>deletes all</b> Event Store related database tables! It uses the Doctrine connection
-     * parameters which were defined for Flow.
+     * This command initializes all configured Event Store adapters (i.e. creates required tables for database
+     * driven storages and/or validates the configuration against the actual backends)
      *
      * @return void
      */
-    public function dropSchemaCommand()
+    public function setupAllCommand()
     {
-        $this->outputLine('<error>Warning</error>');
-        $this->outputLine('You are about to drop all Event Store related tables in database "%s" on host %s.', [ $this->configuration['backendOptions']['dbname'], $this->configuration['backendOptions']['host']]);
-        if (!$this->output->askConfirmation('Are you sure? ', false)) {
-            $this->outputLine('Aborted.');
-            $this->quit(0);
-        }
-
-        try {
-            $connection = $this->connectionFactory->get();
-
-            $schema = $connection->getSchemaManager()->createSchema();
-            $toSchema = clone $schema;
-
-            if ($schema->hasTable($this->connectionFactory->getStreamTableName())) {
-                EventStoreSchema::drop($toSchema, $this->connectionFactory->getStreamTableName());
-            }
-
-            $connection->beginTransaction();
-            $statements = $schema->getMigrateToSql($toSchema, $connection->getDatabasePlatform());
-            foreach ($statements as $statement) {
-                $this->outputLine('<info>++</info> %s', [$statement]);
-                $connection->exec($statement);
-            }
-            $connection->commit();
-
+        $eventStores = $this->eventStoreManager->getAllEventStores();
+        $this->outputLine('Setting up <b>%d</b> Event Store backend(s):', [count($eventStores)]);
+        foreach ($eventStores as $eventStoreIdentifier => $eventStore) {
             $this->outputLine();
-        } catch (ConnectionException $exception) {
-            $this->outputLine('<error>Connection failed</error>');
-            $this->outputLine('%s', [ $exception->getMessage() ]);
-            $this->quit(1);
+            $this->outputLine('<b>Event Store "%s":</b>', [$eventStoreIdentifier]);
+            $this->outputLine(str_repeat('-', $this->output->getMaximumLineLength()));
+            $result = $eventStore->setup();
+            $this->renderResult($result);
         }
     }
 
     /**
      * Display Event Store connection status
      *
-     * This command displays some basic status about the connection of the configured Event Store.
+     * This command displays some basic status about the connection of the configured Event Stores.
      *
      * @return void
      */
     public function statusCommand()
     {
-        try {
-            $connection = $this->connectionFactory->get();
-        } catch (ConnectionException $exception) {
-            $this->outputLine('<error>Connection failed</error>');
-            $this->outputLine('%s', [ $exception->getMessage() ]);
-            $this->quit(1);
-            exit;
+        $eventStores = $this->eventStoreManager->getAllEventStores();
+        $this->outputLine('Displaying status information for <b>%d</b> Event Store backend(s):', [count($eventStores)]);
+
+        foreach ($eventStores as $eventStoreIdentifier => $eventStore) {
+            $this->outputLine();
+            $this->outputLine('<b>Event Store "%s"</b>', [$eventStoreIdentifier]);
+            $this->outputLine(str_repeat('-', $this->output->getMaximumLineLength()));
+
+            $this->renderResult($eventStore->getStatus());
+        }
+    }
+
+    /**
+     * Outputs the given Result object in a human-readable way
+     *
+     * @param Result $result
+     */
+    private function renderResult(Result $result)
+    {
+        if ($result->hasNotices()) {
+            /** @var Notice $notice */
+            foreach ($result->getNotices() as $notice) {
+                if ($notice->getTitle() !== null) {
+                    $this->outputLine('<b>%s</b>: %s', [$notice->getTitle(), $notice->render()]);
+                } else {
+                    $this->outputLine($notice->render());
+                }
+            }
         }
 
-        $tableName = $this->connectionFactory->getStreamTableName();
-        $tableExists = ($connection->getSchemaManager()->tablesExist([$tableName]));
-
-        $this->outputLine('<success>Connection was successful</success>');
-        $this->output->outputTable([
-            ['Host', $connection->getHost()],
-            ['Port', $connection->getPort()],
-            ['Database', $connection->getDatabase()],
-            ['Username', $connection->getUsername()],
-            ['Driver', $connection->getDriver()->getName()],
-            ['Table', $tableName . ($tableExists ? ' (<success>exists</success>)' : ' (<error>missing</error>)')]
-        ]);
+        if ($result->hasErrors()) {
+            /** @var Error $error */
+            foreach ($result->getErrors() as $error) {
+                $this->outputLine('<error>ERROR: %s</error>', [$error->render()]);
+            }
+        } elseif ($result->hasWarnings()) {
+            /** @var Warning $warning */
+            foreach ($result->getWarnings() as $warning) {
+                if ($warning->getTitle() !== null) {
+                    $this->outputLine('<b>%s</b>: <em>%s !!!</em>', [$warning->getTitle(), $warning->render()]);
+                } else {
+                    $this->outputLine('<em>%s !!!</em>', [$warning->render()]);
+                }
+            }
+        } else {
+            $this->outputLine('<success>SUCCESS</success>');
+        }
     }
 }

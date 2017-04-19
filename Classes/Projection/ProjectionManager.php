@@ -131,8 +131,8 @@ class ProjectionManager
 
         $filter = new EventTypesFilter($projection->getEventTypes());
 
+        $eventStore = $this->eventStoreManager->getEventStoreForEventTypes($projection->getEventTypes());
         try {
-            $eventStore = $this->eventStoreManager->getEventStoreForEventTypes($projection->getEventTypes());
             $eventStream = $eventStore->get($filter);
         } catch (EventStreamNotFoundException $exception) {
             return;
@@ -170,8 +170,8 @@ class ProjectionManager
         $lastAppliedSequenceNumber = $projector->getHighestAppliedSequenceNumber();
 
         $filter = new EventTypesFilter($projection->getEventTypes(), $lastAppliedSequenceNumber + 1);
+        $eventStore = $this->eventStoreManager->getEventStoreForEventTypes($projection->getEventTypes());
         try {
-            $eventStore = $this->eventStoreManager->getEventStoreForEventTypes($projection->getEventTypes());
             $eventStream = $eventStore->get($filter);
         } catch (EventStreamNotFoundException $exception) {
             return;

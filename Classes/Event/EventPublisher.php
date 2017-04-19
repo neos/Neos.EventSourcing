@@ -20,7 +20,6 @@ use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\WritableEvent;
 use Neos\EventSourcing\EventStore\WritableEvents;
-use Neos\EventSourcing\Projection\ProjectorInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Property\PropertyMapper;
 use Neos\Flow\Property\PropertyMappingConfiguration;
@@ -136,9 +135,6 @@ class EventPublisher
             if (!is_array($listener)) {
                 continue;
             }
-            if ($listener[0] instanceof ProjectorInterface) {
-                continue;
-            }
             $distinctListenerObjectsByClassName[get_class($listener[0])] = $listener[0];
         }
 
@@ -147,9 +143,9 @@ class EventPublisher
             $lastAppliedSequenceNumber = $listenerObject->getHighestAppliedSequenceNumber();
 
             $eventTypes = $this->eventListenerLocator->getEventTypesByListenerClassName($listenerClassName);
+            $eventStore = $this->eventStoreManager->getEventStoreForEventTypes($eventTypes);
             $filter = new EventTypesFilter($eventTypes, $lastAppliedSequenceNumber + 1);
             try {
-                $eventStore = $this->eventStoreManager->getEventStoreForEventTypes($eventTypes);
                 $eventStream = $eventStore->get($filter);
             } catch (EventStreamNotFoundException $exception) {
                 continue;

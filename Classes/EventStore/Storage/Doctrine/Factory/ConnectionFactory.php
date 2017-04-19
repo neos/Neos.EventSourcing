@@ -32,9 +32,10 @@ class ConnectionFactory
     protected $defaultFlowDatabaseConfiguration;
 
     /**
+     * @param array $options
      * @return Connection
      */
-    public function create($options)
+    public function create(array $options)
     {
         $config = new Configuration();
         $connectionParams = $options['backendOptions'] ?? [];

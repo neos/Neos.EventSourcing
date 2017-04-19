@@ -63,7 +63,7 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
     public function get(string $identifier)
     {
         $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
-        $eventStore = $this->eventStoreManager->getEventStoreForAggregateStreamName($streamName);
+        $eventStore = $this->eventStoreManager->getEventStoreForStreamName($streamName);
         $eventStream = $eventStore->get(new StreamNameFilter($streamName));
 
         if (!class_exists($this->aggregateClassName)) {

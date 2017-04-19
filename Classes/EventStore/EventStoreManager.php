@@ -12,115 +12,204 @@ namespace Neos\EventSourcing\EventStore;
  */
 
 use Neos\EventSourcing\EventStore\Exception\StorageConfigurationException;
+use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 
 /**
+ * The Event Store manager is responsible for building and Event Store instances as configured.
+ * Whenever an Event Store is needed, it should be retrieved through this class.
+ *
  * @Flow\Scope("singleton")
  */
-class EventStoreManager
+final class EventStoreManager
 {
+    /**
+     * @var ObjectManagerInterface
+     */
+    private $objectManager;
 
     /**
      * @var array
-     * @Flow\InjectConfiguration(path="EventStore.stores")
      */
-    protected $configuration;
+    private $configuration;
 
     /**
-     * @var array
+     * @var string[]
      */
-    protected $eventStoreIdentifiersPerBoundedContext = null;
+    private $eventStoreIdentifiersPerBoundedContext = null;
 
     /**
-     * @var array<EventStore>
+     * A list of all initialized event stores, indexed by the "Event Store identifier"
+     *
+     * @var EventStore[]
      */
-    protected $initializedEventStores;
+    private $initializedEventStores;
 
-    public function getEventStoreForAggregateStreamName($streamName) {
-        // TODO
-        return $this->getEventStoreForEventTypes([$streamName]);
-    }
-
-    public function getEventStoreForEventTypes(array $eventTypes) : EventStore {
-        $boundedContexts = [];
-        foreach ($eventTypes as $eventName) {
-            list($boundedContext) = explode(':', $eventName);
-            $boundedContexts[$boundedContext] = $boundedContext;
-        }
-
-        $result = null;
-        foreach ($boundedContexts as $boundedContext) {
-            $tempResult = $this->getEventStoreForBoundedContext($boundedContext);
-
-            if ($result !== NULL && $tempResult !== $result) {
-                throw new StorageConfigurationException("TODO (excpetion type): different event stores per bounded context." . implode(", ", $eventTypes));
-            }
-            $result = $tempResult;
-        }
-        return $result;
-    }
-
-    public function getEventStoreForBoundedContext($boundedContext)
+    /**
+     * This class is usually not instantiated manually but injected like other singletons
+     * Note: ObjectManager and configuration is constructor-injected in order to ease testing & composition
+     *
+     * @param ObjectManagerInterface $objectManager
+     * @param array $configuration
+     */
+    public function __construct(ObjectManagerInterface $objectManager, array $configuration)
     {
-        $eventStoreIdentifier = $this->resolveEventStoreIdentifierForBoundedContext($boundedContext);
-        return $this->getEventStore($eventStoreIdentifier);
+        $this->objectManager = $objectManager;
+        $this->configuration = $configuration;
     }
 
-    protected function getEventStore($eventStoreIdentifier)
+    /**
+     * Initializes the Event Store adapters as configured
+     * This also validates the Event Store configuration
+     *
+     * @return void
+     * @throws StorageConfigurationException
+     */
+    private function initialize()
     {
-        if (!isset($this->initializedEventStores[$eventStoreIdentifier])) {
-            $storage = $this->configuration[$eventStoreIdentifier]['storage'];
-            $storageOptions = $this->configuration[$eventStoreIdentifier]['storageOptions'];
-
-            $storageInstance = new $storage($storageOptions);
-            $this->initializedEventStores[$eventStoreIdentifier] = [
-                'storage' => $storageInstance,
-                'eventStore' => new EventStore($storageInstance)
-            ];
+        if ($this->eventStoreIdentifiersPerBoundedContext !== null) {
+            return;
         }
-
-        return $this->initializedEventStores[$eventStoreIdentifier]['eventStore'];
-    }
-
-    public function initializeFromConfig()
-    {
         $this->eventStoreIdentifiersPerBoundedContext = [];
         foreach ($this->configuration as $eventStoreIdentifier => $eventStoreConfiguration) {
-            if (!isset($eventStoreConfiguration['boundedContexts'])) {
-                throw new StorageConfigurationException(sprintf('The event store "%s" has no boundedContexts assigned. Please configure some.', $eventStoreIdentifier), 1479213813);
+            if (!isset($eventStoreConfiguration['boundedContexts']) || empty($eventStoreConfiguration['boundedContexts'])) {
+                throw new StorageConfigurationException(sprintf('The Event Store "%s" has no Bounded Context assigned. Please configure some.', $eventStoreIdentifier), 1479213813);
             }
             foreach ($eventStoreConfiguration['boundedContexts'] as $boundedContext => $isActive) {
                 if (!$isActive) {
                     continue;
                 }
-
+                if (isset($this->eventStoreIdentifiersPerBoundedContext[$boundedContext])) {
+                    throw new StorageConfigurationException(sprintf('The Event Stores "%s" and "%s" are both configured for the Bounded Context "%s" but overlaps are not supported.', $this->eventStoreIdentifiersPerBoundedContext[$boundedContext], $eventStoreIdentifier, $boundedContext), 1492434176);
+                }
                 $this->eventStoreIdentifiersPerBoundedContext[$boundedContext] = $eventStoreIdentifier;
             }
         }
 
         if (!isset($this->eventStoreIdentifiersPerBoundedContext['*'])) {
-            throw new StorageConfigurationException('No event store found for fallback bounded context "*"', 1479214520);
+            throw new StorageConfigurationException('No Event Store found for fallback Bounded Context "*"', 1479214520);
         }
     }
 
-    private function resolveEventStoreIdentifierForBoundedContext($boundedContext)
+    /**
+     * Retrieves/builds an EventStore instance with the given identifier
+     *
+     * @param string $eventStoreIdentifier The unique Event Store identifier as configured
+     * @return EventStore
+     * @throws \RuntimeException|StorageConfigurationException
+     */
+    public function getEventStore(string $eventStoreIdentifier): EventStore
     {
-        if (!$this->eventStoreIdentifiersPerBoundedContext) {
-            $this->initializeFromConfig();
+        $this->initialize();
+        if (isset($this->initializedEventStores[$eventStoreIdentifier])) {
+            return $this->initializedEventStores[$eventStoreIdentifier];
         }
+        if (!isset($this->configuration[$eventStoreIdentifier])) {
+            throw new \RuntimeException(sprintf('No Event Store with the identifier "%s" is configured', $eventStoreIdentifier), 1492610857);
+        }
+        if (!isset($this->configuration[$eventStoreIdentifier]['storage'])) {
+            throw new StorageConfigurationException(sprintf('There is no Storage configured for Event Store "%s"', $eventStoreIdentifier), 1492610902);
+        }
+        $storageClassName = $this->configuration[$eventStoreIdentifier]['storage'];
+        $storageOptions = $this->configuration[$eventStoreIdentifier]['storageOptions'] ?? [];
 
-        return $this->eventStoreIdentifiersPerBoundedContext[$boundedContext] ?? $this->eventStoreIdentifiersPerBoundedContext['*'];
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
+        $storageInstance = $this->objectManager->get($storageClassName, $storageOptions);
+        if (!$storageInstance instanceof EventStorageInterface) {
+            throw new StorageConfigurationException(sprintf('The configured Storage for Event Store "%s" does not implement the EventStorageInterface', $eventStoreIdentifier), 1492610908);
+        }
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
+        $this->initializedEventStores[$eventStoreIdentifier] = $this->objectManager->get(EventStore::class, $storageInstance);
+
+        return $this->initializedEventStores[$eventStoreIdentifier];
     }
 
-    public function getAllConfiguredStorageBackends()
+    /**
+     * Retrieves/builds an EventStore instance matching the given stream name
+     *
+     * @param string $streamName The stream name can be any string, but usually it has the format "<Bounded.Context>:<Aggregate>-<Identifier>"
+     * @return EventStore
+     */
+    public function getEventStoreForStreamName(string $streamName): EventStore
     {
-        $storages = [];
-        foreach (array_keys($this->configuration) as $eventStoreIdentifier) {
-            $this->getEventStore($eventStoreIdentifier); // init if not exists
+        $boundedContext = $this->extractBoundedContextFromDesignator($streamName);
+        return $this->getEventStoreForBoundedContext($boundedContext);
+    }
 
-
-            $storages[$eventStoreIdentifier] = $this->initializedEventStores[$eventStoreIdentifier]['storage'];
+    /**
+     * Retrieves/builds an EventStore instance matching the given event types
+     *
+     * @param string[] $eventTypes for example ['Some.Package:EventType1', 'Some.Other.Package:EventType2', ...]
+     * @return EventStore
+     */
+    public function getEventStoreForEventTypes(array $eventTypes): EventStore {
+        $this->initialize();
+        $boundedContexts = [];
+        foreach ($eventTypes as $eventType) {
+            $boundedContext = $this->extractBoundedContextFromDesignator($eventType);
+            $boundedContexts[$boundedContext] = $boundedContext;
         }
-        return $storages;
+
+        $firstMatchingEventStore = null;
+        foreach ($boundedContexts as $boundedContext) {
+            $eventStore = $this->getEventStoreForBoundedContext($boundedContext);
+            if ($firstMatchingEventStore !== null && $eventStore !== $firstMatchingEventStore) {
+                throw new \RuntimeException(sprintf('The event types %s are configured for different Event Stores so they can\'t be committed/consumed together', implode(', ', $eventTypes)), 1492434719);
+            }
+            $firstMatchingEventStore = $eventStore;
+        }
+        return $firstMatchingEventStore !== null ? $firstMatchingEventStore : $this->getEventStore($this->eventStoreIdentifiersPerBoundedContext['*']);
+    }
+
+    /**
+     * Retrieves/builds an EventStore instance matching the given Bounded Context
+     *
+     * @param string $boundedContext The Bounded Context can be any string, for example a package key like "Some.Package"
+     * @return EventStore
+     */
+    public function getEventStoreForBoundedContext(string $boundedContext): EventStore
+    {
+        $this->initialize();
+        $eventStoreIdentifier = $this->eventStoreIdentifiersPerBoundedContext[$boundedContext] ?? $this->eventStoreIdentifiersPerBoundedContext['*'];
+        return $this->getEventStore($eventStoreIdentifier);
+    }
+
+    /**
+     * Retrieves/builds all configured EventStore instances
+     *
+     * Note: As this method instantiates all configured Event Store adapters it should only be used for monitoring/testing
+     *
+     * @return EventStore[]
+     */
+    public function getAllEventStores(): array
+    {
+        $this->initialize();
+        $eventStores = [];
+        foreach ($this->eventStoreIdentifiersPerBoundedContext as $eventStoreIdentifier) {
+            // Note: getEventStore() will initialize the given Event Store
+            $eventStores[$eventStoreIdentifier] = $this->getEventStore($eventStoreIdentifier);
+        }
+        return $eventStores;
+    }
+
+    /**
+     * Determines the Bounded Context identifier from a fully qualified designator (event type, stream name, ...)
+     * The BC is the substring of the designator before the first colon.
+     * If the designator doesn't contain any colons, the full designator is considered the BC!!
+     *
+     * Examples:
+     *
+     * "Foo:Bar" => "Foo"
+     * "Foo.Bar:Baz:Foos" => "Foo.Bar"
+     * "Foo.Bar" => "Foo.Bar"
+     *
+     * @param string $designator
+     * @return string
+     */
+    private function extractBoundedContextFromDesignator(string $designator): string
+    {
+        $boundedContext = strstr($designator, ':', true);
+        return $boundedContext !== false ? $boundedContext : $designator;
     }
 }

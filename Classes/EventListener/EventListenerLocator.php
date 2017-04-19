@@ -206,7 +206,7 @@ class EventListenerLocator
                 }
                 $eventClassName = $parameters[0]['class'];
                 if (!$reflectionService->isClassImplementationOf($eventClassName, EventInterface::class)) {
-                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should be cast to an implementation of EventInterface; found "%s"', $listenerClassName, $listenerMethodName, $eventClassName), 1472504443);
+                    throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong, the first parameter should be an implementation of EventInterface but it expects an instance of "%s"', $listenerClassName, $listenerMethodName, $eventClassName), 1472504443);
                 }
 
                 if (isset($parameters[1])) {
