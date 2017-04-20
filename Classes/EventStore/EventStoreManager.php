@@ -143,7 +143,8 @@ final class EventStoreManager
      * @param string[] $eventTypes for example ['Some.Package:EventType1', 'Some.Other.Package:EventType2', ...]
      * @return EventStore
      */
-    public function getEventStoreForEventTypes(array $eventTypes): EventStore {
+    public function getEventStoreForEventTypes(array $eventTypes): EventStore
+    {
         $this->initialize();
         $boundedContexts = [];
         foreach ($eventTypes as $eventType) {
