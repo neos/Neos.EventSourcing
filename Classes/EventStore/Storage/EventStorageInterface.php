@@ -11,6 +11,7 @@ namespace Neos\EventSourcing\EventStore\Storage;
  * source code.
  */
 
+use Neos\Error\Messages\Result;
 use Neos\EventSourcing\EventStore\EventStream;
 use Neos\EventSourcing\EventStore\EventStreamFilterInterface;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
@@ -18,7 +19,7 @@ use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\WritableEvents;
 
 /**
- * EventStorageInterface
+ * Contract for Event Storage adapters
  */
 interface EventStorageInterface
 {
@@ -35,4 +36,24 @@ interface EventStorageInterface
      * @return RawEvent[]
      */
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array;
+
+    /**
+     * Retrieves the (connection) status of the storage adapter
+     *
+     * If the result contains no errors, the status is considered valid
+     * The result may contain Notices, Warnings and Errors
+     *
+     * @return Result
+     */
+    public function getStatus();
+
+    /**
+     * Sets up the configured storage adapter (i.e. creates required database tables) and validates the configuration
+     *
+     * If the result contains no errors, the setup is considered successful
+     * The result may contain Notices, Warnings and Errors
+     *
+     * @return Result
+     */
+    public function setup();
 }
