@@ -12,7 +12,7 @@ namespace Neos\EventSourcing\Projection\Doctrine;
  */
 
 use Neos\EventSourcing\Exception;
-use Neos\EventSourcing\Projection\AbstractBaseProjector;
+use Neos\EventSourcing\Projection\ProjectorInterface;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -20,13 +20,39 @@ use Neos\Flow\Annotations as Flow;
  *
  * @api
  */
-abstract class AbstractDoctrineProjector extends AbstractBaseProjector
+abstract class AbstractDoctrineProjector implements ProjectorInterface
 {
     /**
      * @Flow\Inject
-     * @var DoctrineProjectionPersistenceManager
+     * @var DoctrineProjectionState
      */
     protected $projectionPersistenceManager;
+
+    /**
+     * Concrete projectors may override this property for setting the class name of the Read Model to a non-conventional name
+     *
+     * @var string
+     * @api
+     */
+    protected $readModelClassName;
+
+    /**
+     * The state of this projection
+     *
+     * @var DoctrineProjectionState
+     * @api
+     */
+    protected $state;
+
+    /**
+     * Returns the class name of the (main) Read Model of the concrete projector
+     *
+     * @return string
+     */
+    public function getReadModelClassName(): string
+    {
+        return $this->readModelClassName;
+    }
 
     /**
      * Initialize the Read Model class name
@@ -43,80 +69,28 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
             }
             $this->readModelClassName = substr(get_class($this), 0, -9);
         }
+        $this->state = new DoctrineProjectionState($this->readModelClassName);
     }
 
     /**
-     * Retrieves an object with the given $identifier.
-     * For use in the concrete projector.
-     *
-     * @param mixed $identifier
-     * @return object an instance of $this->readModelClassName or NULL if no matching object could be found
-     * @api
-     */
-    public function get($identifier)
-    {
-        return $this->projectionPersistenceManager->get($this->getReadModelClassName(), $identifier);
-    }
-
-    /**
-     * Adds an object to this repository.
-     * For use in the concrete projector.
-     *
-     * @param object $object The object to add
-     * @return void
-     * @api
-     */
-    protected function add($object)
-    {
-        $this->projectionPersistenceManager->add($object);
-    }
-
-    /**
-     * Schedules a modified object for persistence.
-     * For use in the concrete projector.
-     *
-     * @param object $object The modified object
-     * @return void
-     * @throws \Neos\Flow\Persistence\Exception\IllegalObjectTypeException
-     * @api
-     */
-    protected function update($object)
-    {
-        $this->projectionPersistenceManager->update($object);
-    }
-
-    /**
-     * Removes an object from the projector's persistence.
-     * For use in the concrete projector.
-     *
-     * @param object $object The object to remove
-     * @return void
-     * @api
-     */
-    protected function remove($object)
-    {
-        $this->projectionPersistenceManager->remove($object);
-    }
-
-    /**
-     * Removes all objects of this repository as if remove() was called for all of them.
-     * For usage in the concrete projector.
+     * @inheritdoc
      *
      * @return void
      * @api
      */
     public function reset()
     {
-        $this->projectionPersistenceManager->drop($this->getReadModelClassName());
+        $this->state->reset();
     }
 
     /**
-     * If this projection is currently empty
+     * @inheritdoc
      *
      * @return bool
      */
     public function isEmpty()
     {
-        return $this->projectionPersistenceManager->count($this->getReadModelClassName()) === 0;
+        return $this->state->isEmpty();
     }
+
 }

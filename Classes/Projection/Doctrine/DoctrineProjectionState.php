@@ -20,12 +20,11 @@ use Neos\Flow\Log\SystemLoggerInterface;
 use Neos\Flow\Annotations as Flow;
 
 /**
- * A persistence manager for Doctrine-based projectors
+ * A state for Doctrine-based projectors
  *
- * @Flow\Scope("singleton")
  * @api
  */
-class DoctrineProjectionPersistenceManager
+class DoctrineProjectionState
 {
 
     /**
@@ -45,6 +44,19 @@ class DoctrineProjectionPersistenceManager
     private $numberOfPendingChanges = 0;
 
     /**
+     * @var string
+     */
+    private $readModelClassName;
+
+    /**
+     * @param string $readModelClassName
+     */
+    public function __construct($readModelClassName)
+    {
+        $this->readModelClassName = $readModelClassName;
+    }
+
+    /**
      * @param DoctrineObjectManager $entityManager
      * @return void
      */
@@ -54,22 +66,25 @@ class DoctrineProjectionPersistenceManager
     }
 
     /**
-     * Returns an object with the given $identifier from persistence.
+     * Retrieves an object with the given $identifier.
+     * For use in the concrete projector.
      *
-     * @param string $className
-     * @param mixed $identifier
-     * @return object
+     * @param string $identifier
+     * @return object an instance of $this->readModelClassName or NULL if no matching object could be found
+     * @api
      */
-    public function get(string $className, $identifier)
+    public function get($identifier)
     {
-        return $this->entityManager->find($className, $identifier);
+        return $this->entityManager->find($this->readModelClassName, $identifier);
     }
 
     /**
-     * Adds an object for persistence.
+     * Adds an object to this repository.
+     * For use in the concrete projector.
      *
      * @param object $object The object to add
      * @return void
+     * @api
      */
     public function add($object)
     {
@@ -79,9 +94,12 @@ class DoctrineProjectionPersistenceManager
 
     /**
      * Schedules a modified object for persistence.
+     * For use in the concrete projector.
      *
      * @param object $object The modified object
+     * @return void
      * @throws Exception
+     * @api
      */
     public function update($object)
     {
@@ -100,10 +118,12 @@ class DoctrineProjectionPersistenceManager
     }
 
     /**
-     * Removes an object from this repository.
+     * Removes an object from the projector's persistence.
+     * For use in the concrete projector.
      *
      * @param object $object The object to remove
      * @return void
+     * @api
      */
     public function remove($object)
     {
@@ -112,27 +132,28 @@ class DoctrineProjectionPersistenceManager
     }
 
     /**
-     * Removes all objects from a Doctrine-based projection.
+     * Removes all objects of this repository as if remove() was called for all of them.
+     * For usage in the concrete projector.
      *
-     * @param string $readModelClassName Read Model class name of the projection
-     * @return int Number of records which have been deleted
+     * @return void
+     * @api
      */
-    public function drop(string $readModelClassName): int
+    public function reset()
     {
-        $query = $this->entityManager->createQuery('DELETE FROM ' . $readModelClassName);
-        return $query->execute();
+        $query = $this->entityManager->createQuery('DELETE FROM ' . $this->readModelClassName);
+        $query->execute();
     }
 
     /**
-     * Returns the number of read models stored in this projection.
+     * If this projection is currently empty
      *
-     * @param string $readModelClassName
-     * @return int
+     * @return bool
+     * @api
      */
-    public function count(string $readModelClassName): int
+    public function isEmpty(): bool
     {
-        $query = $this->entityManager->createQuery('SELECT COUNT(m) FROM ' . $readModelClassName . ' m');
-        return $query->getSingleScalarResult();
+        $query = $this->entityManager->createQuery('SELECT COUNT(m) FROM ' . $this->readModelClassName . ' m');
+        return $query->getSingleScalarResult() === 0;
     }
 
     /**
@@ -186,5 +207,13 @@ class DoctrineProjectionPersistenceManager
     public function isNewObject($object): bool
     {
         return ($this->entityManager->getUnitOfWork()->getEntityState($object, UnitOfWork::STATE_NEW) === UnitOfWork::STATE_NEW);
+    }
+
+    /**
+     * @return void
+     */
+    public function shutdownObject()
+    {
+        $this->persistAll();
     }
 }

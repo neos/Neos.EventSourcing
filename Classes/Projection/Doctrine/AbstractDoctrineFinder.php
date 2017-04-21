@@ -22,11 +22,6 @@ use Neos\Flow\Persistence\QueryResultInterface;
  */
 abstract class AbstractDoctrineFinder
 {
-    /**
-     * @Flow\Inject
-     * @var DoctrineProjectionPersistenceManager
-     */
-    protected $projectionPersistenceManager;
 
     /**
      * Concrete projectors may override this property for setting the default sorting order of query results.
