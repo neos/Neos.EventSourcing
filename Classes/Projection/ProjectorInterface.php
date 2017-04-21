@@ -27,7 +27,7 @@ interface ProjectorInterface extends EventListenerInterface
     public function getReadModelClassName(): string;
 
     /**
-     * Removes all objects of this repository as if remove() was called for all of them.
+     * Removes all data of this projections state as if remove() was called for all of them.
      * For usage in the concrete projector.
      *
      * @return void
@@ -36,7 +36,7 @@ interface ProjectorInterface extends EventListenerInterface
     public function reset();
 
     /**
-     * Returns true if the projection maintained by the concreted projector does not contain any data (yet).
+     * Returns true if the projection state maintained by the concrete projector does not contain any data (yet).
      *
      * @return boolean
      */
