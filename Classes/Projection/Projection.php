@@ -41,7 +41,7 @@ class Projection
     /**
      * @param string $identifier
      * @param string $projectorClassName
-     * @param array $eventTypes
+     * @param string[] $eventTypes
      */
     public function __construct(string $identifier, string $projectorClassName, array $eventTypes)
     {
@@ -67,7 +67,7 @@ class Projection
     }
 
     /**
-     * @return \string[]
+     * @return string[]
      */
     public function getEventTypes(): array
     {

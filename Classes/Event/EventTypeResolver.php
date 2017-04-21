@@ -116,7 +116,7 @@ class EventTypeResolver
      * @param string $eventType
      * @return string
      */
-    public function getEventClassNameByType(string $eventType):string
+    public function getEventClassNameByType(string $eventType): string
     {
         return $this->reversedMapping[$eventType];
     }

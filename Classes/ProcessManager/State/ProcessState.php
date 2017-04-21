@@ -67,7 +67,7 @@ class ProcessState
      * @param string $identifier
      * @param string $processManagerClassName
      */
-    public function __construct($identifier, $processManagerClassName)
+    public function __construct(string $identifier, string $processManagerClassName)
     {
         $this->identifier = $identifier;
         $this->processManagerClassName = $processManagerClassName;
@@ -90,7 +90,7 @@ class ProcessState
      *
      * @return string
      */
-    public function getIdentifier()
+    public function getIdentifier(): string
     {
         return $this->identifier;
     }
@@ -100,7 +100,7 @@ class ProcessState
      *
      * @return string
      */
-    public function getProcessManagerClassName()
+    public function getProcessManagerClassName(): string
     {
         return $this->processManagerClassName;
     }
@@ -119,7 +119,7 @@ class ProcessState
      *
      * @return boolean
      */
-    public function isDone()
+    public function isDone(): bool
     {
         return $this->done;
     }
@@ -144,7 +144,7 @@ class ProcessState
      */
     public function get(string $propertyName)
     {
-        return isset($this->properties[$propertyName]) ? $this->properties[$propertyName] : null;
+        return $this->properties[$propertyName] ?? null;
     }
 
     /**
@@ -152,7 +152,7 @@ class ProcessState
      *
      * @return array
      */
-    public function getProperties()
+    public function getProperties(): array
     {
         return $this->properties;
     }
@@ -160,7 +160,8 @@ class ProcessState
     /**
      * Sets a new checklist
      *
-     * @param array $items Todos to check tick off
+     * @param string[] $items Todos to check tick off
+     * @throws \InvalidArgumentException if any of the items is not a string
      */
     public function setChecklist(array $items)
     {
@@ -201,7 +202,7 @@ class ProcessState
      *
      * @return bool
      */
-    public function isChecklistDone()
+    public function isChecklistDone(): bool
     {
         if ($this->checklist === []) {
             return false;
