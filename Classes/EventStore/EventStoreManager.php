@@ -143,7 +143,7 @@ final class EventStoreManager
      * @param string $listenerClassName The fully qualified class name of the EventListener (or Projector)
      * @return EventStore
      */
-   public function getEventStoreForEventListener(string $listenerClassName)
+    public function getEventStoreForEventListener(string $listenerClassName)
     {
         $boundedContext = $this->objectManager->getPackageKeyByObjectName($listenerClassName) ?? '';
         return $this->getEventStoreForBoundedContext($boundedContext);
