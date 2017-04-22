@@ -116,7 +116,7 @@ class EventTypeResolver
      * @param string $eventType
      * @return string
      */
-    public function getEventClassNameByType(string $eventType):string
+    public function getEventClassNameByType(string $eventType): string
     {
         return $this->reversedMapping[$eventType];
     }
@@ -146,11 +146,10 @@ class EventTypeResolver
             if (is_subclass_of($eventClassName, ProvidesEventTypeInterface::class)) {
                 $eventTypeIdentifier = $eventClassName::getEventType();
             } else {
-                $type = $buildEventType($eventClassName);
                 $eventTypeIdentifier = $buildEventType($eventClassName);
-                if (in_array($type, $mapping)) {
-                    throw new Exception(sprintf('Duplicate event type "%s"', $type), 1474710799);
-                }
+            }
+            if (in_array($eventTypeIdentifier, $mapping)) {
+                throw new Exception(sprintf('Duplicate event type "%s" mapped from "%s".', $eventTypeIdentifier, $eventClassName), 1474710799);
             }
             $mapping[$eventClassName] = $eventTypeIdentifier;
         }

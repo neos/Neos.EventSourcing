@@ -46,7 +46,7 @@ final class StateRepository
     /**
      * @param string $identifier
      * @param string $processManagerClassName
-     * @return object
+     * @return object|null
      */
     public function get(string $identifier, string $processManagerClassName)
     {
