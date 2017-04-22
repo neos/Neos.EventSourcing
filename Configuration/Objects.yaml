@@ -1,5 +1,7 @@
-Neos\EventSourcing\EventStore\Storage\EventStorageInterface:
-  className: Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage
+Neos\EventSourcing\EventStore\EventStoreManager:
+  arguments:
+    2:
+      setting: 'Neos.EventSourcing.EventStore.stores'
 
 Neos\EventSourcing\Projection\ProjectionManager:
   properties:
