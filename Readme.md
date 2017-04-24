@@ -2,7 +2,7 @@
 
 _This package is currently under development and not fully tested, please don't use it in production._
 
-The goal of the project is to provide the infrastructure to apply an ES/CQRS pattern for applications based on Flow Framework.
+The goal of the project is to provide the infrastructure to apply ES and an CQRS pattern for applications based on Flow Framework.
 
 # DISCLAIMER
 
@@ -73,7 +73,7 @@ Those can be easily overruled in the code through the respective properties ```a
 
 # Command / Write side
 
-Your write side models your core domain logic, ensuring consistency and keeping business rules intact.
+Your write side models your domain logic, ensuring consistency and keeping business rules intact.
 It's public API is defined by the Commands and Events. Business constraints are commonly modelled through Aggregates and
 processes through ProcessManagers.
 
@@ -91,12 +91,12 @@ final class ConfirmOrder
 {
     /**
      * @var string
+     * @Flow\Validate(type="Uuid")
      */
     protected $identifier;
 
     /**
      * @param string $identifier
-     * @param float $duration
      */
     public function __construct(string $identifier)
     {
@@ -113,8 +113,11 @@ final class ConfirmOrder
 }
 ```
 
-Notice that the commands do not have any dependency on the framework. They are pure POJOs and
-should optimally be immutable.
+Notice that the commands do not have any dependency on the framework. They are pure POJOs and should optimally be immutable.
+
+Commands should be validated inside your Controller like normal Flow controller arguments to make sure they are
+structurally valid. Further constraints can then be validated with Domain Model Validators (see [here](http://flowframework.readthedocs.io/en/stable/TheDefinitiveGuide/PartIII/Validation.html#validating-domain-models)) or directly inside the 
+Controller or CommandHandler.
 
 ### Event
 
@@ -124,7 +127,7 @@ Events need to implement the ```EventInterface``` marker Interface, which contai
 The interface is used by Flow to provide infrastructure helpers (monitoring, debugging, ...).
 
 ```php
-final class ProductedOrdered implements EventInterface
+final class ProductedWasOrdered implements EventInterface
 {
     /**
      * @var string
@@ -202,10 +205,8 @@ final class ButtonCommandHandler
      */
     public function handleCreateButton(CreateButton $command)
     {
-        $button = new Button($command->getIdentifier());
-        $button->changeLabel($command->getLabel());
-
-        $this->buttons->save($button);
+        $button = Button::initialize($command->getButtonIdentifier(), $command->getLabel());
+        $this->buttons->add($button);
     }
 }
 ```
@@ -216,7 +217,70 @@ later on in combination with an CommandBus to provide a single (asynchronous) di
 
 ### Aggregates
 
-t.b.w.
+Aggregates model hard business constraints that may not be violated at any time. They form a very strict consistency
+boundary inside your domain and do not always need to represent single Entities.
+
+Any violations of the hard business constraints should throw an Exception immediately.
+
+```php
+use Neos\EventSourcing\Domain\AbstractEventSourcedAggregateRoot;
+
+class Project extends AbstractEventSourcedAggregateRoot
+{
+    /**
+     * @var string
+     */
+    protected $identifier;
+
+    /**
+     * @return string
+     */
+    public function getIdentifier(): string
+    {
+        return $this->identifier;
+    }
+
+    /**
+     * @param string $aggregateIdentifier
+     */
+    protected function __construct(string $aggregateIdentifier)
+    {
+        $this->identifier = $aggregateIdentifier;
+    }
+
+    /**
+     * @param string $projectId
+     * @param string $title
+     * @return Project
+     */
+    static public function startNew(string $projectId, string $title): Project
+    {
+        $project = new static($projectId);
+        $project->recordThat(new NewProjectWasStarted($projectId, $title));
+        return $project;
+    }
+
+    /**
+     * @param NewProjectWasStarted $event
+     */
+    public function whenNewProjectWasStarted(NewProjectWasStarted $event)
+    {
+        $this->identifier = $event->getProjectId();
+    }
+}
+```
+
+Notice how the constructor is made protected to avoid any accidental instanciation of the aggregate. Instead
+a static factory method that describes the business intention for creating the aggregate.
+The factory method then records an event that describes the fact that this aggregate was created and returns the new instance.
+
+You should never record events inside your constructor, because then it would not be possible to instanciate the
+Aggregate without changing it's history.
+
+Also note how the according handler method for the `NewProjectWasStarted` event does not set a title property on
+the aggregate, even though it is part of the event payload. Do not model a structural Entity in your domain, but
+rather only what is needed to keep the constraints intact. The title is not part of any constraints that the
+aggregate later needs to enforce, but it is still needed by the domain to correctly represent a `Project`.
 
 ### ProcessManagers
 
@@ -453,24 +517,24 @@ class ConsoleOutputListener implements EventListenerInterface
     protected $systemLogger;
 
     /**
-     * @param ButtonTagged $event
+     * @param ButtonWasTagged $event
      * @param EventMetadata $metadata
      */
-    public function whenButtonTagged(ButtonTagged $event, RawEvent $rawEventData)
+    public function whenButtonWasTagged(ButtonWasTagged $event, RawEvent $rawEventData)
     {
-        $this->systemLogger->log('--- ConsoleOutputListener say something has been tagged ---');
+        $this->systemLogger->log("--- The button {$event->getButtonIdentifer()} was tagged {$event->getTagName()} ---");
     }
 }
 ```
-
-The event handler locator can throw an exception if something is wrong with your command handler definition. In that
-case please check your system log for more information.
 
 All the wiring between event and event listeners is done automatically, if you respect the following convention:
 
 * Method name must be when[ShortEventName]
 * The first parameter must be of type `EventInterface` and is your concrete DomainEvent instance
 * The second parameter is optional and is of type `RawEvent`, containing the raw data and metadata from the EventStore
+
+If these conventions are violated an exception will be thrown during compile time. In that case please check your
+system log for more information.
 
 Also, you can optionally let your `EventListener` implement `ActsBeforeInvokingEventListenerMethodsInterface`
 in order to receive a hook method `beforeInvokingEventListenerMethod` before the concrete event handling method (`when*`) is called.
