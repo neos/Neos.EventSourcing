@@ -288,7 +288,9 @@ t.b.w.
 
 ### EventPublisher
 
-t.b.w.
+You can use the EventPublisher directly to record and distribute events outside of your Aggregates. For that, just inject
+it into your CommandHandler and emit new Domain Events there according to an incoming command which does not touch
+any hard business constraints that need to be enforced by an Aggregate.
 
 # Query / Read side
 
