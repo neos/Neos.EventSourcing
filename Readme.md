@@ -158,7 +158,7 @@ final class ProductedWasOrdered implements EventInterface
     }
 
     /**
-     * @return integer
+     * @return int
      */
     public function getAmount(): int
     {
