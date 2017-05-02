@@ -1,116 +1,102 @@
 # Event Sourcing and CQRS for Flow Framework
 
-_This package is currently under development and not fully working, please don't use it in production._
+_This package is currently under development and not fully tested, please don't use it in production._
 
-The goal of the project is to provide the infrastructure for ES/CQRS for applications based on Flow Framework.
+The goal of the project is to provide the infrastructure to apply ES and an CQRS pattern for applications based on Flow Framework.
 
 # DISCLAIMER
 
-**Please note:** This documentation (as well as the inline docs) are not up to date with the implementation of this package unfortunately.
-We are about to change that. Please bear with us in the meantime and [get in touch](https://www.neos.io/docs-and-support/support.html) if you have any questions!
+**Please note:** This documentation (as well as the inline docs) might not be up to date with the implementation of this package unfortunately.
+If you find any errors, please let us know or directly create a PR.
+
+Please bear with us in the meantime and [get in touch](https://www.neos.io/docs-and-support/support.html) if you have any questions!
 
 # Requirements
 
 * PHP 7
 * Flow 4.0
 
-# Configuration
+# Recommended Project Structure
 
-To be able to send events to a different DB, the ES package uses its own DB connection. These are the defaults which you will need to override:
+We highly recommend a PSR-4 folder structure and separating every `Bounded Context` into it's own package.
+We have an ongoing discussion about how to structure the code here: https://github.com/neos/Neos.EventSourcing/issues/9
+Our *current* recommendation (as of April 2017) for the structure is as follows:
 
-```
-Neos:
-  EventSourcing:
-    EventStore:
-      storage:
-        options:
-          eventTableName: neos_eventsourcing_eventstore_events
-          backendOptions:
-            driver: pdo_mysql
-            host: 127.0.0.1
-            dbname: null
-            user: null
-            password: null
-            charset: utf8
-```
-
-If you want the package to use the same DB connection your main application uses and want to save on typing, you can use YAML path references to point the ES storage config to the main one.
-```
-Neos:
-  Flow:
-    persistence:
-      # Add the "&mybackend" reference here (name it however you want, just keep the & in the beginning)
-      backendOptions: &mybackend
-        # Your usual DB credentials / config here [...]
-
-  EventSourcing:
-    EventStore:
-      storage:
-        options:
-          backendOptions: *mybackend
-```
-
-# Packages
-
-The features are split into different packages:
-
-* **[Neos.EventSourcing](https://github.com/neos/Neos.EventSourcing)**: mostly infrastructure (interface, trait, abstract class) and the event/query bus
-* **[Neos.EventSourcing.MonitoringHelper](https://github.com/neos/Neos.EventSourcing.MonitoringHelper)**: aspect to monitor performance of the ```Neos.EventSourcing``` infrastructure
-* **[Neos.EventStore](https://github.com/neos/Neos.EventStore)**: event store to support event sourcing
-* **[Neos.EventSourcing.InMemoryStorageAdapter](https://github.com/neos/Neos.EventSourcing.InMemoryStorageAdapter)**: in memory event storage, mainly for testing
-* **[Neos.EventSourcing.DatabaseStorageAdapter](https://github.com/neos/Neos.EventSourcing.DatabaseStorageAdapter)**: doctrine dbal based event storage
-
-More storage can be added later (Redis, ...).
-
-# Folder Structure
-
-This is a PSR-4 package structure:
-
-    Your.Package/
-      Application/
+    Your.BoundedContextPackage.Command/
+      Classes/
         Controller/
-        Command/
+          [UseCase]Controller.php
+          …
         Service/
-        Projection/
-            [ProjectionName]/
-                [ProjectionName]Finder.php
-                [ProjectionName]Projector.php
-                [ProjectionName].php
-
-      CommandHandler/
-
-      Domain/
-        Service/
-        Aggregate/
+          [SomeDomain]Service.php
+          …
+        Model/
           [YourAggregate]/
             Command/
+              [DoSomething].php
+              …
             Event/
-            Service/
-            YourAggregate.php
-            YourAggregateRepository.php
+              [SomethingHappened].php
+              …
+            [YourAggregate].php
+            [YourAggregate]CommandHandler.php
+            [YourAggregate]Repository.php
+          …
+        Process/
+          [Some]ProcessManager.php
+          …
 
-      EventListener/
+    Your.BoundedContextPackage.Query/
+      Classes/
+        Controller/
+          [ReadUseCase]Controller.php
+          …
+        Dto/
+          [SomeQueryDto].php
+          …
+        Service/
+          [SomeNonDomain]Service.php
+          …
+        Projection/
+          [ProjectionName]/
+            [ProjectionName].php
+            [ProjectionName]Finder.php
+            [ProjectionName]Projector.php
+          …
 
-# Components
+The reason to separate your Command and Query sides into own Packages is to make it clear those are fully separate
+parts of your application. However, it is no problem to have both parts inside a single package.
 
-Currently most components are included in the ```Neos.EventSourcing``` package. In the future some components can be split into
-separate packages for more flexibility.
+Also note that this is just a recommendation and not a necessary structure for anything to work as expected.
+The only requirements are the naming conventions for the Aggregate Repository and the Projection Finder and Projector.
+Those can be easily overruled in the code through the respective properties ```aggregateClassName``` and ```readModelClassName``` though.
 
-## Command
+# Command / Write side
+
+Your write side models your domain logic, ensuring consistency and keeping business rules intact.
+It's public API is defined by the Commands and Events. Business constraints are commonly modelled through Aggregates and
+processes through ProcessManagers.
+
+There are many cases though where you can get along without the latter two and only end up with CommandHandlers that
+receive Commands and emit Events (through the ```EventPublisher```).
+
+## Core Domain
 
 ### Command
+
+The command models a single very specific intention to change your application.
 
 ```php
 final class ConfirmOrder
 {
     /**
      * @var string
+     * @Flow\Validate(type="Uuid")
      */
     protected $identifier;
 
     /**
      * @param string $identifier
-     * @param float $duration
      */
     public function __construct(string $identifier)
     {
@@ -127,62 +113,21 @@ final class ConfirmOrder
 }
 ```
 
-### CommandHandler
+Notice that the commands do not have any dependency on the framework. They are pure POJOs and should optimally be immutable.
 
-```php
-/**
- * @Flow\Scope("singleton")
- */
-class ButtonCommandHandler
-{
-    /**
-     * @var ButtonRepository
-     * @Flow\Inject
-     */
-    protected $buttonRepository;
-
-    /**
-     * @param CreateButton $command
-     */
-    public function handleCreateButton(CreateButton $command)
-    {
-        $button = new Button($command->getIdentifier(), $command->getPublicIdentifier());
-        $button->changeLabel($command->getLabel());
-
-        $this->buttonRepository->save($button);
-    }
-}
-```
-
-### Monitoring
-
-You can disable (enabled by default) the command handler performance monitoring. The monitoring is implemented with AOP,
-check ```Settings.yaml``` for the configuration.
-
-## Domain
-
-* [x] **AggregateRoot**: implement your own based on ```AggregateRootInterface``` with ```AggregateRootTrait```
-* [x] **Repository**: implement your own based on ```RepositoryInterface```
-
-## Event
-
-### EventBus
-
-* [x] **EventBus**: default implementation, implement your own based on ```EventBusInterface```
-
-### EventListenerLocator
-
-* [x] **EventListenerLocator**: based on convention, implement your own based on ```EventListenerLocatorInterface```
+Commands should be validated inside your Controller like normal Flow controller arguments to make sure they are
+structurally valid. Further constraints can then be validated with Domain Model Validators (see [here](http://flowframework.readthedocs.io/en/stable/TheDefinitiveGuide/PartIII/Validation.html#validating-domain-models)) or directly inside the 
+Controller or CommandHandler.
 
 ### Event
 
-* [x] **Event**: implement your own based on ```EventInterface```
-
-This interface contains no methods, so you are free to focus on your domain. The interface is used by Flow to provide
-infrastructure helpers (monitoring, debugging, ...).
+Events model a fact that something happened in your domain that is of interest. They should be fully self-contained
+with all information that is necessary to derive a meaningful interpretation of the fact and be immutable.
+Events need to implement the ```EventInterface``` marker Interface, which contains no methods, so you are free to focus on your domain.
+The interface is used by Flow to provide infrastructure helpers (monitoring, debugging, ...).
 
 ```php
-class ProductedOrdered implements EventInterface
+final class ProductedWasOrdered implements EventInterface
 {
     /**
      * @var string
@@ -195,7 +140,8 @@ class ProductedOrdered implements EventInterface
     protected $amount;
 
     /**
-     * @param string $publicIdentifier
+     * @param string $productIdentifier
+     * @param integer $amount
      */
     public function __construct(string $productIdentifier, int $amount)
     {
@@ -212,7 +158,7 @@ class ProductedOrdered implements EventInterface
     }
 
     /**
-     * @return string
+     * @return int
      */
     public function getAmount(): int
     {
@@ -240,55 +186,118 @@ final class SomethingHappenedElsewhere implements EventInterface, ProvidesEventT
 }
 ```
 
-### Generic Fault (WIP)
-
-* [x] **GenericFault**: event triggered by the EventBus is an event handler throw an exception
-
-### How to implement you own event listener ?
-
-Your must implement the ```EventListenerInterface```:
+### CommandHandlers
 
 ```php
-class ConsoleOutputListener implements EventListenerInterface
+/**
+ * @Flow\Scope("singleton")
+ */
+final class ButtonCommandHandler
 {
     /**
-     * @var SystemLoggerInterface
+     * @var ButtonRepository
      * @Flow\Inject
      */
-    protected $systemLogger;
+    protected $buttons;
 
     /**
-     * @param ButtonTagged $event
-     * @param EventMetadata $metadata
+     * @param CreateButton $command
      */
-    public function onButtonTagged(ButtonTagged $event, EventMetadata $metadata)
+    public function handleCreateButton(CreateButton $command)
     {
-        $this->systemLogger->log('--- ConsoleOutputListener say something has been tagged ---');
+        $button = Button::initialize($command->getButtonIdentifier(), $command->getLabel());
+        $this->buttons->add($button);
     }
 }
 ```
 
-The event handler locator can throw an exception if something is wrong with your command handler definition. In that
-case please check your system log for more information.
+The CommandHandler is currently not a formal part of the Framework, but is a recommended abstraction to introduce
+in order to easily support dispatching commands through other entry points (e.g. CLI). It might be introduced (again)
+later on in combination with an CommandBus to provide a single (asynchronous) dispatch entry point.
 
-All the wiring between event is done automatically, if you respect the following convention:
+### Aggregates
 
-* Method name must be on[ShortEventName]
-* The first parameter must be casted with your ```Event```
-* The second parameter is optional, but should be casted to ```EventMetadata```
+Aggregates model hard business constraints that may not be violated at any time. They form a very strict consistency
+boundary inside your domain and do not always need to represent single Entities.
 
-## EventStore
+Any violations of the hard business constraints should throw an Exception immediately.
 
-See package **Neos.EventSourcing**.
+```php
+use Neos\EventSourcing\Domain\AbstractEventSourcedAggregateRoot;
 
-## Message
+class Project extends AbstractEventSourcedAggregateRoot
+{
+    /**
+     * @var string
+     */
+    protected $identifier;
 
-Messaging infrastructure, base class/traits to build your own Events.
+    /**
+     * @return string
+     */
+    public function getIdentifier(): string
+    {
+        return $this->identifier;
+    }
+
+    /**
+     * @param string $aggregateIdentifier
+     */
+    protected function __construct(string $aggregateIdentifier)
+    {
+        $this->identifier = $aggregateIdentifier;
+    }
+
+    /**
+     * @param string $projectId
+     * @param string $title
+     * @return Project
+     */
+    static public function startNew(string $projectId, string $title): Project
+    {
+        $project = new static($projectId);
+        $project->recordThat(new NewProjectWasStarted($projectId, $title));
+        return $project;
+    }
+
+    /**
+     * @param NewProjectWasStarted $event
+     */
+    public function whenNewProjectWasStarted(NewProjectWasStarted $event)
+    {
+        $this->identifier = $event->getProjectId();
+    }
+}
+```
+
+Notice how the constructor is made protected to avoid any accidental instanciation of the aggregate. Instead
+a static factory method that describes the business intention for creating the aggregate.
+The factory method then records an event that describes the fact that this aggregate was created and returns the new instance.
+
+You should never record events inside your constructor, because then it would not be possible to instanciate the
+Aggregate without changing it's history.
+
+Also note how the according handler method for the `NewProjectWasStarted` event does not set a title property on
+the aggregate, even though it is part of the event payload. Do not model a structural Entity in your domain, but
+rather only what is needed to keep the constraints intact. The title is not part of any constraints that the
+aggregate later needs to enforce, but it is still needed by the domain to correctly represent a `Project`.
+
+### ProcessManagers
+
+t.b.w.
+
+### EventPublisher
+
+You can use the EventPublisher directly to record and distribute events outside of your Aggregates. For that, just inject
+it into your CommandHandler and emit new Domain Events there according to an incoming command which does not touch
+any hard business constraints that need to be enforced by an Aggregate.
+
+# Query / Read side
+
+Your read side is mainly made up of one or multiple Projections and all the Application logic around them,
+e.g. the typical Flow MVC components like Controller(s), DTOs, Templates and Layouts.
 
 ## Projections
-
-Because a projection is usually tailored to one or more views in an application, we recommend using the
-`Application\Projection\[ProjectionName]` namespace for the respective code.
 
 A projection usually consists of three classes: the Projector, the Finder and the Read Model.
 
@@ -300,6 +309,10 @@ updates its projection accordingly.
 The `add()`, `update()` and `remove()` methods are *protected*. Instead of manually adding, updating or removing
 objects, these methods are called by event handler methods contained in the Projector.
 
+#### Asynchronous projections / AsynchronousEventListenerInterface
+
+t.b.w.
+
 ### Finder
 
 The Finder provides methods for querying and retrieving the state of the projection in the form of Read Models.
@@ -307,10 +320,13 @@ It is typically used in controllers and other similar parts of the application f
 well-known `findBy*()` and `findOneBy` methods. In contrast to a Repository though, users cannot add, update or remove
 objects.
 
+> Note: Never use the Finder inside your Projector to query your projection state, only use the methods provided by the Projector itself.
+
 ### Read Model
 
 A Read Model is a simple PHP class which is used for passing around the state of a projection. It is also called a
-Data Transfer Object (DTO). The Finder will return its results as one or more Read Model instances.
+Data Transfer Object (DTO). The Finder will return its results as one or more Read Model instances. The Projector
+will update the projection state as one or more Read Model instances.
 
 ### Doctrine-based projections
 
@@ -321,11 +337,11 @@ The following Read Model is used in a projection for organizations. It has a few
 right after the code.
 
 ```php
-namespace Acme\Application\Projection\Organization;
+namespace Acme\Crm\Query\Projection\Organization;
 
-use TYPO3\Media\Domain\Model\AssetInterface;
-use TYPO3\Media\Domain\Repository\AssetRepository;
-use TYPO3\Flow\Annotations as Flow;
+use Neos\Media\Domain\Model\AssetInterface;
+use Neos\Media\Domain\Repository\AssetRepository;
+use Neos\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
 use Neos\EventSourcing\Annotations as CQRS;
 
@@ -365,6 +381,12 @@ class Organization
      * @var array
      */
     public $projects = [];
+
+    public function __construct(string $identifier, string $name)
+    {
+        $this->identifier = $identifier;
+        $this->name = $name;
+    }
 
     /**
      * @return AssetInterface|null
@@ -407,11 +429,11 @@ That means: `./flow doctrine:migrationgenerate`, adjust and `./flow doctrine:mig
 The corresponding Projector class for this example projection could look like this:
 
 ```php
-namespace Acme\Application\Projection\Organization;
+namespace Acme\Crm\Query\Projection\Organization;
 
-use Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenCreated;
-use Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenDeleted;
-use Acme\Domain\Aggregate\Organization\Event\OrganizationLogoHasBeenChanged;
+use Acme\Crm\Command\Model\Organization\Event\OrganizationHasBeenCreated;
+use Acme\Crm\Command\Model\Organization\Event\OrganizationHasBeenDeleted;
+use Acme\Crm\Command\Model\Organization\Event\OrganizationLogoHasBeenChanged;
 use Neos\EventSourcing\Projection\Doctrine\AbstractDoctrineProjector;
 use TYPO3\Flow\Annotations as Flow;
 
@@ -429,28 +451,27 @@ class OrganizationProjector extends AbstractDoctrineProjector
      */
     public function whenOrganizationHasBeenCreated(OrganizationHasBeenCreated $event)
     {
-        $organization = new Organization();
-        $this->mapEventToReadModel($event, $organization);
+        $organization = new Organization($event->getOrganizationIdentifier(), $event->getName());
         $this->add($organization);
     }
 
     /**
-     * @param \Acme\Domain\Aggregate\Organization\Event\OrganizationHasBeenDeleted $event
+     * @param OrganizationHasBeenDeleted $event
      * @return void
      */
     public function whenOrganizationHasBeenDeleted(OrganizationHasBeenDeleted $event)
     {
-        $organization = $this->get($event->getIdentifier());
+        $organization = $this->get($event->getOrganizationIdentifier());
         $this->remove($organization);
     }
 
     /**
-     * @param \Acme\Domain\Aggregate\Organization\Event\OrganizationLogoHasBeenChanged $event
+     * @param OrganizationLogoHasBeenChanged $event
      * @return void
      */
     public function whenOrganizationLogoHasBeenChanged(OrganizationLogoHasBeenChanged $event)
     {
-        $organization = $this->get($event->getIdentifier());
+        $organization = $this->get($event->getOrganizationIdentifier());
         $organization->logoIdentifier = $event->getLogoIdentifier();
         $this->update($organization);
     }
@@ -460,11 +481,11 @@ class OrganizationProjector extends AbstractDoctrineProjector
 The corresponding Finder class providing the query methods may look as simple as this:
 
 ```php
-namespace Acme\Application\Projection\Organization;
+namespace Acme\Crm\Query\Projection\Organization;
 
 use Neos\EventSourcing\Projection\Doctrine\AbstractDoctrineFinder;
-use TYPO3\Flow\Annotations as Flow;
-use TYPO3\Flow\Persistence\QueryInterface;
+use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Persistence\QueryInterface;
 
 /**
  * Organization Finder
@@ -484,7 +505,41 @@ class OrganizationFinder extends AbstractDoctrineFinder
 }
 ```
 
-... todo: more explanations
+### How to implement you own event listener ?
+
+To implement other custom event listeners you only need to implement the `EventListenerInterface`:
+
+```php
+class ConsoleOutputListener implements EventListenerInterface
+{
+    /**
+     * @var SystemLoggerInterface
+     * @Flow\Inject
+     */
+    protected $systemLogger;
+
+    /**
+     * @param ButtonWasTagged $event
+     * @param EventMetadata $metadata
+     */
+    public function whenButtonWasTagged(ButtonWasTagged $event, RawEvent $rawEventData)
+    {
+        $this->systemLogger->log("--- The button {$event->getButtonIdentifer()} was tagged {$event->getTagName()} ---");
+    }
+}
+```
+
+All the wiring between event and event listeners is done automatically, if you respect the following convention:
+
+* Method name must be when[ShortEventName]
+* The first parameter must be of type `EventInterface` and is your concrete DomainEvent instance
+* The second parameter is optional and is of type `RawEvent`, containing the raw data and metadata from the EventStore
+
+If these conventions are violated an exception will be thrown during compile time. In that case please check your
+system log for more information.
+
+Also, you can optionally let your `EventListener` implement `ActsBeforeInvokingEventListenerMethodsInterface`
+in order to receive a hook method `beforeInvokingEventListenerMethod` before the concrete event handling method (`when*`) is called.
 
 License
 -------
