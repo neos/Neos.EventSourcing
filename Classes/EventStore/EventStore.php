@@ -11,20 +11,27 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
+use Neos\Error\Messages\Result;
 use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\Flow\Annotations as Flow;
 
 /**
- * @Flow\Scope("singleton")
+ * Main API to store and fetch events.
+ *
+ * NOTE: Do not instantiate this class directly but use the EventStoreManager
  */
-class EventStore
+final class EventStore
 {
     /**
      * @var EventStorageInterface
      */
     private $storage;
 
+    /**
+     * @internal Do not instantiate this class directly but use the EventStoreManager
+     * @param EventStorageInterface $storage
+     */
     public function __construct(EventStorageInterface $storage)
     {
         $this->storage = $storage;
@@ -54,5 +61,25 @@ class EventStore
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array
     {
         return $this->storage->commit($streamName, $events, $expectedVersion);
+    }
+
+    /**
+     * Returns the (connection) status of this Event Store, @see EventStorageInterface::getStatus()
+     *
+     * @return Result
+     */
+    public function getStatus()
+    {
+        return $this->storage->getStatus();
+    }
+
+    /**
+     * Sets up this Event Store and returns a status, @see EventStorageInterface::setup()
+     *
+     * @return Result
+     */
+    public function setup()
+    {
+        return $this->storage->setup();
     }
 }

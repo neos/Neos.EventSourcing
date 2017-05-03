@@ -43,20 +43,13 @@ class EventListenerLocator
     private $eventClassNamesAndListeners = [];
 
     /**
-     * @var EventStore
-     */
-    private $eventStore;
-
-    /**
      * @param ObjectManagerInterface $objectManager
      * @param EventTypeResolver $eventTypeService
-     * @param EventStore $eventStore
      */
-    public function __construct(ObjectManagerInterface $objectManager, EventTypeResolver $eventTypeService, EventStore $eventStore)
+    public function __construct(ObjectManagerInterface $objectManager, EventTypeResolver $eventTypeService)
     {
         $this->objectManager = $objectManager;
         $this->eventTypeService = $eventTypeService;
-        $this->eventStore = $eventStore;
     }
 
     /**

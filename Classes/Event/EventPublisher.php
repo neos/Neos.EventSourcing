@@ -14,7 +14,7 @@ namespace Neos\EventSourcing\Event;
 use Neos\EventSourcing\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
 use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
 use Neos\EventSourcing\EventListener\EventListenerLocator;
-use Neos\EventSourcing\EventStore\EventStore;
+use Neos\EventSourcing\EventStore\EventStoreManager;
 use Neos\EventSourcing\EventStore\EventTypesFilter;
 use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
@@ -36,9 +36,9 @@ use Neos\Flow\Utility\Algorithms;
 class EventPublisher
 {
     /**
-     * @var EventStore
+     * @var EventStoreManager
      */
-    private $eventStore;
+    private $eventStoreManager;
 
     /**
      * @var EventListenerLocator
@@ -56,14 +56,14 @@ class EventPublisher
     private $eventTypeResolver;
 
     /**
-     * @param EventStore $eventStore
+     * @param EventStoreManager $eventStoreManager
      * @param EventListenerLocator $eventListenerLocator
      * @param PropertyMapper $propertyMapper
      * @param EventTypeResolver $eventTypeResolver
      */
-    public function __construct(EventStore $eventStore, EventListenerLocator $eventListenerLocator, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
+    public function __construct(EventStoreManager $eventStoreManager, EventListenerLocator $eventListenerLocator, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
     {
-        $this->eventStore = $eventStore;
+        $this->eventStoreManager = $eventStoreManager;
         $this->eventListenerLocator = $eventListenerLocator;
         $this->propertyMapper = $propertyMapper;
         $this->eventTypeResolver = $eventTypeResolver;
@@ -101,7 +101,8 @@ class EventPublisher
             $eventIdentifier = Algorithms::generateUUID();
             $convertedEvents->append(new WritableEvent($eventIdentifier, $type, $data, $metadata));
         }
-        $rawEvents = $this->eventStore->commit($streamName, $convertedEvents, $expectedVersion);
+        $eventStore = $this->eventStoreManager->getEventStoreForStreamName($streamName);
+        $rawEvents = $eventStore->commit($streamName, $convertedEvents, $expectedVersion);
 
         $configuration = new PropertyMappingConfiguration();
         $configuration->allowAllProperties();
@@ -138,9 +139,11 @@ class EventPublisher
         foreach ($distinctListenerObjectsByClassName as $listenerClassName => $listenerObject) {
             $lastAppliedSequenceNumber = $listenerObject->getHighestAppliedSequenceNumber();
 
-            $filter = new EventTypesFilter($this->eventListenerLocator->getEventTypesByListenerClassName($listenerClassName), $lastAppliedSequenceNumber + 1);
+            $eventTypes = $this->eventListenerLocator->getEventTypesByListenerClassName($listenerClassName);
+            $eventStore = $this->eventStoreManager->getEventStoreForEventListener($listenerClassName);
+            $filter = new EventTypesFilter($eventTypes, $lastAppliedSequenceNumber + 1);
             try {
-                $eventStream = $this->eventStore->get($filter);
+                $eventStream = $eventStore->get($filter);
             } catch (EventStreamNotFoundException $exception) {
                 continue;
             }
