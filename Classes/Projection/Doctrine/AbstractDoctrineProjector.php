@@ -99,6 +99,18 @@ abstract class AbstractDoctrineProjector extends AbstractBaseProjector
     }
 
     /**
+     * Creates a Doctrine Query object which can be used for specialized (bulk) operations.
+     * For use in the concrete projector.
+     *
+     * @param string $dql
+     * @return \Doctrine\ORM\Query
+     */
+    protected function createQuery(string $dql = '')
+    {
+        return $this->projectionPersistenceManager->createQuery($dql);
+    }
+
+    /**
      * Removes all objects of this repository as if remove() was called for all of them.
      * For usage in the concrete projector.
      *

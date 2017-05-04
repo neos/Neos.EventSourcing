@@ -112,6 +112,17 @@ class DoctrineProjectionPersistenceManager
     }
 
     /**
+     * Creates a Query object which can be used for specialized (bulk) operations.
+     *
+     * @param string $dql
+     * @return \Doctrine\ORM\Query
+     */
+    public function createQuery(string $dql = '')
+    {
+        return $this->entityManager->createQuery($dql);
+    }
+
+    /**
      * Removes all objects from a Doctrine-based projection.
      *
      * @param string $readModelClassName Read Model class name of the projection
