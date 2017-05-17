@@ -11,6 +11,7 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine\Factory;
  * source code.
  */
 
+use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -25,6 +26,15 @@ use Neos\Utility\Arrays;
  */
 class ConnectionFactory
 {
+
+    /**
+     * NOTE: We inject the Doctrine ObjectManager in order to initialize the EntityManagerConfiguration::configureEntityManager
+     * slot is invoked. Without this an exception 'Unknown column type "flow_json_array" requested' might be thrown
+     *
+     * @Flow\Inject(lazy=false)
+     * @var ObjectManager
+     */
+    protected $doctrineObjectManager;
 
     /**
      * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence.backendOptions")
