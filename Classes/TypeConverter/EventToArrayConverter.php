@@ -52,10 +52,13 @@ class EventToArrayConverter extends AbstractTypeConverter
 
     /**
      * @param mixed $object
-     * @return array
+     * @return array|mixed
      */
     protected function convertObject($object)
     {
+        if ($object instanceof \JsonSerializable) {
+            return $object->jsonSerialize();
+        }
         $properties = ObjectAccess::getGettableProperties($object);
         foreach ($properties as $propertyName => &$propertyValue) {
             if (TypeHandling::isSimpleType(gettype($propertyValue))) {
