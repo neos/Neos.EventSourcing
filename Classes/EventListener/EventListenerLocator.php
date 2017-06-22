@@ -228,7 +228,7 @@ class EventListenerLocator
                 $listenersFoundInClass = true;
             }
             if (!$listenersFoundInClass) {
-                throw new Exception(sprintf('No listener methods have been detected in listener class %s. A listener has the signature "public function when<EventName>(<EventName> $event) {}" and every EventListener class has to implement at least one listener!', $listenerClassName), 1498123537);
+                throw new Exception(sprintf('No listener methods have been detected in listener class %s. A listener has the signature "public function when<EventClass>(<EventClass> $event) {}" and every EventListener class has to implement at least one listener!', $listenerClassName), 1498123537);
             }
         }
 
