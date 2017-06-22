@@ -194,6 +194,7 @@ class EventListenerLocator
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listenerClassName) {
+            $listenersFoundInClass = false;
             foreach (get_class_methods($listenerClassName) as $listenerMethodName) {
                 preg_match('/^when[A-Z].*$/', $listenerMethodName, $matches);
                 if (!isset($matches[0])) {
@@ -224,6 +225,10 @@ class EventListenerLocator
                     $listeners[$eventClassName] = [];
                 }
                 $listeners[$eventClassName][$listenerClassName] = $listenerMethodName;
+                $listenersFoundInClass = true;
+            }
+            if (!$listenersFoundInClass) {
+                throw new Exception(sprintf('No listener methods have been detected in listener class %s. A listener has the signature "public function when<EventClass>(<EventClass> $event) {}" and every EventListener class has to implement at least one listener!', $listenerClassName), 1498123537);
             }
         }
 
