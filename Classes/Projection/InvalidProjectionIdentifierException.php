@@ -12,7 +12,6 @@ namespace Neos\EventSourcing\Projection;
  */
 
 use Neos\EventSourcing\Exception;
-use Neos\Flow\Annotations as Flow;
 
 /**
  * An invalid projection identifier exception (thrown if the given identifier does not exist or is ambiguous)

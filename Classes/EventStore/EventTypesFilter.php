@@ -12,7 +12,6 @@ namespace Neos\EventSourcing\EventStore;
  */
 
 use Neos\EventSourcing\Exception;
-use Neos\Flow\Annotations as Flow;
 
 class EventTypesFilter implements EventStreamFilterInterface
 {

@@ -13,7 +13,6 @@ namespace Neos\EventSourcing\EventListener;
 
 use Neos\EventSourcing\Event\EventInterface;
 use Neos\EventSourcing\Event\EventTypeResolver;
-use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\Exception;
 use Neos\Flow\Annotations as Flow;
