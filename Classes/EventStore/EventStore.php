@@ -14,7 +14,6 @@ namespace Neos\EventSourcing\EventStore;
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
-use Neos\Flow\Annotations as Flow;
 
 /**
  * Main API to store and fetch events.

@@ -11,8 +11,6 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
-use Neos\Flow\Annotations as Flow;
-
 interface EventStreamFilterInterface
 {
     public function getStreamName(): string;

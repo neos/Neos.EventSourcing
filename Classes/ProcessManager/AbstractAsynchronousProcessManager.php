@@ -13,7 +13,6 @@ namespace Neos\EventSourcing\ProcessManager;
 
 use Neos\EventSourcing\EventListener\AppliedEventsLogRepository;
 use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
-use Neos\Flow\Annotations as Flow;
 
 /**
  * Base implementation for a process manager

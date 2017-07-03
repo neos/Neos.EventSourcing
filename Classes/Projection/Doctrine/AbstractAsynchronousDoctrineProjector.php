@@ -13,7 +13,6 @@ namespace Neos\EventSourcing\Projection\Doctrine;
 
 use Neos\EventSourcing\EventListener\AppliedEventsLogRepository;
 use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
-use Neos\Flow\Annotations as Flow;
 
 /**
  * A base class for Doctrine-based projectors

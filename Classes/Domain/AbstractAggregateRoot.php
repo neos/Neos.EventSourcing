@@ -12,7 +12,6 @@ namespace Neos\EventSourcing\Domain;
  */
 
 use Neos\EventSourcing\Event\EventInterface;
-use Neos\Flow\Annotations as Flow;
 
 /**
  * Base class for an aggregate root

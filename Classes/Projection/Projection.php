@@ -12,7 +12,6 @@ namespace Neos\EventSourcing\Projection;
  */
 
 use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
-use Neos\Flow\Annotations as Flow;
 
 /**
  * Projection DTO

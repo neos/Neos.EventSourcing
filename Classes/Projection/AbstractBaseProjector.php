@@ -11,8 +11,6 @@ namespace Neos\EventSourcing\Projection;
  * source code.
  */
 
-use Neos\Flow\Annotations as Flow;
-
 /**
  * A base class for projectors
  *
