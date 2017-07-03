@@ -49,6 +49,7 @@ final class DoctrineStreamIterator implements \Iterator
     {
         $this->queryBuilder = clone $queryBuilder;
         $this->queryBuilder->setMaxResults(self::BATCH_SIZE);
+        $this->queryBuilder->andWhere('sequencenumber > :sequenceNumberOffset');
         $this->fetchBatch();
     }
 
@@ -77,7 +78,7 @@ final class DoctrineStreamIterator implements \Iterator
      */
     public function next()
     {
-        $this->currentOffset ++;
+        $this->currentOffset = $this->innerIterator->current()['sequencenumber'];
         $this->innerIterator->next();
         if ($this->innerIterator->valid()) {
             return;
@@ -120,7 +121,9 @@ final class DoctrineStreamIterator implements \Iterator
      */
     private function fetchBatch()
     {
-        $this->queryBuilder->setFirstResult($this->currentOffset);
+        // we deliberately don't use "setFirstResult" here, as this translates to an OFFSET query. For resolving
+        // an OFFSET query, the DB needs to scan the result-set from the beginning (which is slow as hell).
+        $this->queryBuilder->setParameter('sequenceNumberOffset', $this->currentOffset);
         $rawResult = $this->queryBuilder->execute()->fetchAll();
         $this->innerIterator = new \ArrayIterator($rawResult);
     }
