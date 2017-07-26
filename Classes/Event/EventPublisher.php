@@ -92,13 +92,16 @@ class EventPublisher
      */
     public function publishMany(string $streamName, array $events, int $expectedVersion = ExpectedVersion::ANY)
     {
-        $convertedEvents = new WritableEvents();
+        $identifiedEvents = [];
         foreach ($events as $event) {
+            $identifiedEvents[Algorithms::generateUUID()] = $event;
+        }
+        $convertedEvents = new WritableEvents();
+        foreach ($identifiedEvents as $eventIdentifier => $event) {
             $type = $this->eventTypeResolver->getEventType($event);
             $metadata = [];
             $this->emitBeforePublishingEvent($event, $metadata);
             $data = $this->propertyMapper->convert($event, 'array');
-            $eventIdentifier = Algorithms::generateUUID();
             $convertedEvents->append(new WritableEvent($eventIdentifier, $type, $data, $metadata));
         }
         $eventStore = $this->eventStoreManager->getEventStoreForStreamName($streamName);
@@ -108,8 +111,7 @@ class EventPublisher
         $configuration->allowAllProperties();
         $configuration->forProperty('*')->allowAllProperties();
         foreach ($rawEvents as $rawEvent) {
-            $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
-            $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
+            $event = $identifiedEvents[$rawEvent->getIdentifier()];
             foreach ($this->eventListenerLocator->getSynchronousListenersByEventType($rawEvent->getType()) as $listener) {
                 if (is_array($listener) && $listener[0] instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
                     $listener[0]->beforeInvokingEventListenerMethod($event, $rawEvent);
