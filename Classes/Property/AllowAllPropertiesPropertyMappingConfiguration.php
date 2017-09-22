@@ -41,5 +41,4 @@ class AllowAllPropertiesPropertyMappingConfiguration extends PropertyMappingConf
 
         return new static();
     }
-
 }
