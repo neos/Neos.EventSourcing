@@ -12,9 +12,9 @@ namespace Neos\EventSourcing\EventStore;
  */
 
 use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\Property\AllowAllPropertiesPropertyMappingConfiguration;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Property\PropertyMapper;
-use Neos\Flow\Property\PropertyMappingConfiguration;
 
 /**
  * EventStream
@@ -51,10 +51,7 @@ final class EventStream implements \Iterator
      */
     public function current()
     {
-        $configuration = new PropertyMappingConfiguration();
-        $configuration->allowAllProperties();
-        $configuration->skipUnknownProperties();
-        $configuration->forProperty('*')->allowAllProperties()->skipUnknownProperties();
+        $configuration = new AllowAllPropertiesPropertyMappingConfiguration();
 
         /** @var RawEvent $rawEvent */
         $rawEvent = $this->streamIterator->current();
