@@ -20,9 +20,9 @@ use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\WritableEvent;
 use Neos\EventSourcing\EventStore\WritableEvents;
+use Neos\EventSourcing\Property\AllowAllPropertiesPropertyMappingConfiguration;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Property\PropertyMapper;
-use Neos\Flow\Property\PropertyMappingConfiguration;
 use Neos\Flow\Utility\Algorithms;
 
 /**
@@ -104,9 +104,7 @@ class EventPublisher
         $eventStore = $this->eventStoreManager->getEventStoreForStreamName($streamName);
         $rawEvents = $eventStore->commit($streamName, $convertedEvents, $expectedVersion);
 
-        $configuration = new PropertyMappingConfiguration();
-        $configuration->allowAllProperties();
-        $configuration->forProperty('*')->allowAllProperties();
+        $configuration = new AllowAllPropertiesPropertyMappingConfiguration();
         foreach ($rawEvents as $rawEvent) {
             $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
             $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
