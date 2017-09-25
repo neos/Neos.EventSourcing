@@ -292,6 +292,9 @@ You can use the EventPublisher directly to record and distribute events outside 
 it into your CommandHandler and emit new Domain Events there according to an incoming command which does not touch
 any hard business constraints that need to be enforced by an Aggregate.
 
+In order to provide additional metadata for the event (a simple array with keys and values), you can wrap the event into
+a `EventWithMetadata` object and pass that wrapper to the Event Publisher's publish function.
+
 # Query / Read side
 
 Your read side is mainly made up of one or multiple Projections and all the Application logic around them,
