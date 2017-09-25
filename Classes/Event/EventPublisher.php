@@ -94,8 +94,12 @@ class EventPublisher
     {
         $convertedEvents = new WritableEvents();
         foreach ($events as $event) {
-            $type = $this->eventTypeResolver->getEventType($event);
             $metadata = [];
+            if ($event instanceof EventWithMetadata) {
+                $metadata = $event->getMetadata();
+                $event = $event->getEvent();
+            }
+            $type = $this->eventTypeResolver->getEventType($event);
             $this->emitBeforePublishingEvent($event, $metadata);
             $data = $this->propertyMapper->convert($event, 'array');
             $eventIdentifier = Algorithms::generateUUID();
