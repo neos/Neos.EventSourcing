@@ -14,42 +14,42 @@ namespace Neos\EventSourcing\EventStore;
 use Neos\EventSourcing\Exception;
 
 /**
- * Stream name filter (exact name)
+ * Stream name prefix filter
  */
-class StreamNameFilter implements EventStreamFilterInterface
+class StreamNamePrefixFilter implements EventStreamFilterInterface
 {
     /**
      * @var string
      */
-    private $streamName;
+    private $streamNamePrefix;
 
-    public function __construct(string $streamName)
+    public function __construct(string $streamNamePrefix)
     {
-        $streamName = trim($streamName);
-        if ($streamName === '') {
-            throw new Exception('Empty stream filter provided', 1478299970);
+        $streamNamePrefix = trim($streamNamePrefix);
+        if ($streamNamePrefix === '') {
+            throw new Exception('Empty stream name prefix filter provided', 1506517687);
         }
-        $this->streamName = $streamName;
+        $this->streamNamePrefix = $streamNamePrefix;
     }
 
     public function getStreamName(): string
     {
-        return $this->streamName;
+        return '';
     }
 
     public function hasStreamName(): bool
     {
-        return true;
+        return false;
     }
 
     public function getStreamNamePrefix(): string
     {
-        return '';
+        return $this->streamNamePrefix;
     }
 
     public function hasStreamNamePrefix(): bool
     {
-        return false;
+        return true;
     }
 
     /**
