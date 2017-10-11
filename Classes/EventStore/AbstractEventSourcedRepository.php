@@ -62,18 +62,31 @@ abstract class AbstractEventSourcedRepository implements RepositoryInterface
      */
     public function get(string $identifier)
     {
-        $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($this->aggregateClassName, $identifier);
+        return $this->loadByTypeAndIdentifier($this->aggregateClassName, $identifier);
+    }
+
+    /**
+     * Return an aggregate instance of the given class specified by the identifier.
+     *
+     * @param string $aggregateClassName
+     * @param string $identifier
+     * @return EventSourcedAggregateRootInterface
+     * @throws AggregateRootNotFoundException
+     */
+    public function loadByTypeAndIdentifier(string $aggregateClassName, string $identifier)
+    {
+        $streamName = $this->streamNameResolver->getStreamNameForAggregateTypeAndIdentifier($aggregateClassName, $identifier);
         $eventStore = $this->eventStoreManager->getEventStoreForStreamName($streamName);
         $eventStream = $eventStore->get(new StreamNameFilter($streamName));
 
-        if (!class_exists($this->aggregateClassName)) {
-            throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root %s because its class '%s' does not exist.", $identifier, $this->aggregateClassName), 1474454928115);
+        if (!class_exists($aggregateClassName)) {
+            throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root %s because its class '%s' does not exist.", $identifier, $aggregateClassName), 1474454928115);
         }
-        if (!is_subclass_of($this->aggregateClassName, EventSourcedAggregateRootInterface::class)) {
-            throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root '%s' with id '%s' because it does not implement the EventSourcedAggregateRootInterface.", $this->aggregateClassName, $identifier, $this->aggregateClassName), 1474464335530);
+        if (!is_subclass_of($aggregateClassName, EventSourcedAggregateRootInterface::class)) {
+            throw new AggregateRootNotFoundException(sprintf("Could not reconstitute the aggregate root '%s' with id '%s' because it does not implement the EventSourcedAggregateRootInterface.", $aggregateClassName, $identifier), 1474464335530);
         }
 
-        return call_user_func($this->aggregateClassName . '::reconstituteFromEventStream', $identifier, $eventStream);
+        return call_user_func($aggregateClassName . '::reconstituteFromEventStream', $identifier, $eventStream);
     }
 
     /**
