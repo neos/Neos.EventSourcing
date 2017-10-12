@@ -36,8 +36,13 @@ final class EventWithMetadata implements EventInterface
      */
     public function __construct(EventInterface $event, array $metadata)
     {
-        $this->event = $event;
-        $this->metadata = ($event instanceof EventWithMetadata) ? Arrays::arrayMergeRecursiveOverrule($event->getMetadata(), $metadata) : $metadata;
+        if ($event instanceof EventWithMetadata) {
+            $this->event = $event->getEvent();
+            $this->metadata = Arrays::arrayMergeRecursiveOverrule($event->getMetadata(), $metadata);
+        } else {
+            $this->event = $event;
+            $this->metadata = $metadata;
+        }
     }
 
     /**

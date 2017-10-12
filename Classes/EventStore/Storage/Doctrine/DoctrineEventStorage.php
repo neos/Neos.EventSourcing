@@ -14,6 +14,8 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\ConnectionException;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Schema\Comparator;
+use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
@@ -25,7 +27,6 @@ use Neos\EventSourcing\EventStore\EventStreamFilterInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
-use Neos\EventSourcing\EventStore\Storage\Doctrine\Schema\EventStoreSchema;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\StreamNameFilter;
@@ -109,7 +110,7 @@ class DoctrineEventStorage implements EventStorageInterface
         $this->applyEventStreamFilter($query, $filter);
 
         $streamIterator = new DoctrineStreamIterator($query);
-        return new EventStream($streamIterator, $this->getStreamVersion($filter));
+        return new EventStream($streamIterator);
     }
 
     /**
@@ -124,6 +125,7 @@ class DoctrineEventStorage implements EventStorageInterface
 
         $rawEvents = [];
         foreach ($events as $event) {
+            $metadata = $event->getMetadata();
             $this->connection->insert(
                 $this->eventTableName,
                 [
@@ -132,7 +134,9 @@ class DoctrineEventStorage implements EventStorageInterface
                     'version' => ++$actualVersion,
                     'type' => $event->getType(),
                     'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
-                    'metadata' => json_encode($event->getMetadata(), JSON_PRETTY_PRINT),
+                    'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
+                    'correlationid' => $metadata['correlationId'] ?? null,
+                    'causationid' => $metadata['causationId'] ?? null,
                     'recordedat' => $this->now
                 ],
                 [
@@ -141,7 +145,7 @@ class DoctrineEventStorage implements EventStorageInterface
                 ]
             );
             $sequenceNumber = $this->connection->lastInsertId();
-            $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $event->getMetadata(), $actualVersion, $event->getIdentifier(), $this->now);
+            $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $metadata, $actualVersion, $event->getIdentifier(), $this->now);
         }
         $this->connection->commit();
         return $rawEvents;
@@ -198,20 +202,25 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     private function applyEventStreamFilter(QueryBuilder $query, EventStreamFilterInterface $filter)
     {
-        if ($filter->hasStreamName()) {
+        $filterValues = $filter->getFilterValues();
+        if (array_key_exists(EventStreamFilterInterface::FILTER_STREAM_NAME, $filterValues)) {
             $query->andWhere('stream = :streamName');
-            $query->setParameter('streamName', $filter->getStreamName());
-        } elseif ($filter->hasStreamNamePrefix()) {
+            $query->setParameter('streamName', $filterValues[EventStreamFilterInterface::FILTER_STREAM_NAME]);
+        } elseif (array_key_exists(EventStreamFilterInterface::FILTER_STREAM_NAME_PREFIX, $filterValues)) {
             $query->andWhere('stream LIKE :streamNamePrefix');
-            $query->setParameter('streamNamePrefix', $filter->getStreamNamePrefix() . '%');
+            $query->setParameter('streamNamePrefix', $filterValues[EventStreamFilterInterface::FILTER_STREAM_NAME_PREFIX] . '%');
         }
-        if ($filter->hasEventTypes()) {
+        if (array_key_exists(EventStreamFilterInterface::FILTER_EVENT_TYPES, $filterValues)) {
             $query->andWhere('type IN (:eventTypes)');
-            $query->setParameter('eventTypes', $filter->getEventTypes(), Connection::PARAM_STR_ARRAY);
+            $query->setParameter('eventTypes', $filterValues[EventStreamFilterInterface::FILTER_EVENT_TYPES], Connection::PARAM_STR_ARRAY);
         }
-        if ($filter->hasMinimumSequenceNumber()) {
+        if (array_key_exists(EventStreamFilterInterface::FILTER_MINIMUM_SEQUENCE_NUMBER, $filterValues)) {
             $query->andWhere('sequencenumber >= :minimumSequenceNumber');
-            $query->setParameter('minimumSequenceNumber', $filter->getMinimumSequenceNumber());
+            $query->setParameter('minimumSequenceNumber', $filterValues[EventStreamFilterInterface::FILTER_MINIMUM_SEQUENCE_NUMBER]);
+        }
+        if (array_key_exists(EventStreamFilterInterface::FILTER_CORRELATION_ID, $filterValues)) {
+            $query->andWhere('correlationid = :correlationId');
+            $query->setParameter('correlationId', $filterValues[EventStreamFilterInterface::FILTER_CORRELATION_ID]);
         }
     }
 
@@ -227,13 +236,24 @@ class DoctrineEventStorage implements EventStorageInterface
             $result->addError(new Error($exception->getMessage(), $exception->getCode(), [], 'Connection failed'));
             return $result;
         }
-        $result->addNotice(new Notice($this->connection->getHost(), null, [], 'Host'));
-        $result->addNotice(new Notice($this->connection->getPort(), null, [], 'Port'));
-        $result->addNotice(new Notice($this->connection->getDatabase(), null, [], 'Database'));
-        $result->addNotice(new Notice($this->connection->getDriver()->getName(), null, [], 'Driver'));
-        $result->addNotice(new Notice($this->connection->getUsername(), null, [], 'Username'));
+        $result->addNotice(new Notice((string)$this->connection->getHost(), null, [], 'Host'));
+        $result->addNotice(new Notice((string)$this->connection->getPort(), null, [], 'Port'));
+        $result->addNotice(new Notice((string)$this->connection->getDatabase(), null, [], 'Database'));
+        $result->addNotice(new Notice((string)$this->connection->getDriver()->getName(), null, [], 'Driver'));
+        $result->addNotice(new Notice((string)$this->connection->getUsername(), null, [], 'Username'));
         if ($tableExists) {
             $result->addNotice(new Notice('%s (exists)', null, [$this->eventTableName], 'Table'));
+
+            $fromSchema = $this->connection->getSchemaManager()->createSchema();
+            $schemaDiff = (new Comparator())->compare($fromSchema, $this->createEventStoreSchema());
+            $statements = $schemaDiff->toSaveSql($this->connection->getDatabasePlatform());
+            if ($statements !== []) {
+                $result->addWarning(new Warning('The schama of table %s is not up-to-date', null, [$this->eventTableName], 'Table schema'));
+                foreach ($statements as $statement) {
+                    $result->addWarning(new Warning($statement, null, [], 'Required statement'));
+                }
+            }
+
         } else {
             $result->addWarning(new Warning('%s (missing)', null, [$this->eventTableName], 'Table'));
         }
@@ -253,23 +273,63 @@ class DoctrineEventStorage implements EventStorageInterface
             return $result;
         }
         if ($tableExists) {
-            $result->addNotice(new Notice('Table "%s" (already exists)', null, [$this->eventTableName], 'Skipping'));
+            $result->addNotice(new Notice('Table "%s" (already exists)', null, [$this->eventTableName]));
+        } else {
+            $result->addNotice(new Notice('Creating database table "%s" in database "%s" on host %s....', null, [$this->eventTableName, $this->connection->getDatabase(), $this->connection->getHost()]));
+        }
+
+        $fromSchema = $this->connection->getSchemaManager()->createSchema();
+        $schemaDiff = (new Comparator())->compare($fromSchema, $this->createEventStoreSchema());
+
+        $statements = $schemaDiff->toSaveSql($this->connection->getDatabasePlatform());
+        if ($statements === []) {
+            $result->addNotice(new Notice('Table schema is up to date, no migration required'));
             return $result;
         }
-        $result->addNotice(new Notice('Creating database table "%s" in database "%s" on host %s....', null, [$this->eventTableName, $this->connection->getDatabase(), $this->connection->getHost()]));
-
-        $schema = $this->connection->getSchemaManager()->createSchema();
-        $toSchema = clone $schema;
-
-        EventStoreSchema::createStream($toSchema, $this->eventTableName);
-
         $this->connection->beginTransaction();
-        $statements = $schema->getMigrateToSql($toSchema, $this->connection->getDatabasePlatform());
         foreach ($statements as $statement) {
             $result->addNotice(new Notice('<info>++</info> %s', null, [$statement]));
             $this->connection->exec($statement);
         }
         $this->connection->commit();
         return $result;
+    }
+
+    /**
+     * Creates the Doctrine schema to be compared with the current db schema for migration
+     *
+     * @return Schema
+     */
+    private function createEventStoreSchema()
+    {
+        $schema = new Schema();
+        $table = $schema->createTable($this->eventTableName);
+
+        // The monotonic sequence number
+        $table->addColumn('sequencenumber', Type::INTEGER, ['autoincrement' => true]);
+        // The stream name, usually in the format "<BoundedContext>:<StreamName>"
+        $table->addColumn('stream', Type::STRING, ['length' => 255]);
+        // Version of the event in the respective stream
+        $table->addColumn('version', Type::BIGINT, ['unsigned' => true]);
+        // The event type in the format "<BoundedContext>:<EventType>"
+        $table->addColumn('type', Type::STRING, ['length' => 255]);
+        // The event payload as JSON
+        $table->addColumn('payload', Type::TEXT);
+        // The event metadata as JSON
+        $table->addColumn('metadata', Type::TEXT);
+        // The unique event id, usually a UUID
+        $table->addColumn('id', Type::STRING, ['length' => 255]);
+        // An optional correlation id, usually a UUID
+        $table->addColumn('correlationid', Type::STRING, ['length' => 255, 'notnull' => false]);
+        // An optional causation id, usually a UUID
+        $table->addColumn('causationid', Type::STRING, ['length' => 255, 'notnull' => false]);
+        // Timestamp of the the event publishing
+        $table->addColumn('recordedat', Type::DATETIME);
+
+        $table->setPrimaryKey(['sequencenumber']);
+        $table->addUniqueIndex(['id'], 'id_uniq');
+        $table->addUniqueIndex(['stream', 'version'], 'stream_version_uniq');
+
+        return $schema;
     }
 }

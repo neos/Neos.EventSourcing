@@ -32,46 +32,13 @@ class StreamNameFilter implements EventStreamFilterInterface
         $this->streamName = $streamName;
     }
 
-    public function getStreamName(): string
-    {
-        return $this->streamName;
-    }
-
-    public function hasStreamName(): bool
-    {
-        return true;
-    }
-
-    public function getStreamNamePrefix(): string
-    {
-        return '';
-    }
-
-    public function hasStreamNamePrefix(): bool
-    {
-        return false;
-    }
-
     /**
-     * @return string[] in the format ['Bounded.Context:SomeEvent', 'Bounded.Context:SomeOtherEvent', ...]
+     * @return array
      */
-    public function getEventTypes(): array
+    public function getFilterValues(): array
     {
-        return [];
-    }
-
-    public function hasEventTypes(): bool
-    {
-        return false;
-    }
-
-    public function getMinimumSequenceNumber(): int
-    {
-        return 0;
-    }
-
-    public function hasMinimumSequenceNumber(): bool
-    {
-        return false;
+        return [
+            self::FILTER_STREAM_NAME => $this->streamName,
+        ];
     }
 }

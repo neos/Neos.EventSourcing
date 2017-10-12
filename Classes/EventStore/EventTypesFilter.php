@@ -34,46 +34,16 @@ class EventTypesFilter implements EventStreamFilterInterface
         $this->minimumSequenceNumber = $minimumSequenceNumber;
     }
 
-    public function getStreamName(): string
-    {
-        return '';
-    }
-
-    public function hasStreamName(): bool
-    {
-        return false;
-    }
-
-    public function getStreamNamePrefix(): string
-    {
-        return '';
-    }
-
-    public function hasStreamNamePrefix(): bool
-    {
-        return false;
-    }
-
     /**
-     * @return string[] in the format ['Bounded.Context:SomeEvent', 'Bounded.Context:SomeOtherEvent', ...]
+     * @return array
      */
-    public function getEventTypes(): array
+    public function getFilterValues(): array
     {
-        return $this->eventTypes;
+        return [
+            self::FILTER_EVENT_TYPES => $this->eventTypes,
+            self::FILTER_MINIMUM_SEQUENCE_NUMBER => $this->minimumSequenceNumber,
+        ];
     }
 
-    public function hasEventTypes(): bool
-    {
-        return true;
-    }
 
-    public function getMinimumSequenceNumber(): int
-    {
-        return $this->minimumSequenceNumber;
-    }
-
-    public function hasMinimumSequenceNumber(): bool
-    {
-        return $this->minimumSequenceNumber > 0;
-    }
 }
