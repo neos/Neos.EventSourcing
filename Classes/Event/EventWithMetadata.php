@@ -11,6 +11,8 @@ namespace Neos\EventSourcing\Event;
  * source code.
  */
 
+use Neos\Utility\Arrays;
+
 /**
  * Event wrapper which provides metadata additional to the event
  */
@@ -35,7 +37,7 @@ final class EventWithMetadata implements EventInterface
     public function __construct(EventInterface $event, array $metadata)
     {
         $this->event = $event;
-        $this->metadata = $metadata;
+        $this->metadata = ($event instanceof EventWithMetadata) ? Arrays::arrayMergeRecursiveOverrule($event->getMetadata(), $metadata) : $metadata;
     }
 
     /**
