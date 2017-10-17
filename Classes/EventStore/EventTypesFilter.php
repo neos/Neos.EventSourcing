@@ -44,6 +44,4 @@ class EventTypesFilter implements EventStreamFilterInterface
             self::FILTER_MINIMUM_SEQUENCE_NUMBER => $this->minimumSequenceNumber,
         ];
     }
-
-
 }

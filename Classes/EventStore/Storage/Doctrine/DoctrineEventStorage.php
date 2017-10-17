@@ -253,7 +253,6 @@ class DoctrineEventStorage implements EventStorageInterface
                     $result->addWarning(new Warning($statement, null, [], 'Required statement'));
                 }
             }
-
         } else {
             $result->addWarning(new Warning('%s (missing)', null, [$this->eventTableName], 'Table'));
         }
