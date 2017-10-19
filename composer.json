@@ -3,7 +3,7 @@
     "type": "neos-package",
     "description": "Lean and opinionated way to integrate Event Sourcing and CQRS pattern in your Flow framework package",
     "require": {
-        "php": ">=7.0.1",
+        "php": ">=7.0",
         "neos/flow": "~4.0"
     },
     "suggest": {
