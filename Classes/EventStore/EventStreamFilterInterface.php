@@ -44,4 +44,12 @@ interface EventStreamFilterInterface
      * @return array
      */
     public function getFilterValues(): array;
+
+    /**
+     * Return a specific filter value
+     *
+     * @param string $name Name of the filter value, must be one of the FILTER_* constants
+     * @return mixed The specified filter value
+     */
+    public function getFilterValue(string $name);
 }

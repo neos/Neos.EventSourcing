@@ -25,6 +25,13 @@ class EventTypesFilter implements EventStreamFilterInterface
      */
     private $minimumSequenceNumber = 0;
 
+    /**
+     * EventTypesFilter constructor.
+     *
+     * @param array $eventTypes
+     * @param int $minimumSequenceNumber
+     * @throws Exception
+     */
     public function __construct(array $eventTypes, int $minimumSequenceNumber = 0)
     {
         if ($eventTypes === []) {
@@ -43,5 +50,21 @@ class EventTypesFilter implements EventStreamFilterInterface
             self::FILTER_EVENT_TYPES => $this->eventTypes,
             self::FILTER_MINIMUM_SEQUENCE_NUMBER => $this->minimumSequenceNumber,
         ];
+    }
+
+    /**
+     * @param string $name
+     * @return mixed
+     */
+    public function getFilterValue(string $name)
+    {
+        switch ($name) {
+            case self::FILTER_EVENT_TYPES:
+                return $this->eventTypes;
+            break;
+            case self::FILTER_MINIMUM_SEQUENCE_NUMBER:
+                return $this->minimumSequenceNumber;
+            break;
+        }
     }
 }

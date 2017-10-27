@@ -23,6 +23,12 @@ class StreamNameFilter implements EventStreamFilterInterface
      */
     private $streamName;
 
+    /**
+     * StreamNameFilter constructor.
+     *
+     * @param string $streamName
+     * @throws Exception
+     */
     public function __construct(string $streamName)
     {
         $streamName = trim($streamName);
@@ -40,5 +46,18 @@ class StreamNameFilter implements EventStreamFilterInterface
         return [
             self::FILTER_STREAM_NAME => $this->streamName,
         ];
+    }
+
+    /**
+     * @param string $name
+     * @return mixed
+     */
+    public function getFilterValue(string $name)
+    {
+        switch ($name) {
+            case self::FILTER_STREAM_NAME:
+                return $this->streamName;
+            break;
+        }
     }
 }
