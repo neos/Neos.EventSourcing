@@ -319,7 +319,7 @@ class DoctrineEventStorage implements EventStorageInterface
         // The unique event id, usually a UUID
         $table->addColumn('id', Type::STRING, ['length' => 255]);
         // An optional correlation id, usually a UUID
-        $table->addColumn('correlationidentifier',Type::STRING, ['length' => 255, 'notnull' => false]);
+        $table->addColumn('correlationidentifier', Type::STRING, ['length' => 255, 'notnull' => false]);
         // An optional causation id, usually a UUID
         $table->addColumn('causationidentifier', Type::STRING, ['length' => 255, 'notnull' => false]);
         // Timestamp of the the event publishing
