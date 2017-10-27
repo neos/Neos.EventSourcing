@@ -248,7 +248,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $schemaDiff = (new Comparator())->compare($fromSchema, $this->createEventStoreSchema());
             $statements = $schemaDiff->toSaveSql($this->connection->getDatabasePlatform());
             if ($statements !== []) {
-                $result->addWarning(new Warning('The schama of table %s is not up-to-date', null, [$this->eventTableName], 'Table schema'));
+                $result->addWarning(new Warning('The schema of table %s is not up-to-date', null, [$this->eventTableName], 'Table schema'));
                 foreach ($statements as $statement) {
                     $result->addWarning(new Warning($statement, null, [], 'Required statement'));
                 }
