@@ -34,9 +34,9 @@ interface EventStreamFilterInterface
     const FILTER_MINIMUM_SEQUENCE_NUMBER = 'minimumSequenceNumber';
 
     /**
-     * string representing the correlationId Metadata that has to match
+     * string representing the correlationIdentifier Metadata that has to match
      */
-    const FILTER_CORRELATION_ID = 'correlationId';
+    const FILTER_CORRELATION_IDENTIFIER = 'correlationIdentifier';
 
     /**
      * This method is expected to return an array where the keys can be one or more of the FILTER_* constants

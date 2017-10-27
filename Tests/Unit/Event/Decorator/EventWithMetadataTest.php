@@ -1,8 +1,8 @@
 <?php
-namespace Neos\EventSourcing\Tests\Unit\Event;
+namespace Neos\EventSourcing\Tests\Unit\Event\Decorator;
 
+use Neos\EventSourcing\Event\Decorator\EventWithMetadata;
 use Neos\EventSourcing\Event\EventInterface;
-use Neos\EventSourcing\Event\EventWithMetadata;
 use Neos\Flow\Tests\UnitTestCase;
 
 class EventWithMetadataTest extends UnitTestCase

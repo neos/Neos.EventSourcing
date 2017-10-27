@@ -1,5 +1,5 @@
 <?php
-namespace Neos\EventSourcing\Event;
+namespace Neos\EventSourcing\Event\Decorator;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -11,12 +11,13 @@ namespace Neos\EventSourcing\Event;
  * source code.
  */
 
+use Neos\EventSourcing\Event\EventInterface;
 use Neos\Utility\Arrays;
 
 /**
  * Event wrapper which provides metadata additional to the event
  */
-final class EventWithMetadata implements EventInterface
+final class EventWithMetadata implements EventWithMetadataInterface
 {
     /**
      * @var EventInterface
@@ -36,7 +37,7 @@ final class EventWithMetadata implements EventInterface
      */
     public function __construct(EventInterface $event, array $metadata)
     {
-        if ($event instanceof EventWithMetadata) {
+        if ($event instanceof EventWithMetadataInterface) {
             $this->event = $event->getEvent();
             $this->metadata = Arrays::arrayMergeRecursiveOverrule($event->getMetadata(), $metadata);
         } else {

@@ -135,8 +135,8 @@ class DoctrineEventStorage implements EventStorageInterface
                     'type' => $event->getType(),
                     'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
                     'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
-                    'correlationid' => $metadata['correlationId'] ?? null,
-                    'causationid' => $metadata['causationId'] ?? null,
+                    'correlationidentifier' => $metadata['correlationIdentifier'] ?? null,
+                    'causationidentifier' => $metadata['causationIdentifier'] ?? null,
                     'recordedat' => $this->now
                 ],
                 [
@@ -218,9 +218,9 @@ class DoctrineEventStorage implements EventStorageInterface
             $query->andWhere('sequencenumber >= :minimumSequenceNumber');
             $query->setParameter('minimumSequenceNumber', $filterValues[EventStreamFilterInterface::FILTER_MINIMUM_SEQUENCE_NUMBER]);
         }
-        if (array_key_exists(EventStreamFilterInterface::FILTER_CORRELATION_ID, $filterValues)) {
-            $query->andWhere('correlationid = :correlationId');
-            $query->setParameter('correlationId', $filterValues[EventStreamFilterInterface::FILTER_CORRELATION_ID]);
+        if (array_key_exists(EventStreamFilterInterface::FILTER_CORRELATION_IDENTIFIER, $filterValues)) {
+            $query->andWhere('correlationidentifier = :correlationIdentifier');
+            $query->setParameter('correlationIdentifier', $filterValues[EventStreamFilterInterface::FILTER_CORRELATION_IDENTIFIER]);
         }
     }
 
@@ -319,9 +319,9 @@ class DoctrineEventStorage implements EventStorageInterface
         // The unique event id, usually a UUID
         $table->addColumn('id', Type::STRING, ['length' => 255]);
         // An optional correlation id, usually a UUID
-        $table->addColumn('correlationid', Type::STRING, ['length' => 255, 'notnull' => false]);
+        $table->addColumn('correlationidentifier',Type::STRING, ['length' => 255, 'notnull' => false]);
         // An optional causation id, usually a UUID
-        $table->addColumn('causationid', Type::STRING, ['length' => 255, 'notnull' => false]);
+        $table->addColumn('causationidentifier', Type::STRING, ['length' => 255, 'notnull' => false]);
         // Timestamp of the the event publishing
         $table->addColumn('recordedat', Type::DATETIME);
 
