@@ -13,22 +13,43 @@ namespace Neos\EventSourcing\EventStore;
 
 interface EventStreamFilterInterface
 {
-    public function getStreamName(): string;
-
-    public function hasStreamName(): bool;
-
-    public function getStreamNamePrefix(): string;
-
-    public function hasStreamNamePrefix(): bool;
+    /**
+     * string representing the exact stream name
+     */
+    const FILTER_STREAM_NAME = 'streamName';
 
     /**
-     * @return string[] in the format ['Bounded.Context:SomeEvent', 'Bounded.Context:SomeOtherEvent', ...]
+     * string representing a stream name prefix. Any stream starting with the same string matches this filter
      */
-    public function getEventTypes(): array;
+    const FILTER_STREAM_NAME_PREFIX = 'streamNamePrefix';
 
-    public function hasEventTypes(): bool;
+    /**
+     * array of strings in the format ['Bounded.Context:SomeEvent', 'Bounded.Context:SomeOtherEvent', ...]
+     */
+    const FILTER_EVENT_TYPES = 'eventTypes';
 
-    public function getMinimumSequenceNumber(): int;
+    /**
+     * integer with the minimum sequence number to be matched
+     */
+    const FILTER_MINIMUM_SEQUENCE_NUMBER = 'minimumSequenceNumber';
 
-    public function hasMinimumSequenceNumber(): bool;
+    /**
+     * string representing the correlationIdentifier Metadata that has to match
+     */
+    const FILTER_CORRELATION_IDENTIFIER = 'correlationIdentifier';
+
+    /**
+     * This method is expected to return an array where the keys can be one or more of the FILTER_* constants
+     *
+     * @return array
+     */
+    public function getFilterValues(): array;
+
+    /**
+     * Return a specific filter value
+     *
+     * @param string $name Name of the filter value, must be one of the FILTER_* constants
+     * @return mixed The specified filter value
+     */
+    public function getFilterValue(string $name);
 }

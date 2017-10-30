@@ -1,8 +1,8 @@
 <?php
-namespace Neos\EventSourcing\Tests\Unit\EventStore;
+namespace Neos\EventSourcing\Tests\Unit\Event\Decorator;
 
+use Neos\EventSourcing\Event\Decorator\EventWithMetadata;
 use Neos\EventSourcing\Event\EventInterface;
-use Neos\EventSourcing\Event\EventWithMetadata;
 use Neos\Flow\Tests\UnitTestCase;
 
 class EventWithMetadataTest extends UnitTestCase
@@ -36,11 +36,10 @@ class EventWithMetadataTest extends UnitTestCase
         $this->assertSame($someMetadata, $eventWithMetadata->getMetadata());
     }
 
-
     /**
      * @test
      */
-    public function eventsWithMetadataCanBeNested()
+    public function metadataIsMergedWhenNestingEventsWithMetadata()
     {
         $someMetadata = ['foo' => ['bar' => 'Baz', 'foos' => 'bars']];
         $eventWithMetadata = new EventWithMetadata($this->mockEvent, $someMetadata);
@@ -51,5 +50,16 @@ class EventWithMetadataTest extends UnitTestCase
         $mergedMetadata = ['foo' => ['bar' => 'Baz', 'foos' => 'overridden'], 'another' => 'entry'];
 
         $this->assertSame($mergedMetadata, $nestedEventWithMetadata->getMetadata());
+    }
+
+    /**
+     * @test
+     */
+    public function eventIsUnwrappedWhenNestingEventsWithMetadata()
+    {
+        $eventWithMetadata = new EventWithMetadata($this->mockEvent, []);
+        $nestedEventWithMetadata = new EventWithMetadata($eventWithMetadata, []);
+
+        $this->assertSame($this->mockEvent, $nestedEventWithMetadata->getEvent());
     }
 }

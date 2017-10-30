@@ -11,6 +11,7 @@ namespace Neos\EventSourcing\Event;
  * source code.
  */
 
+use Neos\EventSourcing\Event\Decorator\EventWithMetadataInterface;
 use Neos\EventSourcing\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
 use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
 use Neos\EventSourcing\EventListener\EventListenerLocator;
@@ -95,7 +96,7 @@ class EventPublisher
         $convertedEvents = new WritableEvents();
         foreach ($events as $event) {
             $metadata = [];
-            if ($event instanceof EventWithMetadata) {
+            if ($event instanceof EventWithMetadataInterface) {
                 $metadata = $event->getMetadata();
                 $event = $event->getEvent();
             }

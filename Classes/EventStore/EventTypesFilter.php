@@ -25,6 +25,13 @@ class EventTypesFilter implements EventStreamFilterInterface
      */
     private $minimumSequenceNumber = 0;
 
+    /**
+     * EventTypesFilter constructor.
+     *
+     * @param array $eventTypes
+     * @param int $minimumSequenceNumber
+     * @throws Exception
+     */
     public function __construct(array $eventTypes, int $minimumSequenceNumber = 0)
     {
         if ($eventTypes === []) {
@@ -34,46 +41,30 @@ class EventTypesFilter implements EventStreamFilterInterface
         $this->minimumSequenceNumber = $minimumSequenceNumber;
     }
 
-    public function getStreamName(): string
+    /**
+     * @return array
+     */
+    public function getFilterValues(): array
     {
-        return '';
-    }
-
-    public function hasStreamName(): bool
-    {
-        return false;
-    }
-
-    public function getStreamNamePrefix(): string
-    {
-        return '';
-    }
-
-    public function hasStreamNamePrefix(): bool
-    {
-        return false;
+        return [
+            self::FILTER_EVENT_TYPES => $this->eventTypes,
+            self::FILTER_MINIMUM_SEQUENCE_NUMBER => $this->minimumSequenceNumber,
+        ];
     }
 
     /**
-     * @return string[] in the format ['Bounded.Context:SomeEvent', 'Bounded.Context:SomeOtherEvent', ...]
+     * @param string $name
+     * @return mixed
      */
-    public function getEventTypes(): array
+    public function getFilterValue(string $name)
     {
-        return $this->eventTypes;
-    }
-
-    public function hasEventTypes(): bool
-    {
-        return true;
-    }
-
-    public function getMinimumSequenceNumber(): int
-    {
-        return $this->minimumSequenceNumber;
-    }
-
-    public function hasMinimumSequenceNumber(): bool
-    {
-        return $this->minimumSequenceNumber > 0;
+        switch ($name) {
+            case self::FILTER_EVENT_TYPES:
+                return $this->eventTypes;
+            break;
+            case self::FILTER_MINIMUM_SEQUENCE_NUMBER:
+                return $this->minimumSequenceNumber;
+            break;
+        }
     }
 }

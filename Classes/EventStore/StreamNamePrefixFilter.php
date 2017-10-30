@@ -23,6 +23,12 @@ class StreamNamePrefixFilter implements EventStreamFilterInterface
      */
     private $streamNamePrefix;
 
+    /**
+     * StreamNamePrefixFilter constructor.
+     *
+     * @param string $streamNamePrefix
+     * @throws Exception
+     */
     public function __construct(string $streamNamePrefix)
     {
         $streamNamePrefix = trim($streamNamePrefix);
@@ -32,46 +38,26 @@ class StreamNamePrefixFilter implements EventStreamFilterInterface
         $this->streamNamePrefix = $streamNamePrefix;
     }
 
-    public function getStreamName(): string
+    /**
+     * @return array
+     */
+    public function getFilterValues(): array
     {
-        return '';
-    }
-
-    public function hasStreamName(): bool
-    {
-        return false;
-    }
-
-    public function getStreamNamePrefix(): string
-    {
-        return $this->streamNamePrefix;
-    }
-
-    public function hasStreamNamePrefix(): bool
-    {
-        return true;
+        return [
+            self::FILTER_STREAM_NAME_PREFIX => $this->streamNamePrefix,
+        ];
     }
 
     /**
-     * @return string[] in the format ['Bounded.Context:SomeEvent', 'Bounded.Context:SomeOtherEvent', ...]
+     * @param string $name
+     * @return mixed
      */
-    public function getEventTypes(): array
+    public function getFilterValue(string $name)
     {
-        return [];
-    }
-
-    public function hasEventTypes(): bool
-    {
-        return false;
-    }
-
-    public function getMinimumSequenceNumber(): int
-    {
-        return 0;
-    }
-
-    public function hasMinimumSequenceNumber(): bool
-    {
-        return false;
+        switch ($name) {
+            case self::FILTER_STREAM_NAME_PREFIX:
+                return $this->streamNamePrefix;
+            break;
+        }
     }
 }
