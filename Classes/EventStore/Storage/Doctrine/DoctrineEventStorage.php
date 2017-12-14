@@ -108,6 +108,36 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @inheritdoc
+     */
+    public function loadOne(EventStreamFilterInterface $filter)
+    {
+        $query = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($this->eventTableName);
+        $this->applyEventStreamFilter($query, $filter);
+        $eventData = $query->execute()->fetch(\PDO::FETCH_ASSOC);
+        if ($eventData === false) {
+            return null;
+        }
+
+        $payload = json_decode($eventData['payload'], true);
+        $metadata = json_decode($eventData['metadata'], true);
+        $recordedAt = new \DateTimeImmutable($eventData['recordedat']);
+        return new RawEvent(
+            $eventData['sequencenumber'],
+            $eventData['type'],
+            $payload,
+            $metadata,
+            $eventData['stream'],
+            (int)$eventData['version'],
+            $eventData['id'],
+            $recordedAt
+        );
+    }
+
+
+    /**
+     * @inheritdoc
      * @throws ConcurrencyException|\Exception
      */
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array
@@ -214,6 +244,10 @@ class DoctrineEventStorage implements EventStorageInterface
         if (array_key_exists(EventStreamFilterInterface::FILTER_CORRELATION_IDENTIFIER, $filterValues)) {
             $query->andWhere('correlationidentifier = :correlationIdentifier');
             $query->setParameter('correlationIdentifier', $filterValues[EventStreamFilterInterface::FILTER_CORRELATION_IDENTIFIER]);
+        }
+        if (array_key_exists(EventStreamFilterInterface::FILTER_VERSION, $filterValues)) {
+            $query->andWhere('version = :version');
+            $query->setParameter('version', $filterValues[EventStreamFilterInterface::FILTER_VERSION]);
         }
     }
 

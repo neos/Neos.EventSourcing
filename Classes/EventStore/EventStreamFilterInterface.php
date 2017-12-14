@@ -34,6 +34,11 @@ interface EventStreamFilterInterface
     const FILTER_MINIMUM_SEQUENCE_NUMBER = 'minimumSequenceNumber';
 
     /**
+     * integer with the version to be matched
+     */
+    const FILTER_VERSION = 'version';
+
+    /**
      * string representing the correlationIdentifier Metadata that has to match
      */
     const FILTER_CORRELATION_IDENTIFIER = 'correlationIdentifier';
