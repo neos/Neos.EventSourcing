@@ -138,7 +138,7 @@ class DoctrineEventStorage implements EventStorageInterface
                 ]
             );
             $sequenceNumber = $this->connection->lastInsertId();
-            $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $metadata, $actualVersion, $event->getIdentifier(), $this->now);
+            $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $metadata, $streamName, $actualVersion, $event->getIdentifier(), $this->now);
         }
         $this->connection->commit();
         return $rawEvents;

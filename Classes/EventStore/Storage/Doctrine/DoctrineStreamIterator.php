@@ -67,6 +67,7 @@ final class DoctrineStreamIterator implements \Iterator
             $currentEventData['type'],
             $payload,
             $metadata,
+            $currentEventData['stream'],
             (int)$currentEventData['version'],
             $currentEventData['id'],
             $recordedAt
