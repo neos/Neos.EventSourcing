@@ -12,6 +12,7 @@ namespace Neos\EventSourcing\EventStore;
  */
 
 use Neos\Error\Messages\Result;
+use Neos\EventSourcing\EventStore\Exception\EventNotFoundException;
 use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 
@@ -37,6 +38,8 @@ final class EventStore
     }
 
     /**
+     * Returns an EventStream that matches the given $filter - or throws an EventStreamNotFoundException if no matching events could be found
+     *
      * @param EventStreamFilterInterface $filter
      * @return EventStream Can be empty stream
      * @throws EventStreamNotFoundException
@@ -50,6 +53,22 @@ final class EventStore
             throw new EventStreamNotFoundException(sprintf('The event stream "%s" does not appear to be valid.', $streamName), 1477497156);
         }
         return $eventStream;
+    }
+
+    /**
+     * Returns the first EventAndRawEvent instance that matches the given $filter - or throws an EventNotFoundException if no matching events could be found
+     *
+     * @param EventStreamFilterInterface $filter
+     * @return EventAndRawEvent
+     * @throws EventNotFoundException
+     */
+    public function getOne(EventStreamFilterInterface $filter): EventAndRawEvent
+    {
+        $rawEvent = $this->storage->loadOne($filter);
+        if ($rawEvent === null) {
+            throw new EventNotFoundException('No event found for the given filter', 1513170518);
+        }
+        return (new EventStream(new \ArrayIterator([$rawEvent])))->current();
     }
 
     /**
