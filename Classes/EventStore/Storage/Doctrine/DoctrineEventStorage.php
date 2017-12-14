@@ -32,7 +32,6 @@ use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\StreamNameFilter;
 use Neos\EventSourcing\EventStore\WritableEvents;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Property\PropertyMapper;
 use Neos\Flow\Utility\Now;
 
 /**
@@ -47,12 +46,6 @@ class DoctrineEventStorage implements EventStorageInterface
      * @Flow\Inject
      */
     protected $connectionFactory;
-
-    /**
-     * @var PropertyMapper
-     * @Flow\Inject
-     */
-    protected $propertyMapper;
 
     /**
      * @Flow\Inject
