@@ -108,6 +108,35 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @inheritdoc
+     */
+    public function loadOne(string $eventIdentifier)
+    {
+        $query = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($this->eventTableName)
+            ->where('id = :eventIdentifier')
+            ->setParameter('eventIdentifier', $eventIdentifier);
+        $eventData = $query->execute()->fetch(\PDO::FETCH_ASSOC);
+        if ($eventData === false) {
+            return null;
+        }
+
+        $payload = json_decode($eventData['payload'], true);
+        $metadata = json_decode($eventData['metadata'], true);
+        $recordedAt = new \DateTimeImmutable($eventData['recordedat']);
+        return new RawEvent(
+            $eventData['sequencenumber'],
+            $eventData['type'],
+            $payload,
+            $metadata,
+            (int)$eventData['version'],
+            $eventData['id'],
+            $recordedAt
+        );
+    }
+
+    /**
+     * @inheritdoc
      * @throws ConcurrencyException|\Exception
      */
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array

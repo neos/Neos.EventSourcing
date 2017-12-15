@@ -30,6 +30,12 @@ interface EventStorageInterface
     public function load(EventStreamFilterInterface $filter): EventStream;
 
     /**
+     * @param string $eventIdentifier
+     * @return RawEvent|null
+     */
+    public function loadOne(string $eventIdentifier);
+
+    /**
      * @param string $streamName
      * @param WritableEvents $events
      * @param int $expectedVersion
