@@ -34,6 +34,11 @@ interface EventStreamFilterInterface
     const FILTER_MINIMUM_SEQUENCE_NUMBER = 'minimumSequenceNumber';
 
     /**
+     * string representing the events identifier that has to match
+     */
+    const FILTER_EVENT_IDENTIFIER = 'eventIdentifier';
+
+    /**
      * string representing the correlationIdentifier Metadata that has to match
      */
     const FILTER_CORRELATION_IDENTIFIER = 'correlationIdentifier';
