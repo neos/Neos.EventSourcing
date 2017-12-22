@@ -37,6 +37,8 @@ interface EventStorageInterface
      */
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array;
 
+    public function getStreamVersion(EventStreamFilterInterface $filter): int;
+
     /**
      * Retrieves the (connection) status of the storage adapter
      *

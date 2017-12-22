@@ -148,7 +148,7 @@ class DoctrineEventStorage implements EventStorageInterface
      * @param EventStreamFilterInterface $filter
      * @return int
      */
-    private function getStreamVersion(EventStreamFilterInterface $filter): int
+    public function getStreamVersion(EventStreamFilterInterface $filter): int
     {
         $query = $this->connection->createQueryBuilder()
             ->select('MAX(version)')

@@ -52,6 +52,12 @@ final class EventStore
         return $eventStream;
     }
 
+    public function getStreamVersion(EventStreamFilterInterface $filter): int
+    {
+        return $this->storage->getStreamVersion($filter);
+    }
+
+
     /**
      * @param string $streamName
      * @param WritableEvents $events
