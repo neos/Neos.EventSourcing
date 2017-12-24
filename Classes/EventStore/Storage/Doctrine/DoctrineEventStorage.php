@@ -113,35 +113,41 @@ class DoctrineEventStorage implements EventStorageInterface
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array
     {
         $this->connection->beginTransaction();
-        $actualVersion = $this->getStreamVersion(new StreamNameFilter($streamName));
-        $this->verifyExpectedVersion($actualVersion, $expectedVersion);
+        try {
+            $actualVersion = $this->getStreamVersion(new StreamNameFilter($streamName));
+            $this->verifyExpectedVersion($actualVersion, $expectedVersion);
 
-        $rawEvents = [];
-        foreach ($events as $event) {
-            $metadata = $event->getMetadata();
-            $this->connection->insert(
-                $this->eventTableName,
-                [
-                    'id' => $event->getIdentifier(),
-                    'stream' => $streamName,
-                    'version' => ++$actualVersion,
-                    'type' => $event->getType(),
-                    'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
-                    'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
-                    'correlationidentifier' => $metadata['correlationIdentifier'] ?? null,
-                    'causationidentifier' => $metadata['causationIdentifier'] ?? null,
-                    'recordedat' => $this->now
-                ],
-                [
-                    'version' => \PDO::PARAM_INT,
-                    'recordedat' => Type::DATETIME,
-                ]
-            );
-            $sequenceNumber = $this->connection->lastInsertId();
-            $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $metadata, $streamName, $actualVersion, $event->getIdentifier(), $this->now);
+            $rawEvents = [];
+            foreach ($events as $event) {
+                $metadata = $event->getMetadata();
+                $this->connection->insert(
+                    $this->eventTableName,
+                    [
+                        'id' => $event->getIdentifier(),
+                        'stream' => $streamName,
+                        'version' => ++$actualVersion,
+                        'type' => $event->getType(),
+                        'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
+                        'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
+                        'correlationidentifier' => $metadata['correlationIdentifier'] ?? null,
+                        'causationidentifier' => $metadata['causationIdentifier'] ?? null,
+                        'recordedat' => $this->now
+                    ],
+                    [
+                        'version' => \PDO::PARAM_INT,
+                        'recordedat' => Type::DATETIME,
+                    ]
+                );
+                $sequenceNumber = $this->connection->lastInsertId();
+                $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $metadata, $streamName, $actualVersion, $event->getIdentifier(), $this->now);
+            }
+
+            $this->connection->commit();
+            return $rawEvents;
+        } catch (\Exception $e) {
+            $this->connection->rollBack();
+            throw $e;
         }
-        $this->connection->commit();
-        return $rawEvents;
     }
 
     /**
