@@ -125,7 +125,23 @@ final class DoctrineStreamIterator implements \Iterator
         // we deliberately don't use "setFirstResult" here, as this translates to an OFFSET query. For resolving
         // an OFFSET query, the DB needs to scan the result-set from the beginning (which is slow as hell).
         $this->queryBuilder->setParameter('sequenceNumberOffset', $this->currentOffset);
+        $this->reconnectDatabaseConnection();
         $rawResult = $this->queryBuilder->execute()->fetchAll();
         $this->innerIterator = new \ArrayIterator($rawResult);
     }
+
+    /**
+     * Reconnects the database connection associated with this storage, if it doesn't respond to a ping
+     *
+     * @see \Neos\Flow\Persistence\Doctrine\PersistenceManager::persistAll()
+     * @return void
+     */
+    private function reconnectDatabaseConnection()
+    {
+        if ($this->queryBuilder->getConnection()->ping() === false) {
+            $this->queryBuilder->getConnection()->close();
+            $this->queryBuilder->getConnection()->connect();
+        }
+    }
+
 }
