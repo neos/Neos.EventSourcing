@@ -143,5 +143,4 @@ final class DoctrineStreamIterator implements \Iterator
             $this->queryBuilder->getConnection()->connect();
         }
     }
-
 }
