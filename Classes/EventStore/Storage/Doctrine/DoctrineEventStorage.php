@@ -289,11 +289,16 @@ class DoctrineEventStorage implements EventStorageInterface
             return $result;
         }
         $this->connection->beginTransaction();
-        foreach ($statements as $statement) {
-            $result->addNotice(new Notice('<info>++</info> %s', null, [$statement]));
-            $this->connection->exec($statement);
+        try {
+            foreach ($statements as $statement) {
+                $result->addNotice(new Notice('<info>++</info> %s', null, [$statement]));
+                $this->connection->exec($statement);
+            }
+            $this->connection->commit();
+        } catch (\Exception $exception) {
+            $this->connection->rollBack();
+            throw $exception;
         }
-        $this->connection->commit();
         return $result;
     }
 
