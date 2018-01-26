@@ -52,6 +52,10 @@ final class EventStore
         return $eventStream;
     }
 
+    /**
+     * @param EventStreamFilterInterface $filter
+     * @return int
+     */
     public function getStreamVersion(EventStreamFilterInterface $filter): int
     {
         return $this->storage->getStreamVersion($filter);
@@ -74,7 +78,7 @@ final class EventStore
      *
      * @return Result
      */
-    public function getStatus()
+    public function getStatus(): Result
     {
         return $this->storage->getStatus();
     }
@@ -84,7 +88,7 @@ final class EventStore
      *
      * @return Result
      */
-    public function setup()
+    public function setup(): Result
     {
         return $this->storage->setup();
     }

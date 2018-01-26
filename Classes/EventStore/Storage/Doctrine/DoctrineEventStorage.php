@@ -26,9 +26,9 @@ use Neos\EventSourcing\EventStore\EventStream;
 use Neos\EventSourcing\EventStore\EventStreamFilterInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
+use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
-use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\StreamNameFilter;
 use Neos\EventSourcing\EventStore\WritableEvents;
 use Neos\Flow\Annotations as Flow;
@@ -230,7 +230,7 @@ class DoctrineEventStorage implements EventStorageInterface
     /**
      * @inheritdoc
      */
-    public function getStatus()
+    public function getStatus(): Result
     {
         $result = new Result();
         try {
@@ -265,7 +265,7 @@ class DoctrineEventStorage implements EventStorageInterface
     /**
      * @inheritdoc
      */
-    public function setup()
+    public function setup(): Result
     {
         $result = new Result();
         try {
