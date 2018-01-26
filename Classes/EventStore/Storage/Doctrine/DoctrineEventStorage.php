@@ -96,6 +96,7 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     public function load(EventStreamFilterInterface $filter): EventStream
     {
+        $this->reconnectDatabaseConnection();
         $query = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->eventTableName)
@@ -112,6 +113,7 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array
     {
+        $this->reconnectDatabaseConnection();
         $this->connection->beginTransaction();
         try {
             $actualVersion = $this->getStreamVersion(new StreamNameFilter($streamName));
@@ -338,5 +340,19 @@ class DoctrineEventStorage implements EventStorageInterface
         $table->addUniqueIndex(['stream', 'version'], 'stream_version_uniq');
 
         return $schema;
+    }
+
+    /**
+     * Reconnects the database connection associated with this storage, if it doesn't respond to a ping
+     *
+     * @see \Neos\Flow\Persistence\Doctrine\PersistenceManager::persistAll()
+     * @return void
+     */
+    private function reconnectDatabaseConnection()
+    {
+        if ($this->connection->ping() === false) {
+            $this->connection->close();
+            $this->connection->connect();
+        }
     }
 }
