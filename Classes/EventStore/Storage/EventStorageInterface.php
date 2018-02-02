@@ -38,6 +38,12 @@ interface EventStorageInterface
     public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array;
 
     /**
+     * @param EventStreamFilterInterface $filter
+     * @return int
+     */
+    public function getStreamVersion(EventStreamFilterInterface $filter): int;
+
+    /**
      * Retrieves the (connection) status of the storage adapter
      *
      * If the result contains no errors, the status is considered valid
@@ -45,7 +51,7 @@ interface EventStorageInterface
      *
      * @return Result
      */
-    public function getStatus();
+    public function getStatus(): Result;
 
     /**
      * Sets up the configured storage adapter (i.e. creates required database tables) and validates the configuration
@@ -55,5 +61,5 @@ interface EventStorageInterface
      *
      * @return Result
      */
-    public function setup();
+    public function setup(): Result;
 }

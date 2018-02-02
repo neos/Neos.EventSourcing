@@ -26,9 +26,9 @@ use Neos\EventSourcing\EventStore\EventStream;
 use Neos\EventSourcing\EventStore\EventStreamFilterInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
+use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
-use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\StreamNameFilter;
 use Neos\EventSourcing\EventStore\WritableEvents;
 use Neos\Flow\Annotations as Flow;
@@ -115,42 +115,48 @@ class DoctrineEventStorage implements EventStorageInterface
     {
         $this->reconnectDatabaseConnection();
         $this->connection->beginTransaction();
-        $actualVersion = $this->getStreamVersion(new StreamNameFilter($streamName));
-        $this->verifyExpectedVersion($actualVersion, $expectedVersion);
+        try {
+            $actualVersion = $this->getStreamVersion(new StreamNameFilter($streamName));
+            $this->verifyExpectedVersion($actualVersion, $expectedVersion);
 
-        $rawEvents = [];
-        foreach ($events as $event) {
-            $metadata = $event->getMetadata();
-            $this->connection->insert(
-                $this->eventTableName,
-                [
-                    'id' => $event->getIdentifier(),
-                    'stream' => $streamName,
-                    'version' => ++$actualVersion,
-                    'type' => $event->getType(),
-                    'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
-                    'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
-                    'correlationidentifier' => $metadata['correlationIdentifier'] ?? null,
-                    'causationidentifier' => $metadata['causationIdentifier'] ?? null,
-                    'recordedat' => $this->now
-                ],
-                [
-                    'version' => \PDO::PARAM_INT,
-                    'recordedat' => Type::DATETIME,
-                ]
-            );
-            $sequenceNumber = $this->connection->lastInsertId();
-            $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $metadata, $streamName, $actualVersion, $event->getIdentifier(), $this->now);
+            $rawEvents = [];
+            foreach ($events as $event) {
+                $metadata = $event->getMetadata();
+                $this->connection->insert(
+                    $this->eventTableName,
+                    [
+                        'id' => $event->getIdentifier(),
+                        'stream' => $streamName,
+                        'version' => ++$actualVersion,
+                        'type' => $event->getType(),
+                        'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
+                        'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
+                        'correlationidentifier' => $metadata['correlationIdentifier'] ?? null,
+                        'causationidentifier' => $metadata['causationIdentifier'] ?? null,
+                        'recordedat' => $this->now
+                    ],
+                    [
+                        'version' => \PDO::PARAM_INT,
+                        'recordedat' => Type::DATETIME,
+                    ]
+                );
+                $sequenceNumber = $this->connection->lastInsertId();
+                $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $metadata, $streamName, $actualVersion, $event->getIdentifier(), $this->now);
+            }
+
+            $this->connection->commit();
+            return $rawEvents;
+        } catch (\Exception $e) {
+            $this->connection->rollBack();
+            throw $e;
         }
-        $this->connection->commit();
-        return $rawEvents;
     }
 
     /**
      * @param EventStreamFilterInterface $filter
      * @return int
      */
-    private function getStreamVersion(EventStreamFilterInterface $filter): int
+    public function getStreamVersion(EventStreamFilterInterface $filter): int
     {
         $query = $this->connection->createQueryBuilder()
             ->select('MAX(version)')
@@ -226,7 +232,7 @@ class DoctrineEventStorage implements EventStorageInterface
     /**
      * @inheritdoc
      */
-    public function getStatus()
+    public function getStatus(): Result
     {
         $result = new Result();
         try {
@@ -261,7 +267,7 @@ class DoctrineEventStorage implements EventStorageInterface
     /**
      * @inheritdoc
      */
-    public function setup()
+    public function setup(): Result
     {
         $result = new Result();
         try {
@@ -285,11 +291,16 @@ class DoctrineEventStorage implements EventStorageInterface
             return $result;
         }
         $this->connection->beginTransaction();
-        foreach ($statements as $statement) {
-            $result->addNotice(new Notice('<info>++</info> %s', null, [$statement]));
-            $this->connection->exec($statement);
+        try {
+            foreach ($statements as $statement) {
+                $result->addNotice(new Notice('<info>++</info> %s', null, [$statement]));
+                $this->connection->exec($statement);
+            }
+            $this->connection->commit();
+        } catch (\Exception $exception) {
+            $this->connection->rollBack();
+            throw $exception;
         }
-        $this->connection->commit();
         return $result;
     }
 
