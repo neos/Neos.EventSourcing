@@ -4,7 +4,7 @@
     "description": "Lean and opinionated way to integrate Event Sourcing and CQRS pattern in your Flow framework package",
     "require": {
         "php": ">=7.0",
-        "neos/flow": "~4.0"
+        "neos/flow": "~4.0 || dev-master"
     },
     "suggest": {
         "php-uuid": "For fast generation of UUIDs used in the persistence."
