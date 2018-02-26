@@ -54,7 +54,7 @@ class DoctrineEventStorage implements EventStorageInterface
     protected $eventTypeResolver;
 
     /**
-     * @Flow\Inject
+     * @Flow\Inject(lazy=false)
      * @var Now
      */
     protected $now;
