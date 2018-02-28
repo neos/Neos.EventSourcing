@@ -13,6 +13,8 @@ namespace Neos\EventSourcing\EventListener;
 
 use Neos\EventSourcing\Event\EventInterface;
 use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\EventListener\Exception\EventCantBeAppliedException;
+use Neos\EventSourcing\EventStore\EventStream;
 use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\Exception;
 use Neos\Flow\Annotations as Flow;
@@ -20,11 +22,11 @@ use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ReflectionService;
 
 /**
- * EventListenerLocator
+ * Central authority for Event Listeners
  *
  * @Flow\Scope("singleton")
  */
-class EventListenerLocator
+class EventListenerManager
 {
     /**
      * @var ObjectManagerInterface
@@ -60,105 +62,88 @@ class EventListenerLocator
     }
 
     /**
-     * Returns all known event listeners
+     * Iterates through the given $eventStream and invokes the corresponding "when*" method on the $eventListener
      *
-     * @return \callable[]
+     * @param EventListenerInterface $eventListener The EventListener class that should handle events
+     * @param EventStream $eventStream The events to be handled
+     * @param \Closure|null $progressCallback Optional callback that is invoked after each handled event (for debugging, progress notification, ...)
      */
-    public function getListeners(): array
+    public function invokeListeners(EventListenerInterface $eventListener, EventStream $eventStream, \Closure $progressCallback = null)
     {
-        $listeners = [];
-        foreach ($this->eventClassNamesAndListeners as $eventClassName => $listenersForEventType) {
-            array_walk($this->eventClassNamesAndListeners[$eventClassName], function ($listenerMethodName, $listenerClassName) use (&$listeners) {
-                $listeners[] = [$this->objectManager->get($listenerClassName), $listenerMethodName];
-            });
+        foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
+            $this->invokeListener($eventListener, $eventAndRawEvent->getEvent(), $eventAndRawEvent->getRawEvent());
+            if ($progressCallback !== null) {
+                call_user_func($progressCallback, $eventAndRawEvent->getRawEvent());
+            }
         }
-        return $listeners;
     }
 
     /**
-     * Returns event listeners for the given event type
+     * Handles the given $event on all synchronous EventListeners
      *
-     * @param string $eventType
-     * @return \callable[]
+     * @param EventInterface $event
+     * @param RawEvent $rawEvent
      */
-    public function getListenersByEventType(string $eventType): array
+    public function invokeSynchronousListeners(EventInterface $event, RawEvent $rawEvent)
     {
-        $eventClassName = $this->eventTypeService->getEventClassNameByType($eventType);
+        $eventClassName = $this->eventTypeService->getEventClassNameByType($rawEvent->getType());
         if (!isset($this->eventClassNamesAndListeners[$eventClassName])) {
-            return [];
+            return;
         }
-        $listeners = [];
-        array_walk($this->eventClassNamesAndListeners[$eventClassName], function ($listenerMethodName, $listenerClassName) use (&$listeners) {
-            $listeners[] = [$this->objectManager->get($listenerClassName), $listenerMethodName];
-        });
-        return $listeners;
-    }
-
-    /**
-     * Returns all known synchronous event listeners
-     *
-     * @return \callable[]
-     */
-    public function getSynchronousListeners(): array
-    {
-        return array_filter($this->getListeners(), function (array $listener) {
-            return (!is_array($listener) || !$listener[0] instanceof AsynchronousEventListenerInterface);
-        });
-    }
-
-    /**
-     * Returns synchronous event listeners for the given event type
-     *
-     * @param string $eventType
-     * @return \callable[]
-     */
-    public function getSynchronousListenersByEventType(string $eventType): array
-    {
-        return array_filter($this->getListenersByEventType($eventType), function (array $listener) {
-            return (!is_array($listener) || !$listener[0] instanceof AsynchronousEventListenerInterface);
-        });
-    }
-
-    /**
-     * Returns all known asynchronous event listeners (implementing AsyncEventListenerInterface)
-     *
-     * @return \callable[]
-     */
-    public function getAsynchronousListeners(): array
-    {
-        return array_filter($this->getListeners(), function (array $listener) {
-            return (is_array($listener) && $listener[0] instanceof AsynchronousEventListenerInterface);
-        });
-    }
-
-    /**
-     * Returns asynchronous event listeners (implementing AsyncEventListenerInterface) for the given event type
-     *
-     * @param string $eventType
-     * @return \callable[]
-     */
-    public function getAsynchronousListenersByEventType(string $eventType): array
-    {
-        return array_filter($this->getListenersByEventType($eventType), function (array $listener) {
-            return (is_array($listener) && $listener[0] instanceof AsynchronousEventListenerInterface);
-        });
-    }
-
-    /**
-     * Returns a single listener for the given $eventType and $listenerClassName, or null if the given listener
-     * does not handle events of the specified type.
-     *
-     * @param string $eventType
-     * @param string $listenerClassName
-     * @return \callable|null
-     */
-    public function getListener(string $eventType, string $listenerClassName)
-    {
-        $eventClassName = $this->eventTypeService->getEventClassNameByType($eventType);
-        if (!isset($this->eventClassNamesAndListeners[$eventClassName][$listenerClassName])) {
-            return null;
+        foreach (array_keys($this->eventClassNamesAndListeners[$eventClassName]) as $listenerClassName) {
+            if (is_subclass_of($listenerClassName, AsynchronousEventListenerInterface::class)) {
+                return;
+            }
+            /** @var EventListenerInterface $eventListener */
+            $eventListener = $this->objectManager->get($listenerClassName);
+            $this->invokeListener($eventListener, $event, $rawEvent);
         }
-        return [$this->objectManager->get($listenerClassName), $this->eventClassNamesAndListeners[$eventClassName][$listenerClassName]];
+    }
+
+    /**
+     * Invokes the "when*()" method of the given $eventListener for the specified $event
+     * Additionally this invokes beforeInvokingEventListenerMethod(), saveHighestAppliedSequenceNumber() and afterInvokingEventListenerMethod()
+     * if the EventListener implements the corresponding interfaces
+     *
+     * @param EventListenerInterface $eventListener
+     * @param EventInterface $event
+     * @param RawEvent $rawEvent
+     * @throws EventCantBeAppliedException
+     */
+    private function invokeListener(EventListenerInterface $eventListener, EventInterface $event, RawEvent $rawEvent)
+    {
+        if ($eventListener instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
+            $eventListener->beforeInvokingEventListenerMethod($event, $rawEvent);
+        }
+        $eventClassName = $this->eventTypeService->getEventClassNameByType($rawEvent->getType());
+        $eventListenerMethodName = $this->eventClassNamesAndListeners[$eventClassName][get_class($eventListener)];
+        try {
+            call_user_func([$eventListener, $eventListenerMethodName], $event, $rawEvent);
+        } catch (\Exception $exception) {
+            throw new EventCantBeAppliedException(sprintf('Event "%s" (at sequence number %d) could not be applied to %s::%s()', $rawEvent->getType(), $rawEvent->getSequenceNumber(), $eventClassName, $eventListenerMethodName), 1507113406, $exception, $rawEvent);
+        }
+        if ($eventListener instanceof AsynchronousEventListenerInterface) {
+            $eventListener->saveHighestAppliedSequenceNumber($rawEvent->getSequenceNumber());
+        }
+        if ($eventListener instanceof ActsAfterInvokingEventListenerMethodsInterface) {
+            $eventListener->afterInvokingEventListenerMethod($event, $rawEvent);
+        }
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getAsynchronousListenerClassNames(): array
+    {
+        $asynchronousListenerClassNames = [];
+        array_walk($this->eventClassNamesAndListeners, function ($listenerMappings) use (&$asynchronousListenerClassNames) {
+            foreach (array_keys($listenerMappings) as $listenerMappingClassName) {
+                if (!in_array($listenerMappingClassName, $asynchronousListenerClassNames) && is_subclass_of($listenerMappingClassName, AsynchronousEventListenerInterface::class)) {
+                    $asynchronousListenerClassNames[] = $listenerMappingClassName;
+                }
+            }
+        });
+        return $asynchronousListenerClassNames;
     }
 
     /**
@@ -183,7 +168,7 @@ class EventListenerLocator
      * Detects and collects all existing event listener classes
      *
      * @param ObjectManagerInterface $objectManager
-     * @return array
+     * @return array in the format ['<eventClassName>' => ['<listenerClassName>' => '<listenerMethodName>', '<listenerClassName2>' => '<listenerMethodName2>', ...]]
      * @throws Exception
      * @Flow\CompileStatic
      */

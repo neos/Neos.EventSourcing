@@ -11,7 +11,12 @@ namespace Neos\EventSourcing\Command;
  * source code.
  */
 
-use Neos\EventSourcing\Event\EventPublisher;
+use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
+use Neos\EventSourcing\EventListener\EventListenerManager;
+use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\EventTypesFilter;
+use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
+use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 use Neos\Flow\Core\Booting\Scripts;
@@ -25,9 +30,15 @@ class EventCommandController extends CommandController
 {
     /**
      * @Flow\Inject
-     * @var EventPublisher
+     * @var EventListenerManager
      */
-    protected $eventPublisher;
+    protected $eventListenerManager;
+
+    /**
+     * @Flow\Inject
+     * @var EventStoreManager
+     */
+    protected $eventStoreManager;
 
     /**
      * @Flow\InjectConfiguration(package="Neos.Flow")
@@ -47,20 +58,32 @@ class EventCommandController extends CommandController
      */
     public function catchUpCommand($verbose = false, $quiet = false)
     {
-        $progressCallback = function ($listenerClassName, $eventType) use ($quiet, $verbose) {
-            if (!$quiet) {
-                if ($verbose) {
-                    $this->outputLine('%s -> %s', [$listenerClassName, $eventType]);
-                } else {
-                    $this->output('*');
-                }
-            }
+        $eventsCount = 0;
+        $progressCallback = function (RawEvent $rawEvent) use ($quiet, $verbose, &$eventsCount) {
+            $eventsCount += 1;
+            $this->outputIfVerbose(sprintf('  %s (%d)', $rawEvent->getType(), $rawEvent->getSequenceNumber()), '*');
         };
+        foreach ($this->eventListenerManager->getAsynchronousListenerClassNames() as $eventListenerClassName) {
+            /** @var AsynchronousEventListenerInterface $eventListener */
+            $eventListener = $this->objectManager->get($eventListenerClassName);
 
-        $eventsCount = $this->eventPublisher->catchUp($progressCallback);
-        if ($verbose) {
-            $this->outputLine('Applied %d events.', [$eventsCount]);
+            $lastAppliedSequenceNumber = $eventListener->getHighestAppliedSequenceNumber();
+            $eventTypes = $this->eventListenerManager->getEventTypesByListenerClassName($eventListenerClassName);
+
+            $this->outputIfVerbose(sprintf('Applying events for <b>%s</b> from sequence number <b>%d</b>:', $eventListenerClassName, $lastAppliedSequenceNumber + 1));
+
+            $filter = new EventTypesFilter($eventTypes, $lastAppliedSequenceNumber + 1);
+            $eventStore = $this->eventStoreManager->getEventStoreForEventListener($eventListenerClassName);
+            try {
+                $eventStream = $eventStore->get($filter);
+            } catch (EventStreamNotFoundException $exception) {
+                $this->outputIfVerbose('No (new) events found...');
+                continue;
+            }
+            $this->eventListenerManager->invokeListeners($eventListener, $eventStream, $progressCallback);
+            $this->outputIfVerbose('');
         }
+        $this->outputIfVerbose(sprintf('Applied %d events.', $eventsCount));
     }
 
     /**
@@ -88,14 +111,27 @@ class EventCommandController extends CommandController
                 'verbose' => $verbose ? 'yes' : 'no'
             ];
             Scripts::executeCommand('neos.eventsourcing:event:catchup', $this->flowSettings, !$quiet, $catchupCommandArguments);
-            if (!$quiet) {
-                if ($verbose) {
-                    $this->outputLine();
-                } else {
-                    $this->output('.');
-                }
-            }
+            $this->outputIfVerbose('', '.');
             sleep($lookupInterval);
         } while (true);
+    }
+
+    /**
+     * A "conditional" outputLine implementation, respecting the "quiet" and "verbose" CLI arguments
+     *
+     * @param string $verboseText The string that is rendered if the "verbose" flag is set
+     * @param string|null $shortText The (optional) string that is rendered otherwise
+     *
+     */
+    private function outputIfVerbose(string $verboseText, string $shortText = null)
+    {
+        if ($this->request->hasArgument('quiet') && $this->request->getArgument('quiet') === true) {
+            return;
+        }
+        if ($this->request->hasArgument('verbose') && $this->request->getArgument('verbose') === true) {
+            $this->outputLine($verboseText);
+        } elseif ($shortText !== null) {
+            $this->output($shortText);
+        }
     }
 }

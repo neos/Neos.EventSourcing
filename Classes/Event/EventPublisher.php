@@ -12,12 +12,8 @@ namespace Neos\EventSourcing\Event;
  */
 
 use Neos\EventSourcing\Event\Decorator\EventWithMetadataInterface;
-use Neos\EventSourcing\EventListener\ActsBeforeInvokingEventListenerMethodsInterface;
-use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
-use Neos\EventSourcing\EventListener\EventListenerLocator;
+use Neos\EventSourcing\EventListener\EventListenerManager;
 use Neos\EventSourcing\EventStore\EventStoreManager;
-use Neos\EventSourcing\EventStore\EventTypesFilter;
-use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\WritableEvent;
 use Neos\EventSourcing\EventStore\WritableEvents;
@@ -42,9 +38,9 @@ class EventPublisher
     private $eventStoreManager;
 
     /**
-     * @var EventListenerLocator
+     * @var EventListenerManager
      */
-    private $eventListenerLocator;
+    private $eventListenerManager;
 
     /**
      * @var PropertyMapper
@@ -58,14 +54,14 @@ class EventPublisher
 
     /**
      * @param EventStoreManager $eventStoreManager
-     * @param EventListenerLocator $eventListenerLocator
+     * @param EventListenerManager $eventListenerManager
      * @param PropertyMapper $propertyMapper
      * @param EventTypeResolver $eventTypeResolver
      */
-    public function __construct(EventStoreManager $eventStoreManager, EventListenerLocator $eventListenerLocator, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
+    public function __construct(EventStoreManager $eventStoreManager, EventListenerManager $eventListenerManager, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
     {
         $this->eventStoreManager = $eventStoreManager;
-        $this->eventListenerLocator = $eventListenerLocator;
+        $this->eventListenerManager = $eventListenerManager;
         $this->propertyMapper = $propertyMapper;
         $this->eventTypeResolver = $eventTypeResolver;
     }
@@ -113,63 +109,8 @@ class EventPublisher
         foreach ($rawEvents as $rawEvent) {
             $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
             $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
-            foreach ($this->eventListenerLocator->getSynchronousListenersByEventType($rawEvent->getType()) as $listener) {
-                if (is_array($listener) && $listener[0] instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
-                    $listener[0]->beforeInvokingEventListenerMethod($event, $rawEvent);
-                }
-                call_user_func($listener, $event, $rawEvent);
-            }
+            $this->eventListenerManager->invokeSynchronousListeners($event, $rawEvent);
         }
-    }
-
-    /**
-     * Iterate over all relevant event listeners and play back events to them which haven't been applied previously.
-     *
-     * @param \Closure $progressCallback Call back which is triggered on each event listener being invoked
-     * @return int
-     */
-    public function catchUp(\Closure $progressCallback): int
-    {
-        $distinctListenerObjectsByClassName = [];
-        foreach ($this->eventListenerLocator->getAsynchronousListeners() as $listener) {
-            if (!is_array($listener)) {
-                continue;
-            }
-            $distinctListenerObjectsByClassName[get_class($listener[0])] = $listener[0];
-        }
-
-        $eventCount = 0;
-        foreach ($distinctListenerObjectsByClassName as $listenerClassName => $listenerObject) {
-            $lastAppliedSequenceNumber = $listenerObject->getHighestAppliedSequenceNumber();
-
-            $eventTypes = $this->eventListenerLocator->getEventTypesByListenerClassName($listenerClassName);
-            $eventStore = $this->eventStoreManager->getEventStoreForEventListener($listenerClassName);
-            $filter = new EventTypesFilter($eventTypes, $lastAppliedSequenceNumber + 1);
-            try {
-                $eventStream = $eventStore->get($filter);
-            } catch (EventStreamNotFoundException $exception) {
-                continue;
-            }
-
-            foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
-                $event = $eventAndRawEvent->getEvent();
-                $rawEvent = $eventAndRawEvent->getRawEvent();
-                $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $listenerClassName);
-
-                /** @var AsynchronousEventListenerInterface $listenerObject */
-                $listenerObject = $listener[0];
-                if ($listenerObject instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
-                    $listenerObject->beforeInvokingEventListenerMethod($event, $rawEvent);
-                }
-
-                $progressCallback($listenerClassName, $rawEvent->getType(), $eventCount);
-                call_user_func($listener, $event, $rawEvent);
-
-                $eventCount ++;
-                $listenerObject->saveHighestAppliedSequenceNumber($sequenceNumber);
-            }
-        }
-        return $eventCount;
     }
 
     /**

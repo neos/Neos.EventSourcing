@@ -2,13 +2,3 @@ Neos\EventSourcing\EventStore\EventStoreManager:
   arguments:
     2:
       setting: 'Neos.EventSourcing.EventStore.stores'
-
-Neos\EventSourcing\Projection\ProjectionManager:
-  properties:
-    'projectionCache':
-      object:
-        factoryObjectName: Neos\Flow\Cache\CacheManager
-        factoryMethodName: getCache
-        arguments:
-          1:
-            value: 'Neos_EventSourcing_ProjectionCache'
