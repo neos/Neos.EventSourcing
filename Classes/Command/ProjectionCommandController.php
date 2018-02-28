@@ -103,16 +103,21 @@ class ProjectionCommandController extends CommandController
      *
      * @param string $projection The projection identifier; see projection:list for possible options
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
+     * @param int $minimumSequenceNumber If specified the projection is replayed from a specific point in the event sequence. By default the whole event log is replayed.
      * @return void
      * @see neos.eventsourcing:projection:list
      * @see neos.eventsourcing:projection:replayall
      */
-    public function replayCommand($projection, $quiet = false)
+    public function replayCommand($projection, $quiet = false, int $minimumSequenceNumber = 0)
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
         if (!$quiet) {
-            $this->outputLine('Replaying events for projection "%s" ...', [$projectionDto->getIdentifier()]);
+            if ($minimumSequenceNumber !== 0) {
+                $this->outputLine('Replaying events for projection "%s" from sequence number %d...', [$projectionDto->getIdentifier(), $minimumSequenceNumber]);
+            } else {
+                $this->outputLine('Replaying all events for projection "%s" ...', [$projectionDto->getIdentifier()]);
+            }
             $this->output->progressStart();
         }
         $eventsCount = 0;
@@ -121,7 +126,7 @@ class ProjectionCommandController extends CommandController
             if (!$quiet) {
                 $this->output->progressAdvance();
             }
-        });
+        }, $minimumSequenceNumber);
         if (!$quiet) {
             $this->output->progressFinish();
             $this->outputLine('Replayed %s events.', [$eventsCount]);
@@ -135,14 +140,19 @@ class ProjectionCommandController extends CommandController
      *
      * @param bool $onlyEmpty If specified, only projections which are currently empty will be considered
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
+     * @param int $minimumSequenceNumber If specified the projections are replayed from a specific point in the event sequence. By default the whole event log is replayed.
      * @return void
      * @see neos.eventsourcing:projection:replay
      * @see neos.eventsourcing:projection:list
      */
-    public function replayAllCommand($onlyEmpty = false, $quiet = false)
+    public function replayAllCommand($onlyEmpty = false, $quiet = false, int $minimumSequenceNumber = 0)
     {
         if (!$quiet) {
-            $this->outputLine('Replaying all%s projections', [$onlyEmpty ? ' empty' : '']);
+            if ($minimumSequenceNumber !== 0) {
+                $this->outputLine('Replaying all%s projections from sequence number %d', [$onlyEmpty ? ' empty' : '', $minimumSequenceNumber]);
+            } else {
+                $this->outputLine('Replaying all%s projections', [$onlyEmpty ? ' empty' : '']);
+            }
         }
         $eventsCount = 0;
         foreach ($this->projectionManager->getProjections() as $projection) {
@@ -161,7 +171,7 @@ class ProjectionCommandController extends CommandController
                 if (!$quiet) {
                     $this->output->progressAdvance();
                 }
-            });
+            }, $minimumSequenceNumber);
             if (!$quiet) {
                 $this->output->progressFinish();
             }
