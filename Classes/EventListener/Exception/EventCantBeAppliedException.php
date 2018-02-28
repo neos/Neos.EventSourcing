@@ -37,5 +37,4 @@ class EventCantBeAppliedException extends RuntimeException
     {
         return $this->rawEvent;
     }
-
 }
