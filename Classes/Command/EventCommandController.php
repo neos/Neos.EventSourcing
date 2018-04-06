@@ -11,9 +11,12 @@ namespace Neos\EventSourcing\Command;
  * source code.
  */
 
-use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
+use Neos\EventSourcing\EventListener\AppliedEventsLogRepository;
 use Neos\EventSourcing\EventListener\EventListenerManager;
+use Neos\EventSourcing\EventStore\EventAndRawEvent;
 use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\EventStream;
+use Neos\EventSourcing\EventStore\EventStreamFilterInterface;
 use Neos\EventSourcing\EventStore\EventTypesFilter;
 use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\RawEvent;
@@ -41,6 +44,12 @@ class EventCommandController extends CommandController
     protected $eventStoreManager;
 
     /**
+     * @Flow\Inject
+     * @var AppliedEventsLogRepository
+     */
+    protected $appliedEventsLogRepository;
+
+    /**
      * @Flow\InjectConfiguration(package="Neos.Flow")
      * @var array
      */
@@ -63,24 +72,54 @@ class EventCommandController extends CommandController
             $eventsCount += 1;
             $this->outputIfVerbose(sprintf('  %s (%d)', $rawEvent->getType(), $rawEvent->getSequenceNumber()), '*');
         };
-        foreach ($this->eventListenerManager->getAsynchronousListenerClassNames() as $eventListenerClassName) {
-            /** @var AsynchronousEventListenerInterface $eventListener */
-            $eventListener = $this->objectManager->get($eventListenerClassName);
+        foreach ($this->eventListenerManager->getEventListenerIdentifiers() as $eventListenerIdentifier) {
 
-            $lastAppliedSequenceNumber = $eventListener->getHighestAppliedSequenceNumber();
-            $eventTypes = $this->eventListenerManager->getEventTypesByListenerClassName($eventListenerClassName);
+            $lastAppliedSequenceNumber = $this->appliedEventsLogRepository->reserveHighestAppliedSequenceNumber($eventListenerIdentifier);
 
-            $this->outputIfVerbose(sprintf('Applying events for <b>%s</b> from sequence number <b>%d</b>:', $eventListenerClassName, $lastAppliedSequenceNumber + 1));
+            $eventTypes = $this->eventListenerManager->getEventTypesByListener($eventListenerIdentifier);
+            $eventStreamFilter = new EventTypesFilter($eventTypes, $lastAppliedSequenceNumber + 1);
 
-            $filter = new EventTypesFilter($eventTypes, $lastAppliedSequenceNumber + 1);
-            $eventStore = $this->eventStoreManager->getEventStoreForEventListener($eventListenerClassName);
+            $this->outputIfVerbose(sprintf('Applying events for <b>%s</b> from sequence number <b>%d</b>:', $eventListenerIdentifier, $eventStreamFilter->getFilterValue(EventStreamFilterInterface::FILTER_MINIMUM_SEQUENCE_NUMBER)));
+
+            $eventStore = $this->eventStoreManager->getEventStoreForEventListener($this->eventListenerManager->getEventListenerClassName($eventListenerIdentifier));
             try {
-                $eventStream = $eventStore->get($filter);
+                $eventStream = $eventStore->get($eventStreamFilter);
             } catch (EventStreamNotFoundException $exception) {
                 $this->outputIfVerbose('No (new) events found...');
+                $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
                 continue;
             }
-            $this->eventListenerManager->invokeListeners($eventListener, $eventStream, $progressCallback);
+
+            // TODO is this rewind required?
+            $eventStream->rewind();
+
+            while (true) {
+                $eventAndRawEvent = $eventStream->current();
+                $rawEvent = $eventAndRawEvent->getRawEvent();
+                try {
+                    $this->eventListenerManager->invokeListener($eventListenerIdentifier, $eventAndRawEvent->getEvent(), $rawEvent);
+                } catch (\Exception $exception) {
+                    $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
+                    throw $exception;
+                }
+                $this->outputIfVerbose(sprintf('  %s (%d)', $rawEvent->getType(), $rawEvent->getSequenceNumber()), '*');
+                $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber($eventListenerIdentifier, $rawEvent->getSequenceNumber());
+
+                $eventStream->next();
+                if (!$eventStream->valid()) {
+                    // no more events
+                    continue 2;
+                }
+
+                $lastAppliedSequenceNumber = $this->appliedEventsLogRepository->reserveHighestAppliedSequenceNumber($eventListenerIdentifier);
+                if ($lastAppliedSequenceNumber !== $rawEvent->getSequenceNumber()) {
+                    $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
+                    // HSN has been updated in the meantime => cancel.
+                    $this->outputIfVerbose(sprintf('HighestAppliedSequenceNumber jumped from %d to %d - aborting', $rawEvent->getSequenceNumber(), $lastAppliedSequenceNumber));
+                    continue 2;
+                }
+            }
+
             $this->outputIfVerbose('');
         }
         $this->outputIfVerbose(sprintf('Applied %d events.', $eventsCount));

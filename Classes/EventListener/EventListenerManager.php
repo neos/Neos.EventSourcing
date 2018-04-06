@@ -19,6 +19,7 @@ use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\Exception;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
+use Neos\Flow\Reflection\ClassReflection;
 use Neos\Flow\Reflection\ReflectionService;
 
 /**
@@ -39,9 +40,9 @@ class EventListenerManager
     private $eventTypeService;
 
     /**
-     * @var array in the format ['<eventClassName>' => ['<listenerClassName>' => '<listenerMethodName>', '<listenerClassName2>' => '<listenerMethodName2>', ...]]
+     * @var array in the format ['<eventListenerIdentifier>' => ['className' => '<listenerClassName>', 'eventClassNames' => ['<eventClassName1>', '<eventClassName2>', ...]]]
      */
-    private $eventClassNamesAndListeners = [];
+    private $eventListeners = [];
 
     /**
      * @param ObjectManagerInterface $objectManager
@@ -58,24 +59,12 @@ class EventListenerManager
      */
     public function initializeObject()
     {
-        $this->eventClassNamesAndListeners = self::detectListeners($this->objectManager);
+        $this->eventListeners = self::detectListeners($this->objectManager);
     }
 
-    /**
-     * Iterates through the given $eventStream and invokes the corresponding "when*" method on the $eventListener
-     *
-     * @param EventListenerInterface $eventListener The EventListener class that should handle events
-     * @param EventStream $eventStream The events to be handled
-     * @param \Closure|null $progressCallback Optional callback that is invoked after each handled event (for debugging, progress notification, ...)
-     */
-    public function invokeListeners(EventListenerInterface $eventListener, EventStream $eventStream, \Closure $progressCallback = null)
+    public function getEventClassNamesAndListeners(): array
     {
-        foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
-            $this->invokeListener($eventListener, $eventAndRawEvent->getEvent(), $eventAndRawEvent->getRawEvent());
-            if ($progressCallback !== null) {
-                call_user_func($progressCallback, $eventAndRawEvent->getRawEvent());
-            }
-        }
+        return $this->eventListeners;
     }
 
     /**
@@ -87,10 +76,10 @@ class EventListenerManager
     public function invokeSynchronousListeners(EventInterface $event, RawEvent $rawEvent)
     {
         $eventClassName = $this->eventTypeService->getEventClassNameByType($rawEvent->getType());
-        if (!isset($this->eventClassNamesAndListeners[$eventClassName])) {
+        if (!isset($this->eventListeners[$eventClassName])) {
             return;
         }
-        foreach (array_keys($this->eventClassNamesAndListeners[$eventClassName]) as $listenerClassName) {
+        foreach (array_keys($this->eventListeners[$eventClassName]) as $listenerClassName) {
             if (is_subclass_of($listenerClassName, AsynchronousEventListenerInterface::class)) {
                 return;
             }
@@ -105,25 +94,27 @@ class EventListenerManager
      * Additionally this invokes beforeInvokingEventListenerMethod(), saveHighestAppliedSequenceNumber() and afterInvokingEventListenerMethod()
      * if the EventListener implements the corresponding interfaces
      *
-     * @param EventListenerInterface $eventListener
+     * @param string $eventListenerIdentifier
      * @param EventInterface $event
      * @param RawEvent $rawEvent
      * @throws EventCantBeAppliedException
      */
-    private function invokeListener(EventListenerInterface $eventListener, EventInterface $event, RawEvent $rawEvent)
+    public function invokeListener(string $eventListenerIdentifier, EventInterface $event, RawEvent $rawEvent)
     {
+        $this->verifyEventListenerIdentifier($eventListenerIdentifier);
+        $eventListenerClassName = $this->getEventListenerClassName($eventListenerIdentifier);
+        $eventListener = $this->objectManager->get($eventListenerClassName);
+
         if ($eventListener instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
             $eventListener->beforeInvokingEventListenerMethod($event, $rawEvent);
         }
         $eventClassName = $this->eventTypeService->getEventClassNameByType($rawEvent->getType());
-        $eventListenerMethodName = $this->eventClassNamesAndListeners[$eventClassName][get_class($eventListener)];
+        // TODO: no reflection at runtime!?
+        $eventListenerMethodName = 'when' . (new ClassReflection($eventClassName))->getShortName();
         try {
             call_user_func([$eventListener, $eventListenerMethodName], $event, $rawEvent);
         } catch (\Exception $exception) {
             throw new EventCantBeAppliedException(sprintf('Event "%s" (at sequence number %d) could not be applied to %s::%s()', $rawEvent->getType(), $rawEvent->getSequenceNumber(), $eventClassName, $eventListenerMethodName), 1507113406, $exception, $rawEvent);
-        }
-        if ($eventListener instanceof AsynchronousEventListenerInterface) {
-            $eventListener->saveHighestAppliedSequenceNumber($rawEvent->getSequenceNumber());
         }
         if ($eventListener instanceof ActsAfterInvokingEventListenerMethodsInterface) {
             $eventListener->afterInvokingEventListenerMethod($event, $rawEvent);
@@ -136,7 +127,7 @@ class EventListenerManager
     public function getAsynchronousListenerClassNames(): array
     {
         $asynchronousListenerClassNames = [];
-        array_walk($this->eventClassNamesAndListeners, function ($listenerMappings) use (&$asynchronousListenerClassNames) {
+        array_walk($this->eventListeners, function ($listenerMappings) use (&$asynchronousListenerClassNames) {
             foreach (array_keys($listenerMappings) as $listenerMappingClassName) {
                 if (!in_array($listenerMappingClassName, $asynchronousListenerClassNames) && is_subclass_of($listenerMappingClassName, AsynchronousEventListenerInterface::class)) {
                     $asynchronousListenerClassNames[] = $listenerMappingClassName;
@@ -153,7 +144,7 @@ class EventListenerManager
     public function getEventTypesByListenerClassName(string $listenerClassName): array
     {
         $eventTypes = [];
-        array_walk($this->eventClassNamesAndListeners, function ($listenerMappings, $eventClassName) use (&$eventTypes, $listenerClassName) {
+        array_walk($this->eventListeners, function ($listenerMappings, $eventClassName) use (&$eventTypes, $listenerClassName) {
             $eventType = $this->eventTypeService->getEventTypeByClassName($eventClassName);
             foreach (array_keys($listenerMappings) as $listenerMappingClassName) {
                 if ($listenerMappingClassName === $listenerClassName) {
@@ -168,7 +159,7 @@ class EventListenerManager
      * Detects and collects all existing event listener classes
      *
      * @param ObjectManagerInterface $objectManager
-     * @return array in the format ['<eventClassName>' => ['<listenerClassName>' => '<listenerMethodName>', '<listenerClassName2>' => '<listenerMethodName2>', ...]]
+     * @return array in the format ['<eventListenerIdentifier>' => ['className' => '<listenerClassName>', 'eventClassNames' => ['<eventClassName>', '<eventClassName>', ...]]]
      * @throws Exception
      * @Flow\CompileStatic
      */
@@ -178,7 +169,8 @@ class EventListenerManager
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listenerClassName) {
-            $listenersFoundInClass = false;
+            $shortListenerClassName = (new ClassReflection($listenerClassName))->getShortName();
+            $eventClassNames = [];
             foreach (get_class_methods($listenerClassName) as $listenerMethodName) {
                 preg_match('/^when[A-Z].*$/', $listenerMethodName, $matches);
                 if (!isset($matches[0])) {
@@ -200,22 +192,50 @@ class EventListenerManager
                         throw new Exception(sprintf('Invalid listener in %s::%s the method signature is wrong. If the second parameter is present, it has to be a RawEvent but it expects an instance of "%s"', $listenerClassName, $listenerMethodName, $rawEventDataType), 1472504303);
                     }
                 }
-                $expectedMethodName = 'when' . (new \ReflectionClass($eventClassName))->getShortName();
+                $expectedMethodName = 'when' . (new ClassReflection($eventClassName))->getShortName();
                 if ($expectedMethodName !== $listenerMethodName) {
                     throw new Exception(sprintf('Invalid listener in %s::%s the method name is expected to be "%s"', $listenerClassName, $listenerMethodName, $expectedMethodName), 1476442394);
                 }
-
-                if (!isset($listeners[$eventClassName])) {
-                    $listeners[$eventClassName] = [];
-                }
-                $listeners[$eventClassName][$listenerClassName] = $listenerMethodName;
-                $listenersFoundInClass = true;
+                $eventClassNames[] = $eventClassName;
             }
-            if (!$listenersFoundInClass) {
+            if ($eventClassNames === []) {
                 throw new Exception(sprintf('No listener methods have been detected in listener class %s. A listener has the signature "public function when<EventClass>(<EventClass> $event) {}" and every EventListener class has to implement at least one listener!', $listenerClassName), 1498123537);
             }
+            $packageKey = strtolower($objectManager->getPackageKeyByObjectName($listenerClassName));
+            $listenerIdentifier = $packageKey . ':' . strtolower($shortListenerClassName);
+            if (isset($listeners[$listenerIdentifier])) {
+                throw new \RuntimeException(sprintf('The EventListener identifier "%s" is ambiguous, please rename one of the classes "%s" or "%s"', $listenerIdentifier, $listeners[$listenerIdentifier], $listenerClassName), 1521553940);
+            }
+            $listeners[$listenerIdentifier] = ['className' => $listenerClassName, 'eventClassNames' => $eventClassNames];
         }
-
         return $listeners;
+    }
+
+    public function getEventListenerIdentifiers(): array
+    {
+        return array_keys($this->eventListeners);
+    }
+
+    public function getEventListenerClassName(string $eventListenerIdentifier): string
+    {
+        $this->verifyEventListenerIdentifier($eventListenerIdentifier);
+        return $this->eventListeners[$eventListenerIdentifier]['className'];
+    }
+
+    private function verifyEventListenerIdentifier(string $eventListenerIdentifier): void
+    {
+        if (!array_key_exists($eventListenerIdentifier, $this->eventListeners)) {
+            throw new \InvalidArgumentException(sprintf('The EventListener with identifier "%s" could not be found', $eventListenerIdentifier), 1521561079);
+        }
+    }
+
+    public function getEventTypesByListener(string $eventListenerIdentifier): array
+    {
+        $this->verifyEventListenerIdentifier($eventListenerIdentifier);
+        $eventTypes = [];
+        array_walk($this->eventListeners[$eventListenerIdentifier]['eventClassNames'], function ($eventClassName) use (&$eventTypes) {
+            $eventTypes[] = $this->eventTypeService->getEventTypeByClassName($eventClassName);
+        });
+        return $eventTypes;
     }
 }

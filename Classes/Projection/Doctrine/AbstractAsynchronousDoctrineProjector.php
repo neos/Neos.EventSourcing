@@ -42,7 +42,7 @@ abstract class AbstractAsynchronousDoctrineProjector extends AbstractDoctrinePro
      */
     public function getHighestAppliedSequenceNumber(): int
     {
-        return $this->appliedEventsLogRepository->getHighestAppliedSequenceNumber(get_class($this));
+        return $this->appliedEventsLogRepository->reserveHighestAppliedSequenceNumber(get_class($this));
     }
 
     /**

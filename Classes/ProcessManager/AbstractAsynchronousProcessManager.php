@@ -40,7 +40,7 @@ abstract class AbstractAsynchronousProcessManager extends AbstractProcessManager
      */
     public function getHighestAppliedSequenceNumber(): int
     {
-        return $this->appliedEventsLogRepository->getHighestAppliedSequenceNumber(get_class($this));
+        return $this->appliedEventsLogRepository->reserveHighestAppliedSequenceNumber(get_class($this));
     }
 
     /**
