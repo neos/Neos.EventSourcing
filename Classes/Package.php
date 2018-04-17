@@ -20,10 +20,6 @@ use Neos\Flow\Package\Package as BasePackage;
  */
 class Package extends BasePackage
 {
-    /**
-     * @var boolean
-     */
-    protected $protected = true;
 
     /**
      * @param Bootstrap $bootstrap The current bootstrap
