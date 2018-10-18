@@ -11,27 +11,20 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
-use Neos\EventSourcing\Event\EventTypeResolver;
-use Neos\EventSourcing\Property\AllowAllPropertiesPropertyMappingConfiguration;
+use Neos\EventSourcing\Event\EventNormalizer;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Property\PropertyMapper;
 
 /**
  * EventStream
  */
 final class EventStream implements \Iterator
 {
-    /**
-     * @Flow\Inject
-     * @var EventTypeResolver
-     */
-    protected $eventTypeResolver;
 
     /**
      * @Flow\Inject
-     * @var PropertyMapper
+     * @var EventNormalizer
      */
-    protected $propertyMapper;
+    protected $eventNormalizer;
 
     /**
      * @var \Iterator
@@ -51,13 +44,10 @@ final class EventStream implements \Iterator
      */
     public function current()
     {
-        $configuration = new AllowAllPropertiesPropertyMappingConfiguration();
-
         /** @var RawEvent $rawEvent */
         $rawEvent = $this->streamIterator->current();
-        $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
         return new EventAndRawEvent(
-            $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration),
+            $this->eventNormalizer->denormalize($rawEvent->getPayload(), $rawEvent->getType()),
             $rawEvent
         );
     }

@@ -21,9 +21,7 @@ use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\WritableEvent;
 use Neos\EventSourcing\EventStore\WritableEvents;
-use Neos\EventSourcing\Property\AllowAllPropertiesPropertyMappingConfiguration;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Property\PropertyMapper;
 use Neos\Flow\Utility\Algorithms;
 
 /**
@@ -47,9 +45,9 @@ class EventPublisher
     private $eventListenerLocator;
 
     /**
-     * @var PropertyMapper
+     * @var EventNormalizer
      */
-    private $propertyMapper;
+    private $eventNormalizer;
 
     /**
      * @var EventTypeResolver
@@ -59,14 +57,14 @@ class EventPublisher
     /**
      * @param EventStoreManager $eventStoreManager
      * @param EventListenerLocator $eventListenerLocator
-     * @param PropertyMapper $propertyMapper
+     * @param EventNormalizer $eventNormalizer
      * @param EventTypeResolver $eventTypeResolver
      */
-    public function __construct(EventStoreManager $eventStoreManager, EventListenerLocator $eventListenerLocator, PropertyMapper $propertyMapper, EventTypeResolver $eventTypeResolver)
+    public function __construct(EventStoreManager $eventStoreManager, EventListenerLocator $eventListenerLocator, EventNormalizer $eventNormalizer, EventTypeResolver $eventTypeResolver)
     {
         $this->eventStoreManager = $eventStoreManager;
         $this->eventListenerLocator = $eventListenerLocator;
-        $this->propertyMapper = $propertyMapper;
+        $this->eventNormalizer = $eventNormalizer;
         $this->eventTypeResolver = $eventTypeResolver;
     }
 
@@ -102,17 +100,15 @@ class EventPublisher
             }
             $type = $this->eventTypeResolver->getEventType($event);
             $this->emitBeforePublishingEvent($event, $metadata);
-            $data = $this->propertyMapper->convert($event, 'array');
+            $data = $this->eventNormalizer->normalize($event);
             $eventIdentifier = Algorithms::generateUUID();
             $convertedEvents->append(new WritableEvent($eventIdentifier, $type, $data, $metadata));
         }
         $eventStore = $this->eventStoreManager->getEventStoreForStreamName($streamName);
         $rawEvents = $eventStore->commit($streamName, $convertedEvents, $expectedVersion);
 
-        $configuration = new AllowAllPropertiesPropertyMappingConfiguration();
         foreach ($rawEvents as $rawEvent) {
-            $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
-            $event = $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration);
+            $event = $this->eventNormalizer->denormalize($rawEvent->getPayload(), $rawEvent->getType());
             foreach ($this->eventListenerLocator->getSynchronousListenersByEventType($rawEvent->getType()) as $listener) {
                 if (is_array($listener) && $listener[0] instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
                     $listener[0]->beforeInvokingEventListenerMethod($event, $rawEvent);
