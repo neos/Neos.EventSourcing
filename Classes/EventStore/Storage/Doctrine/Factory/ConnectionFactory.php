@@ -14,6 +14,7 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine\Factory;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
 use Neos\Flow\Annotations as Flow;
@@ -42,24 +43,35 @@ class ConnectionFactory
     protected $defaultFlowDatabaseConfiguration;
 
     /**
+     * A runtime cache for the created connections
+     * (same options == same connection instance)
+     *
+     * @var array
+     */
+    private $connections = [];
+
+    /**
      * @param array $options
      * @return Connection
+     * @throws DBALException
      */
     public function create(array $options)
     {
-        $config = new Configuration();
+        $cacheIdentifier = md5(http_build_query($options));
+        if (array_key_exists($cacheIdentifier, $this->connections)) {
+            return $this->connections[$cacheIdentifier];
+        }
         $connectionParams = $options['backendOptions'] ?? [];
         $connectionParams = Arrays::arrayMergeRecursiveOverrule($this->defaultFlowDatabaseConfiguration, $connectionParams);
 
-        $connection = DriverManager::getConnection($connectionParams, $config);
+        $this->connections[$cacheIdentifier] = DriverManager::getConnection($connectionParams);
 
         if (isset($options['mappingTypes']) && is_array($options['mappingTypes'])) {
             foreach ($options['mappingTypes'] as $typeName => $typeConfiguration) {
                 Type::addType($typeName, $typeConfiguration['className']);
-                $connection->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
+                $this->connections[$cacheIdentifier]->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
             }
         }
-
-        return $connection;
+        return $this->connections[$cacheIdentifier];
     }
 }
