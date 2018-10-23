@@ -64,14 +64,14 @@ class ConnectionFactory
         $connectionParams = $options['backendOptions'] ?? [];
         $connectionParams = Arrays::arrayMergeRecursiveOverrule($this->defaultFlowDatabaseConfiguration, $connectionParams);
 
-        $this->connections[$cacheIdentifier] = DriverManager::getConnection($connectionParams);
+        $connection = $this->connections[$cacheIdentifier] = DriverManager::getConnection($connectionParams);
 
         if (isset($options['mappingTypes']) && is_array($options['mappingTypes'])) {
             foreach ($options['mappingTypes'] as $typeName => $typeConfiguration) {
                 Type::addType($typeName, $typeConfiguration['className']);
-                $this->connections[$cacheIdentifier]->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
+                $connection->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
             }
         }
-        return $this->connections[$cacheIdentifier];
+        return $connection;
     }
 }
