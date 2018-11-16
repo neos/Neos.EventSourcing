@@ -11,6 +11,7 @@ namespace Neos\EventSourcing\Domain;
  * source code.
  */
 
+use Neos\EventSourcing\Event\Decorator\EventWithMetadataInterface;
 use Neos\EventSourcing\Event\EventInterface;
 
 /**
@@ -59,6 +60,10 @@ abstract class AbstractAggregateRoot implements AggregateRootInterface
      */
     final protected function apply(EventInterface $event)
     {
+        if ($event instanceof EventWithMetadataInterface) {
+            $event = $event->getEvent();
+        }
+
         $methodName = sprintf('when%s', (new \ReflectionClass($event))->getShortName());
         if (method_exists($this, $methodName)) {
             $this->$methodName($event);
