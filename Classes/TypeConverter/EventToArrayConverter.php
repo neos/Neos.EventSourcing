@@ -67,7 +67,7 @@ class EventToArrayConverter extends AbstractTypeConverter
             if ($propertyValue instanceof \DateTimeZone) {
                 $propertyValue = $propertyValue->getName();
             } elseif ($propertyValue instanceof \DateTimeInterface) {
-                $propertyValue = $propertyValue->format(DATE_ISO8601);
+                $propertyValue = $propertyValue->format(\DateTime::W3C);
             } elseif (is_object($propertyValue)) {
                 $propertyValue = $this->convertObject($propertyValue);
             }
