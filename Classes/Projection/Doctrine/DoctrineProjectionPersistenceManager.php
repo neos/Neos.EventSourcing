@@ -11,7 +11,7 @@ namespace Neos\EventSourcing\Projection\Doctrine;
  * source code.
  */
 
-use Doctrine\ORM\EntityManager as DoctrineEntityManager;
+use Doctrine\ORM\EntityManagerInterface as DoctrineEntityManagerInterface;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\UnitOfWork;
 use Neos\EventSourcing\Exception;
@@ -34,7 +34,7 @@ class DoctrineProjectionPersistenceManager
     protected $systemLogger;
 
     /**
-     * @var DoctrineEntityManager
+     * @var DoctrineEntityManagerInterface
      */
     private $entityManager;
 
@@ -44,10 +44,10 @@ class DoctrineProjectionPersistenceManager
     private $numberOfPendingChanges = 0;
 
     /**
-     * @param DoctrineEntityManager $entityManager
+     * @param DoctrineEntityManagerInterface $entityManager
      * @return void
      */
-    public function injectEntityManager(DoctrineEntityManager $entityManager)
+    public function injectEntityManager(DoctrineEntityManagerInterface $entityManager)
     {
         $this->entityManager = $entityManager;
     }
