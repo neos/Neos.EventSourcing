@@ -164,6 +164,7 @@ class ProjectionCommandController extends CommandController
             });
             if (!$quiet) {
                 $this->output->progressFinish();
+                $this->outputLine();
             }
         }
         if (!$quiet) {
