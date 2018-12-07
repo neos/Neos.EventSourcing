@@ -12,8 +12,8 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
  */
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Exception\ConnectionException;
-use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\ConnectionException;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
@@ -21,15 +21,12 @@ use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
 use Neos\Error\Messages\Result;
 use Neos\Error\Messages\Warning;
-use Neos\EventSourcing\Event\EventTypeResolver;
 use Neos\EventSourcing\EventStore\EventStream;
-use Neos\EventSourcing\EventStore\EventStreamFilterInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
-use Neos\EventSourcing\EventStore\RawEvent;
+use Neos\EventSourcing\EventStore\Storage\CorrelationIdAwareEventStorageInterface;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
-use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
-use Neos\EventSourcing\EventStore\StreamNameFilter;
+use Neos\EventSourcing\EventStore\StreamName;
 use Neos\EventSourcing\EventStore\WritableEvents;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Utility\Now;
@@ -37,7 +34,7 @@ use Neos\Flow\Utility\Now;
 /**
  * Database event storage adapter
  */
-class DoctrineEventStorage implements EventStorageInterface
+class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
 {
     const DEFAULT_EVENT_TABLE_NAME = 'neos_eventsourcing_eventstore_events';
 
@@ -46,12 +43,6 @@ class DoctrineEventStorage implements EventStorageInterface
      * @Flow\Inject
      */
     protected $connectionFactory;
-
-    /**
-     * @Flow\Inject
-     * @var EventTypeResolver
-     */
-    protected $eventTypeResolver;
 
     /**
      * @Flow\Inject(lazy=false)
@@ -85,8 +76,9 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @return void
+     * @throws DBALException
      */
-    public function initializeObject()
+    public function initializeObject(): void
     {
         $this->connection = $this->connectionFactory->create($this->options);
     }
@@ -94,39 +86,68 @@ class DoctrineEventStorage implements EventStorageInterface
     /**
      * @inheritdoc
      */
-    public function load(EventStreamFilterInterface $filter): EventStream
+    public function load(StreamName $streamName, string $eventIdentifier = null): EventStream
     {
         $this->reconnectDatabaseConnection();
         $query = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->eventTableName)
             ->orderBy('sequencenumber', 'ASC');
-        $this->applyEventStreamFilter($query, $filter);
+
+        if ($eventIdentifier !== null) {
+            $eventSequenceNumber = $this->getEventSequenceNumber($eventIdentifier);
+            $query->andWhere('sequenceNumber > :sequenceNumber');
+            $query->setParameter('sequenceNumber', $eventSequenceNumber);
+        }
+
+        if (!$streamName->isVirtualStream()) {
+            $query->andWhere('stream = :streamName');
+            $query->setParameter('streamName', (string)$streamName);
+        } elseif (!$streamName->isAll()) {
+            $query->andWhere('stream LIKE :streamNamePrefix');
+            $query->setParameter('streamNamePrefix', $streamName->getCategoryName() . '%');
+        }
 
         $streamIterator = new DoctrineStreamIterator($query);
-        return new EventStream($streamIterator);
+        return new EventStream($streamName, $streamIterator);
+    }
+
+    public function loadByCorrelationId(string $correlationId): EventStream
+    {
+        $this->reconnectDatabaseConnection();
+        $query = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($this->eventTableName)
+            ->where('correlationidentifier = :correlationId')
+            ->orderBy('sequencenumber', 'ASC')
+            ->setParameter('correlationId', $correlationId);
+
+        $streamIterator = new DoctrineStreamIterator($query);
+        return new EventStream(StreamName::forCorrelationId($correlationId), $streamIterator);
     }
 
     /**
      * @inheritdoc
-     * @throws ConcurrencyException|\Exception
+     * @throws DBALException
      */
-    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array
+    public function commit(StreamName $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): void
     {
+        if ($streamName->isVirtualStream()) {
+            throw new \InvalidArgumentException(sprintf('Can\'t commit to virtual stream "%s"', $streamName), 1540632984);
+        }
         $this->reconnectDatabaseConnection();
         $this->connection->beginTransaction();
         try {
-            $actualVersion = $this->getStreamVersion(new StreamNameFilter($streamName));
+            $actualVersion = $this->getStreamVersion($streamName);
             $this->verifyExpectedVersion($actualVersion, $expectedVersion);
 
-            $rawEvents = [];
             foreach ($events as $event) {
                 $metadata = $event->getMetadata();
                 $this->connection->insert(
                     $this->eventTableName,
                     [
                         'id' => $event->getIdentifier(),
-                        'stream' => $streamName,
+                        'stream' => (string)$streamName,
                         'version' => ++$actualVersion,
                         'type' => $event->getType(),
                         'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
@@ -140,30 +161,48 @@ class DoctrineEventStorage implements EventStorageInterface
                         'recordedat' => Type::DATETIME,
                     ]
                 );
-                $sequenceNumber = $this->connection->lastInsertId();
-                $rawEvents[] = new RawEvent($sequenceNumber, $event->getType(), $event->getData(), $metadata, $streamName, $actualVersion, $event->getIdentifier(), $this->now);
             }
 
             $this->connection->commit();
-            return $rawEvents;
-        } catch (\Exception $e) {
+        } catch (DBALException $exception) {
             $this->connection->rollBack();
-            throw $e;
+            throw $exception;
         }
     }
 
     /**
-     * @param EventStreamFilterInterface $filter
+     * @param StreamName $streamName
      * @return int
      */
-    public function getStreamVersion(EventStreamFilterInterface $filter): int
+    private function getStreamVersion(StreamName $streamName): int
     {
-        $query = $this->connection->createQueryBuilder()
+        $version = $this->connection->createQueryBuilder()
             ->select('MAX(version)')
-            ->from($this->eventTableName);
-        $this->applyEventStreamFilter($query, $filter);
-        $version = $query->execute()->fetchColumn();
+            ->from($this->eventTableName)
+            ->where('stream = :streamName')
+            ->setParameter('streamName', (string)$streamName)
+            ->execute()
+            ->fetchColumn();
         return $version !== null ? (int)$version : -1;
+    }
+
+    /**
+     * @param string $eventIdentifier
+     * @return int
+     */
+    private function getEventSequenceNumber(string $eventIdentifier): int
+    {
+        $sequenceNumber = $this->connection->createQueryBuilder()
+            ->select('sequenceNumber')
+            ->from($this->eventTableName)
+            ->where('id = :eventIdentifier')
+            ->setParameter('eventIdentifier', $eventIdentifier)
+            ->execute()
+            ->fetchColumn();
+        if ($sequenceNumber === null) {
+            throw new \RuntimeException(sprintf('Event with id "%s" not found', $eventIdentifier), 1540636494);
+        }
+        return (int)$sequenceNumber;
     }
 
     /**
@@ -171,7 +210,7 @@ class DoctrineEventStorage implements EventStorageInterface
      * @param int $expectedVersion
      * @throws ConcurrencyException
      */
-    private function verifyExpectedVersion(int $actualVersion, int $expectedVersion)
+    private function verifyExpectedVersion(int $actualVersion, int $expectedVersion): void
     {
         if ($expectedVersion === ExpectedVersion::ANY) {
             return;
@@ -186,7 +225,7 @@ class DoctrineEventStorage implements EventStorageInterface
      * @param int $expectedVersion
      * @return string
      */
-    private function renderExpectedVersion(int $expectedVersion)
+    private function renderExpectedVersion(int $expectedVersion): string
     {
         if ($expectedVersion === ExpectedVersion::ANY) {
             return 'ANY (-2)';
@@ -198,39 +237,8 @@ class DoctrineEventStorage implements EventStorageInterface
     }
 
     /**
-     * @param QueryBuilder $query
-     * @param EventStreamFilterInterface $filter
-     */
-    private function applyEventStreamFilter(QueryBuilder $query, EventStreamFilterInterface $filter)
-    {
-        $filterValues = $filter->getFilterValues();
-        if (array_key_exists(EventStreamFilterInterface::FILTER_STREAM_NAME, $filterValues)) {
-            $query->andWhere('stream = :streamName');
-            $query->setParameter('streamName', $filterValues[EventStreamFilterInterface::FILTER_STREAM_NAME]);
-        } elseif (array_key_exists(EventStreamFilterInterface::FILTER_STREAM_NAME_PREFIX, $filterValues)) {
-            $query->andWhere('stream LIKE :streamNamePrefix');
-            $query->setParameter('streamNamePrefix', $filterValues[EventStreamFilterInterface::FILTER_STREAM_NAME_PREFIX] . '%');
-        }
-        if (array_key_exists(EventStreamFilterInterface::FILTER_EVENT_TYPES, $filterValues)) {
-            $query->andWhere('type IN (:eventTypes)');
-            $query->setParameter('eventTypes', $filterValues[EventStreamFilterInterface::FILTER_EVENT_TYPES], Connection::PARAM_STR_ARRAY);
-        }
-        if (array_key_exists(EventStreamFilterInterface::FILTER_MINIMUM_SEQUENCE_NUMBER, $filterValues)) {
-            $query->andWhere('sequencenumber >= :minimumSequenceNumber');
-            $query->setParameter('minimumSequenceNumber', $filterValues[EventStreamFilterInterface::FILTER_MINIMUM_SEQUENCE_NUMBER]);
-        }
-        if (array_key_exists(EventStreamFilterInterface::FILTER_EVENT_IDENTIFIER, $filterValues)) {
-            $query->andWhere('id = :eventIdentifier');
-            $query->setParameter('eventIdentifier', $filterValues[EventStreamFilterInterface::FILTER_EVENT_IDENTIFIER]);
-        }
-        if (array_key_exists(EventStreamFilterInterface::FILTER_CORRELATION_IDENTIFIER, $filterValues)) {
-            $query->andWhere('correlationidentifier = :correlationIdentifier');
-            $query->setParameter('correlationIdentifier', $filterValues[EventStreamFilterInterface::FILTER_CORRELATION_IDENTIFIER]);
-        }
-    }
-
-    /**
      * @inheritdoc
+     * @throws DBALException
      */
     public function getStatus(): Result
     {
@@ -266,6 +274,8 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @inheritdoc
+     * @throws DBALException
+     * @throws \Exception
      */
     public function setup(): Result
     {
@@ -309,7 +319,7 @@ class DoctrineEventStorage implements EventStorageInterface
      *
      * @return Schema
      */
-    private function createEventStoreSchema()
+    private function createEventStoreSchema(): Schema
     {
         $schema = new Schema();
         $table = $schema->createTable($this->eventTableName);
@@ -348,7 +358,7 @@ class DoctrineEventStorage implements EventStorageInterface
      * @see \Neos\Flow\Persistence\Doctrine\PersistenceManager::persistAll()
      * @return void
      */
-    private function reconnectDatabaseConnection()
+    private function reconnectDatabaseConnection(): void
     {
         if ($this->connection->ping() === false) {
             $this->connection->close();

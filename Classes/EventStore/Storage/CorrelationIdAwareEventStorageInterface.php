@@ -1,5 +1,5 @@
 <?php
-namespace Neos\EventSourcing\Domain\Exception;
+namespace Neos\EventSourcing\EventStore\Storage;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -11,11 +11,9 @@ namespace Neos\EventSourcing\Domain\Exception;
  * source code.
  */
 
-use Neos\Flow\Exception;
+use Neos\EventSourcing\EventStore\EventStream;
 
-/**
- * AggregateRootNotFoundException
- */
-class AggregateRootNotFoundException extends Exception
+interface CorrelationIdAwareEventStorageInterface extends EventStorageInterface
 {
+    public function loadByCorrelationId(string $correlationId): EventStream;
 }

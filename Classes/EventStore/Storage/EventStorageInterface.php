@@ -13,9 +13,8 @@ namespace Neos\EventSourcing\EventStore\Storage;
 
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\EventStore\EventStream;
-use Neos\EventSourcing\EventStore\EventStreamFilterInterface;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
-use Neos\EventSourcing\EventStore\RawEvent;
+use Neos\EventSourcing\EventStore\StreamName;
 use Neos\EventSourcing\EventStore\WritableEvents;
 
 /**
@@ -24,24 +23,19 @@ use Neos\EventSourcing\EventStore\WritableEvents;
 interface EventStorageInterface
 {
     /**
-     * @param EventStreamFilterInterface $filter
+     * @param StreamName $filter
+     * @param string $eventIdentifier
      * @return EventStream
      */
-    public function load(EventStreamFilterInterface $filter): EventStream;
+    public function load(StreamName $filter, string $eventIdentifier = null): EventStream;
 
     /**
-     * @param string $streamName
+     * @param StreamName $streamName
      * @param WritableEvents $events
      * @param int $expectedVersion
-     * @return RawEvent[]
+     * @return void
      */
-    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array;
-
-    /**
-     * @param EventStreamFilterInterface $filter
-     * @return int
-     */
-    public function getStreamVersion(EventStreamFilterInterface $filter): int;
+    public function commit(StreamName $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): void;
 
     /**
      * Retrieves the (connection) status of the storage adapter

@@ -1,5 +1,5 @@
 <?php
-namespace Neos\EventSourcing\ProcessManager;
+namespace Neos\EventSourcing\Event;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -10,11 +10,7 @@ namespace Neos\EventSourcing\ProcessManager;
  * information, please view the LICENSE file which was distributed with this
  * source code.
  */
-use Neos\EventSourcing\Exception;
 
-/**
- * ProcessManagerException
- */
-class ProcessManagerException extends Exception
+interface DomainEventInterface
 {
 }

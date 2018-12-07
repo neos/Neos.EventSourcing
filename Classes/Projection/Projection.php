@@ -35,18 +35,18 @@ class Projection
      *
      * @var string[]
      */
-    private $eventTypes;
+    private $eventClassNames;
 
     /**
      * @param string $identifier
      * @param string $projectorClassName
-     * @param string[] $eventTypes
+     * @param string[] $eventClassNames
      */
-    public function __construct(string $identifier, string $projectorClassName, array $eventTypes)
+    public function __construct(string $identifier, string $projectorClassName, array $eventClassNames)
     {
         $this->fullIdentifier = $identifier;
         $this->projectorClassName = $projectorClassName;
-        $this->eventTypes = $eventTypes;
+        $this->eventClassNames = $eventClassNames;
     }
 
     /**
@@ -68,9 +68,9 @@ class Projection
     /**
      * @return string[]
      */
-    public function getEventTypes(): array
+    public function getEventClassNames(): array
     {
-        return $this->eventTypes;
+        return $this->eventClassNames;
     }
 
     /**

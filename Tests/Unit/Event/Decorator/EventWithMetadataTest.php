@@ -2,19 +2,19 @@
 namespace Neos\EventSourcing\Tests\Unit\Event\Decorator;
 
 use Neos\EventSourcing\Event\Decorator\EventWithMetadata;
-use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\Flow\Tests\UnitTestCase;
 
 class EventWithMetadataTest extends UnitTestCase
 {
     /**
-     * @var EventInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var DomainEventInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     private $mockEvent;
 
     public function setUp()
     {
-        $this->mockEvent = $this->getMockBuilder(EventInterface::class)->getMock();
+        $this->mockEvent = $this->getMockBuilder(DomainEventInterface::class)->getMock();
     }
 
     /**

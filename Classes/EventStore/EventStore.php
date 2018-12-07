@@ -12,8 +12,14 @@ namespace Neos\EventSourcing\EventStore;
  */
 
 use Neos\Error\Messages\Result;
+use Neos\EventSourcing\EventBus\EventBus;
+use Neos\Flow\Annotations as Flow;
+use Neos\EventSourcing\Event\Decorator\DomainEventWithMetadataInterface;
+use Neos\EventSourcing\Event\DomainEvents;
+use Neos\EventSourcing\Event\EventTypeResolver;
 use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
+use Neos\Flow\Utility\Algorithms;
 
 /**
  * Main API to store and fetch events.
@@ -28,6 +34,28 @@ final class EventStore
     private $storage;
 
     /**
+     * TODO replace
+     *
+     * @Flow\Inject
+     * @var EventTypeResolver
+     */
+    protected $eventTypeResolver;
+
+    /**
+     * TODO replace
+     *
+     * @Flow\Inject
+     * @var EventNormalizer
+     */
+    protected $eventNormalizer;
+
+    /**
+     * @Flow\Inject
+     * @var EventBus
+     */
+    protected $eventBus;
+
+    /**
      * @internal Do not instantiate this class directly but use the EventStoreManager
      * @param EventStorageInterface $storage
      */
@@ -36,41 +64,42 @@ final class EventStore
         $this->storage = $storage;
     }
 
-    /**
-     * @param EventStreamFilterInterface $filter
-     * @return EventStream Can be empty stream
-     * @throws EventStreamNotFoundException
-     * @todo improve exception message, log the current filter type and configuration
-     */
-    public function get(EventStreamFilterInterface $filter): EventStream
+    public function load(StreamName $streamName, string $eventIdentifier = null): EventStream
     {
-        $eventStream = $this->storage->load($filter);
+        $eventStream = $this->storage->load($streamName, $eventIdentifier);
         if (!$eventStream->valid()) {
-            $streamName = $filter->getFilterValue(EventStreamFilterInterface::FILTER_STREAM_NAME) ?? 'unknown stream';
             throw new EventStreamNotFoundException(sprintf('The event stream "%s" does not appear to be valid.', $streamName), 1477497156);
         }
         return $eventStream;
     }
 
     /**
-     * @param EventStreamFilterInterface $filter
-     * @return int
-     */
-    public function getStreamVersion(EventStreamFilterInterface $filter): int
-    {
-        return $this->storage->getStreamVersion($filter);
-    }
-
-
-    /**
-     * @param string $streamName
-     * @param WritableEvents $events
+     * @param StreamName $streamName
+     * @param DomainEvents $events
      * @param int $expectedVersion
-     * @return RawEvent[]
      */
-    public function commit(string $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): array
+    public function commit(StreamName $streamName, DomainEvents $events, int $expectedVersion = ExpectedVersion::ANY): void
     {
-        return $this->storage->commit($streamName, $events, $expectedVersion);
+        if ($events->isEmpty()) {
+            return;
+        }
+        $convertedEvents = [];
+        foreach ($events as $event) {
+            $metadata = [];
+            if ($event instanceof DomainEventWithMetadataInterface) {
+                $metadata = $event->getMetadata();
+                $event = $event->getEvent();
+            }
+            $type = $this->eventTypeResolver->getEventType($event);
+            $data = $this->eventNormalizer->normalize($event);
+            $eventIdentifier = Algorithms::generateUUID();
+            $convertedEvents[] = new WritableEvent($eventIdentifier, $type, $data, $metadata);
+        }
+
+        $this->storage->commit($streamName, WritableEvents::fromArray($convertedEvents), $expectedVersion);
+        foreach ($events as $event) {
+            $this->eventBus->dispatch($event);
+        }
     }
 
     /**

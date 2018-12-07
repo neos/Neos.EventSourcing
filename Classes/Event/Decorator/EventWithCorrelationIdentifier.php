@@ -11,16 +11,15 @@ namespace Neos\EventSourcing\Event\Decorator;
  * source code.
  */
 
-use Neos\EventSourcing\Event\EventInterface;
-use Neos\EventSourcing\Exception;
+use Neos\EventSourcing\Event\DomainEventInterface;
 
 /**
  * Event wrapper which provides a correlation id additional to the event
  */
-final class EventWithCorrelationIdentifier implements EventWithMetadataInterface
+final class EventWithCorrelationIdentifier implements DomainEventWithMetadataInterface
 {
     /**
-     * @var EventInterface
+     * @var DomainEventInterface
      */
     private $event;
 
@@ -32,20 +31,19 @@ final class EventWithCorrelationIdentifier implements EventWithMetadataInterface
     /**
      * EventWithCorrelationId constructor.
      *
-     * @param EventInterface $event
+     * @param DomainEventInterface $event
      * @param string $correlationIdentifier
-     * @throws Exception
      */
-    public function __construct(EventInterface $event, string $correlationIdentifier)
+    public function __construct(DomainEventInterface $event, string $correlationIdentifier)
     {
         $correlationIdentifier = trim($correlationIdentifier);
         if ($correlationIdentifier === '') {
-            throw new Exception('Empty correlation identifier provided', 1509109037);
+            throw new \InvalidArgumentException('Empty correlation identifier provided', 1509109037);
         }
         if (strlen($correlationIdentifier) > 255) {
-            throw new Exception('Correlation identifier must be 255 characters or less', 1509109039);
+            throw new \InvalidArgumentException('Correlation identifier must be 255 characters or less', 1509109039);
         }
-        if ($event instanceof EventWithMetadataInterface) {
+        if ($event instanceof DomainEventWithMetadataInterface) {
             $this->event = $event->getEvent();
             $this->metadata = $event->getMetadata();
         } else {
@@ -56,9 +54,9 @@ final class EventWithCorrelationIdentifier implements EventWithMetadataInterface
     }
 
     /**
-     * @return EventInterface
+     * @return DomainEventInterface
      */
-    public function getEvent(): EventInterface
+    public function getEvent(): DomainEventInterface
     {
         return $this->event;
     }

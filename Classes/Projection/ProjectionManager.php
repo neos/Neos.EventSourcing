@@ -11,16 +11,14 @@ namespace Neos\EventSourcing\Projection;
  * source code.
  */
 
-use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\EventListener\AppliedEventsLogRepository;
+use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventListener\EventListenerLocator;
-use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
-use Neos\EventSourcing\EventStore\EventStoreManager;
-use Neos\EventSourcing\EventStore\EventTypesFilter;
-use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
+use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\Flow\Annotations as Flow;
-use Neos\Cache\Frontend\VariableFrontend;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ClassReflection;
+use Neos\Flow\Reflection\Exception\ClassLoadingForReflectionFailedException;
 use Neos\Flow\Reflection\ReflectionService;
 
 /**
@@ -39,27 +37,21 @@ class ProjectionManager
 
     /**
      * @Flow\Inject
-     * @var EventTypeResolver
-     */
-    protected $eventTypeResolver;
-
-    /**
-     * @Flow\Inject
      * @var EventListenerLocator
      */
     protected $eventListenerLocator;
 
     /**
      * @Flow\Inject
-     * @var VariableFrontend
+     * @var AppliedEventsLogRepository
      */
-    protected $projectionCache;
+    protected $appliedEventsLogRepository;
 
     /**
      * @Flow\Inject
-     * @var EventStoreManager
+     * @var EventListenerInvoker
      */
-    protected $eventStoreManager;
+    protected $eventListenerInvoker;
 
     /**
      * @var array in the format ['<projectionIdentifier>' => '<projectorClassName>', ...]
@@ -68,8 +60,9 @@ class ProjectionManager
 
     /**
      * Register event listeners based on annotations
+     * @throws ClassLoadingForReflectionFailedException
      */
-    protected function initializeObject()
+    protected function initializeObject(): void
     {
         $this->projections = self::detectProjectors($this->objectManager);
     }
@@ -80,7 +73,7 @@ class ProjectionManager
      * @return Projection[]
      * @api
      */
-    public function getProjections()
+    public function getProjections(): array
     {
         return array_map([$this, 'getProjection'], array_keys($this->projections));
     }
@@ -96,8 +89,8 @@ class ProjectionManager
     {
         $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
         $projectorClassName = $this->projections[$fullProjectionIdentifier];
-        $eventTypes = $this->eventListenerLocator->getEventTypesByListenerClassName($projectorClassName);
-        return new Projection($fullProjectionIdentifier, $projectorClassName, $eventTypes);
+        $eventClassNames = $this->eventListenerLocator->getEventClassNamesByListenerClassName($projectorClassName);
+        return new Projection($fullProjectionIdentifier, $projectorClassName, $eventClassNames);
     }
 
     /**
@@ -121,71 +114,17 @@ class ProjectionManager
      * @param \Closure $progressCallback If set, this callback is invoked for every applied event during replay with the arguments $sequenceNumber and $eventStreamVersion
      * @return void
      * @api
+     * @throws EventCouldNotBeAppliedException
      */
-    public function replay(string $projectionIdentifier, \Closure $progressCallback = null)
+    public function replay(string $projectionIdentifier, \Closure $progressCallback = null): void
     {
         $projection = $this->getProjection($projectionIdentifier);
 
+        /** @var ProjectorInterface $projector */
         $projector = $this->objectManager->get($projection->getProjectorClassName());
+        $this->appliedEventsLogRepository->saveLastAppliedEventId($projection->getProjectorClassName(), 0);
         $projector->reset();
-
-        $filter = new EventTypesFilter($projection->getEventTypes());
-
-        $eventStore = $this->eventStoreManager->getEventStoreForEventListener($projection->getProjectorClassName());
-        try {
-            $eventStream = $eventStore->get($filter);
-        } catch (EventStreamNotFoundException $exception) {
-            return;
-        }
-        foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
-            $rawEvent = $eventAndRawEvent->getRawEvent();
-            $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
-            call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
-            if ($progressCallback !== null) {
-                call_user_func($progressCallback, $sequenceNumber);
-            }
-
-            if ($projector instanceof AsynchronousEventListenerInterface) {
-                $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
-            }
-        }
-    }
-
-    /**
-     * Play all events for the given projection which haven't been applied yet.
-     *
-     * @param string $projectionIdentifier unambiguous identifier of the projection to catch-up
-     * @param \Closure $progressCallback If set, this callback is invoked for every applied event during catch-up with the arguments $sequenceNumber and $eventStreamVersion
-     * @return void
-     */
-    public function catchUp(string $projectionIdentifier, \Closure $progressCallback = null)
-    {
-        $projection = $this->getProjection($projectionIdentifier);
-        if (!$projection->isAsynchronous()) {
-            throw new \InvalidArgumentException(sprintf('The projection "%s" is not asynchronous, so catching up is not supported.', $projection->getIdentifier()), 1479147244634);
-        }
-
-        /** @var AsynchronousEventListenerInterface $projector */
-        $projector = $this->objectManager->get($projection->getProjectorClassName());
-        $lastAppliedSequenceNumber = $projector->getHighestAppliedSequenceNumber();
-
-        $filter = new EventTypesFilter($projection->getEventTypes(), $lastAppliedSequenceNumber + 1);
-        $eventStore = $this->eventStoreManager->getEventStoreForEventListener($projection->getProjectorClassName());
-        try {
-            $eventStream = $eventStore->get($filter);
-        } catch (EventStreamNotFoundException $exception) {
-            return;
-        }
-        foreach ($eventStream as $sequenceNumber => $eventAndRawEvent) {
-            $rawEvent = $eventAndRawEvent->getRawEvent();
-            $listener = $this->eventListenerLocator->getListener($rawEvent->getType(), $projection->getProjectorClassName());
-            call_user_func($listener, $eventAndRawEvent->getEvent(), $rawEvent);
-            if ($progressCallback !== null) {
-                call_user_func($progressCallback, $sequenceNumber);
-            }
-
-            $projector->saveHighestAppliedSequenceNumber($sequenceNumber);
-        }
+        $this->eventListenerInvoker->catchUp($projector, $progressCallback);
     }
 
     /**
@@ -193,9 +132,8 @@ class ProjectionManager
      *
      * @param string $projectionIdentifier in the form "<package.key>:<projection>", "<key>:<projection>" or "<projection">"
      * @return string
-     * @throws InvalidProjectionIdentifierException if no matching projector could be found
      */
-    private function normalizeProjectionIdentifier(string $projectionIdentifier)
+    private function normalizeProjectionIdentifier(string $projectionIdentifier): string
     {
         $matchingIdentifiers = [];
         foreach (array_keys($this->projections) as $fullProjectionIdentifier) {
@@ -204,10 +142,10 @@ class ProjectionManager
             }
         }
         if ($matchingIdentifiers === []) {
-            throw new InvalidProjectionIdentifierException(sprintf('No projection could be found that matches the projection identifier "%s"', $projectionIdentifier), 1476368605);
+            throw new \InvalidArgumentException(sprintf('No projection could be found that matches the projection identifier "%s"', $projectionIdentifier), 1476368605);
         }
         if (count($matchingIdentifiers) !== 1) {
-            throw new InvalidProjectionIdentifierException(sprintf('More than one projection matches the projection identifier "%s":%s%s', $projectionIdentifier, chr(10), implode(', ', $matchingIdentifiers)), 1476368615);
+            throw new \InvalidArgumentException(sprintf('More than one projection matches the projection identifier "%s":%s%s', $projectionIdentifier, chr(10), implode(', ', $matchingIdentifiers)), 1476368615);
         }
         return $matchingIdentifiers[0];
     }
@@ -219,7 +157,6 @@ class ProjectionManager
      * @param string $shortIdentifier
      * @param string $fullIdentifier The full projection identifier
      * @return bool
-     * @throws InvalidProjectionIdentifierException if the given $shortIdentifier is not in the valid form
      * @see normalizeProjectionIdentifier()
      */
     private function projectionIdentifiersMatch(string $shortIdentifier, string $fullIdentifier): bool
@@ -236,7 +173,7 @@ class ProjectionManager
             return $shortIdentifier === $fullIdentifierParts[1];
         }
         if ($shortIdentifierPartsCount !== 2) {
-            throw new InvalidProjectionIdentifierException(sprintf('Invalid projection identifier "%s", identifiers must have the format "<projection>" or "<package-key>:<projection>".', $shortIdentifier), 1476367741);
+            throw new \InvalidArgumentException(sprintf('Invalid projection identifier "%s", identifiers must have the format "<projection>" or "<package-key>:<projection>".', $shortIdentifier), 1476367741);
         }
         return
             $shortIdentifierParts[1] === $fullIdentifierParts[1]
@@ -247,8 +184,9 @@ class ProjectionManager
      * @param ObjectManagerInterface $objectManager
      * @return array
      * @Flow\CompileStatic
+     * @throws ClassLoadingForReflectionFailedException
      */
-    protected static function detectProjectors($objectManager)
+    protected static function detectProjectors($objectManager): array
     {
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);

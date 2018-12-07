@@ -24,6 +24,7 @@ use Neos\Flow\Annotations as Flow;
  */
 final class RawEvent
 {
+
     /**
      * @var string
      */
@@ -45,7 +46,7 @@ final class RawEvent
     private $metadata;
 
     /**
-     * @var string
+     * @var StreamName
      */
     private $streamName;
 
@@ -55,18 +56,12 @@ final class RawEvent
     private $version;
 
     /**
-     * @var int
-     */
-    private $sequenceNumber;
-
-    /**
      * @var \DateTimeInterface
      */
-    protected $recordedAt;
+    private $recordedAt;
 
-    public function __construct(int $sequenceNumber, string $type, array $payload, array $metadata, string $streamName, int $version, string $identifier, \DateTimeInterface $recordedAt)
+    public function __construct(string $type, array $payload, array $metadata, StreamName $streamName, int $version, string $identifier, \DateTimeInterface $recordedAt)
     {
-        $this->sequenceNumber = $sequenceNumber;
         $this->type = $type;
         $this->payload = $payload;
         $this->metadata = $metadata;
@@ -74,11 +69,6 @@ final class RawEvent
         $this->version = $version;
         $this->identifier = $identifier;
         $this->recordedAt = $recordedAt;
-    }
-
-    public function getSequenceNumber(): int
-    {
-        return $this->sequenceNumber;
     }
 
     public function getType(): string
@@ -96,7 +86,7 @@ final class RawEvent
         return $this->metadata;
     }
 
-    public function getStreamName(): string
+    public function getStreamName(): StreamName
     {
         return $this->streamName;
     }

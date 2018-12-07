@@ -37,7 +37,7 @@ final class EventStoreManager
     /**
      * @var string[]
      */
-    private $eventStoreIdentifiersPerBoundedContext = null;
+    private $eventStoreIdentifiersPerBoundedContext;
 
     /**
      * A list of all initialized event stores, indexed by the "Event Store identifier"
@@ -66,7 +66,7 @@ final class EventStoreManager
      * @return void
      * @throws StorageConfigurationException
      */
-    private function initialize()
+    private function initialize(): void
     {
         if ($this->eventStoreIdentifiersPerBoundedContext !== null) {
             return;
@@ -128,10 +128,10 @@ final class EventStoreManager
     /**
      * Retrieves/builds an EventStore instance matching the given stream name
      *
-     * @param string $streamName The stream name can be any string, but usually it has the format "<Bounded.Context>:<Aggregate>-<Identifier>"
+     * @param StreamName $streamName
      * @return EventStore
      */
-    public function getEventStoreForStreamName(string $streamName): EventStore
+    public function getEventStoreForStreamName(StreamName $streamName): EventStore
     {
         $boundedContext = $this->extractBoundedContextFromDesignator($streamName);
         return $this->getEventStoreForBoundedContext($boundedContext);
@@ -143,7 +143,7 @@ final class EventStoreManager
      * @param string $listenerClassName The fully qualified class name of the EventListener (or Projector)
      * @return EventStore
      */
-    public function getEventStoreForEventListener(string $listenerClassName)
+    public function getEventStoreForEventListener(string $listenerClassName): EventStore
     {
         $boundedContext = $this->objectManager->getPackageKeyByObjectName($listenerClassName) ?? '';
         return $this->getEventStoreForBoundedContext($boundedContext);

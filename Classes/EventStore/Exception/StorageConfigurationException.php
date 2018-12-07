@@ -11,8 +11,6 @@ namespace Neos\EventSourcing\EventStore\Exception;
  * source code.
  */
 
-use Neos\EventSourcing\RuntimeException;
-
-class StorageConfigurationException extends RuntimeException
+class StorageConfigurationException extends \RuntimeException
 {
 }

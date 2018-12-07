@@ -14,6 +14,7 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine\Factory;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
 use Neos\Flow\Annotations as Flow;
@@ -44,8 +45,9 @@ class ConnectionFactory
     /**
      * @param array $options
      * @return Connection
+     * @throws DBALException
      */
-    public function create(array $options)
+    public function create(array $options): Connection
     {
         $config = new Configuration();
         $connectionParams = $options['backendOptions'] ?? [];

@@ -11,51 +11,51 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
-final class WritableEvents implements \Iterator
+use Neos\Flow\Annotations as Flow;
+
+/**
+ * @Flow\Proxy(false)
+ */
+final class WritableEvents implements \IteratorAggregate, \Countable
 {
+
     /**
      * @var WritableEvent[]
      */
-    private $events = [];
+    private $events;
 
-    /**
-     * @var int
-     */
-    private $position = 0;
-
-    /**
-     * @param WritableEvent $event
-     */
-    public function append(WritableEvent $event)
+    private function __construct(array $events)
     {
-        $this->events[] = $event;
+        $this->events = $events;
+    }
+
+    public static function fromArray(array $events): self
+    {
+        foreach ($events as $event) {
+            if (!$event instanceof WritableEvent) {
+                throw new \InvalidArgumentException(sprintf('Only instances of WritableEvent are allowed, given: %s', is_object($event) ? get_class($event) : gettype($event)), 1540316594);
+            }
+        }
+        return new static(array_values($events));
+    }
+
+    public function append(WritableEvent $event): self
+    {
+        $events = $this->events;
+        $events[] = $event;
+        return new static($events);
     }
 
     /**
-     * @return WritableEvent
+     * @return WritableEvent[]|\ArrayIterator<WritableEvent>
      */
-    public function current()
+    public function getIterator(): \ArrayIterator
     {
-        return $this->events[$this->position];
+        return new \ArrayIterator($this->events);
     }
 
-    public function next()
+    public function count(): int
     {
-        $this->position ++;
-    }
-
-    public function key()
-    {
-        return $this->position;
-    }
-
-    public function valid()
-    {
-        return isset($this->events[$this->position]);
-    }
-
-    public function rewind()
-    {
-        $this->position = 0;
+        return count($this->events);
     }
 }

@@ -32,5 +32,5 @@ interface AsynchronousEventListenerInterface extends EventListenerInterface
      * @param int $sequenceNumber
      * @return void
      */
-    public function saveHighestAppliedSequenceNumber(int $sequenceNumber);
+    public function saveHighestAppliedSequenceNumber(int $sequenceNumber): void;
 }

@@ -11,16 +11,15 @@ namespace Neos\EventSourcing\Event\Decorator;
  * source code.
  */
 
-use Neos\EventSourcing\Event\EventInterface;
-use Neos\EventSourcing\Exception;
+use Neos\EventSourcing\Event\DomainEventInterface;
 
 /**
  * Event wrapper which provides a causation id additional to the event
  */
-final class EventWithCausationIdentifier implements EventWithMetadataInterface
+final class EventWithCausationIdentifier implements DomainEventWithMetadataInterface
 {
     /**
-     * @var EventInterface
+     * @var DomainEventInterface
      */
     private $event;
 
@@ -32,20 +31,19 @@ final class EventWithCausationIdentifier implements EventWithMetadataInterface
     /**
      * EventWithCausationIdentifier constructor.
      *
-     * @param EventInterface $event
+     * @param DomainEventInterface $event
      * @param string $causationIdentifier
-     * @throws Exception
      */
-    public function __construct(EventInterface $event, string $causationIdentifier)
+    public function __construct(DomainEventInterface $event, string $causationIdentifier)
     {
         $causationIdentifier = trim($causationIdentifier);
         if ($causationIdentifier === '') {
-            throw new Exception('Empty causation identifier provided', 1509109337);
+            throw new \InvalidArgumentException('Empty causation identifier provided', 1509109337);
         }
         if (strlen($causationIdentifier) > 255) {
-            throw new Exception('Causation identifier must be 255 characters or less', 1509109339);
+            throw new \InvalidArgumentException('Causation identifier must be 255 characters or less', 1509109339);
         }
-        if ($event instanceof EventWithMetadataInterface) {
+        if ($event instanceof DomainEventWithMetadataInterface) {
             $this->event = $event->getEvent();
             $this->metadata = $event->getMetadata();
         } else {
@@ -56,9 +54,9 @@ final class EventWithCausationIdentifier implements EventWithMetadataInterface
     }
 
     /**
-     * @return EventInterface
+     * @return DomainEventInterface
      */
-    public function getEvent(): EventInterface
+    public function getEvent(): DomainEventInterface
     {
         return $this->event;
     }

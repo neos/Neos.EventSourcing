@@ -11,8 +11,6 @@ namespace Neos\EventSourcing\EventStore\Exception;
  * source code.
  */
 
-use Neos\EventSourcing\RuntimeException;
-
-class ConcurrencyException extends RuntimeException
+class ConcurrencyException extends \RuntimeException
 {
 }

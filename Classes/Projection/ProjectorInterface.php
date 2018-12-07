@@ -26,12 +26,12 @@ interface ProjectorInterface extends EventListenerInterface
      * @return void
      * @api
      */
-    public function reset();
+    public function reset(): void;
 
     /**
      * Returns true if the projection maintained by the concreted projector does not contain any data (yet).
      *
      * @return boolean
      */
-    public function isEmpty();
+    public function isEmpty(): bool;
 }

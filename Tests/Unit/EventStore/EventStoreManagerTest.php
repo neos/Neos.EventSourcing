@@ -4,6 +4,7 @@ namespace Neos\EventSourcing\Tests\Unit\EventStore;
 use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\EventStoreManager;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
+use Neos\EventSourcing\EventStore\StreamName;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Tests\UnitTestCase;
 use Neos\Utility\ObjectAccess;
@@ -252,7 +253,6 @@ class EventStoreManagerTest extends UnitTestCase
     public function getEventStoreForStreamNameDataProvider()
     {
         return [
-            ['streamName' => '', 'expectedEventStore' => 'fallbackStore'],
             ['streamName' => 'Inactive', 'expectedEventStore' => 'fallbackStore'],
             ['streamName' => 'NoMatch', 'expectedEventStore' => 'fallbackStore'],
             ['streamName' => 'NoMatch:Foo', 'expectedEventStore' => 'fallbackStore'],
@@ -289,7 +289,7 @@ class EventStoreManagerTest extends UnitTestCase
             return '';
         }));
 
-        $this->eventStoreManager->getEventStoreForStreamName($streamName);
+        $this->eventStoreManager->getEventStoreForStreamName(StreamName::fromString($streamName));
     }
 
     /**

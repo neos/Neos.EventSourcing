@@ -1,5 +1,5 @@
 <?php
-namespace Neos\EventSourcing\Annotations;
+namespace Neos\EventSourcing\Event\Decorator;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -11,24 +11,17 @@ namespace Neos\EventSourcing\Annotations;
  * source code.
  */
 
-/**
- * @Annotation
- * @Target("CLASS")
- */
-final class ReadModel
+use Neos\EventSourcing\Event\DomainEventInterface;
+
+interface DomainEventWithMetadataInterface extends DomainEventInterface
 {
     /**
-     * @var string
+     * @return DomainEventInterface
      */
-    public $table;
+    public function getEvent(): DomainEventInterface;
 
     /**
-     * @param array $values
+     * @return array
      */
-    public function __construct(array $values)
-    {
-        if (isset($values['table'])) {
-            $this->table = $values['table'];
-        }
-    }
+    public function getMetadata(): array;
 }

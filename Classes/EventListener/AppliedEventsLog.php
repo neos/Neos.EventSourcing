@@ -28,7 +28,7 @@ class AppliedEventsLog
     public $eventListenerIdentifier;
 
     /**
-     * @var integer
+     * @var string
      */
     public $highestAppliedSequenceNumber;
 }

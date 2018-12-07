@@ -13,6 +13,7 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
 
 use Doctrine\DBAL\Query\QueryBuilder;
 use Neos\EventSourcing\EventStore\RawEvent;
+use Neos\EventSourcing\EventStore\StreamName;
 
 /**
  * Stream Iterator for the doctrine based EventStore
@@ -56,18 +57,21 @@ final class DoctrineStreamIterator implements \Iterator
     /**
      * @return RawEvent
      */
-    public function current()
+    public function current(): RawEvent
     {
         $currentEventData = $this->innerIterator->current();
         $payload = json_decode($currentEventData['payload'], true);
         $metadata = json_decode($currentEventData['metadata'], true);
-        $recordedAt = new \DateTimeImmutable($currentEventData['recordedat']);
+        try {
+            $recordedAt = new \DateTimeImmutable($currentEventData['recordedat']);
+        } catch (\Exception $exception) {
+            throw new \RuntimeException(sprintf('Could not parse recordedat timestamp "%s" as date.', $currentEventData['recordedat']), 1544211618, $exception);
+        }
         return new RawEvent(
-            $currentEventData['sequencenumber'],
             $currentEventData['type'],
             $payload,
             $metadata,
-            $currentEventData['stream'],
+            StreamName::fromString($currentEventData['stream']),
             (int)$currentEventData['version'],
             $currentEventData['id'],
             $recordedAt
@@ -77,7 +81,7 @@ final class DoctrineStreamIterator implements \Iterator
     /**
      * @return void
      */
-    public function next()
+    public function next(): void
     {
         $this->currentOffset = $this->innerIterator->current()['sequencenumber'];
         $this->innerIterator->next();
@@ -98,7 +102,7 @@ final class DoctrineStreamIterator implements \Iterator
     /**
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         return $this->innerIterator->valid();
     }
@@ -106,7 +110,7 @@ final class DoctrineStreamIterator implements \Iterator
     /**
      * @return void
      */
-    public function rewind()
+    public function rewind(): void
     {
         if ($this->currentOffset === 0) {
             return;
@@ -120,7 +124,7 @@ final class DoctrineStreamIterator implements \Iterator
      *
      * @return void
      */
-    private function fetchBatch()
+    private function fetchBatch(): void
     {
         // we deliberately don't use "setFirstResult" here, as this translates to an OFFSET query. For resolving
         // an OFFSET query, the DB needs to scan the result-set from the beginning (which is slow as hell).
@@ -136,7 +140,7 @@ final class DoctrineStreamIterator implements \Iterator
      * @see \Neos\Flow\Persistence\Doctrine\PersistenceManager::persistAll()
      * @return void
      */
-    private function reconnectDatabaseConnection()
+    private function reconnectDatabaseConnection(): void
     {
         if ($this->queryBuilder->getConnection()->ping() === false) {
             $this->queryBuilder->getConnection()->close();

@@ -12,26 +12,19 @@ namespace Neos\EventSourcing\Projection\Doctrine;
  */
 
 use Doctrine\ORM\EntityManagerInterface as DoctrineEntityManagerInterface;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\UnitOfWork;
-use Neos\EventSourcing\Exception;
-use Neos\Flow\Log\SystemLoggerInterface;
 use Neos\Flow\Annotations as Flow;
 
 /**
  * A persistence manager for Doctrine-based projectors
  *
  * @Flow\Scope("singleton")
- * @api
+ * @deprecated
  */
 class DoctrineProjectionPersistenceManager
 {
-
-    /**
-     * @Flow\Inject
-     * @var SystemLoggerInterface
-     */
-    protected $systemLogger;
 
     /**
      * @var DoctrineEntityManagerInterface
@@ -47,7 +40,7 @@ class DoctrineProjectionPersistenceManager
      * @param DoctrineEntityManagerInterface $entityManager
      * @return void
      */
-    public function injectEntityManager(DoctrineEntityManagerInterface $entityManager)
+    public function injectEntityManager(DoctrineEntityManagerInterface $entityManager): void
     {
         $this->entityManager = $entityManager;
     }
@@ -70,7 +63,7 @@ class DoctrineProjectionPersistenceManager
      * @param object $object The object to add
      * @return void
      */
-    public function add($object)
+    public function add($object): void
     {
         $this->entityManager->persist($object);
         $this->garbageCollection();
@@ -80,20 +73,19 @@ class DoctrineProjectionPersistenceManager
      * Schedules a modified object for persistence.
      *
      * @param object $object The modified object
-     * @throws Exception
      */
-    public function update($object)
+    public function update($object): void
     {
         if (!is_object($object)) {
             throw new \InvalidArgumentException(sprintf('Invalid argument: $object must be an object, %s given.', gettype($object)), 1474531440208);
         }
         if ($this->isNewObject($object)) {
-            throw new Exception(sprintf('The object of type %s which was passed to %s->update() is not a previously persisted projection. Check the code which updates this read model and make sure that only objects are updated which were persisted before. Alternatively use add() for persisting new objects.', get_class($object), get_class($this)), 1474531362129);
+            throw new \RuntimeException(sprintf('The object of type %s which was passed to %s->update() is not a previously persisted projection. Check the code which updates this read model and make sure that only objects are updated which were persisted before. Alternatively use add() for persisting new objects.', get_class($object), get_class($this)), 1474531362129);
         }
         try {
             $this->entityManager->persist($object);
         } catch (\Exception $exception) {
-            throw new Exception('Could not persist updated object of type "' . get_class($object) . '"', 1474531485464, $exception);
+            throw new \RuntimeException('Could not persist updated object of type "' . get_class($object) . '"', 1474531485464, $exception);
         }
         $this->garbageCollection();
     }
@@ -104,7 +96,7 @@ class DoctrineProjectionPersistenceManager
      * @param object $object The object to remove
      * @return void
      */
-    public function remove($object)
+    public function remove($object): void
     {
         $this->entityManager->remove($object);
         $this->garbageCollection();
@@ -116,7 +108,7 @@ class DoctrineProjectionPersistenceManager
      * @param string $dql
      * @return \Doctrine\ORM\Query
      */
-    public function createQuery(string $dql = '')
+    public function createQuery(string $dql = ''): \Doctrine\ORM\Query
     {
         return $this->entityManager->createQuery($dql);
     }
@@ -138,6 +130,7 @@ class DoctrineProjectionPersistenceManager
      *
      * @param string $readModelClassName
      * @return int
+     * @throws NonUniqueResultException
      */
     public function count(string $readModelClassName): int
     {
@@ -151,21 +144,18 @@ class DoctrineProjectionPersistenceManager
      * @return void
      * @api
      */
-    public function persistAll()
+    public function persistAll(): void
     {
         if (!$this->entityManager->isOpen()) {
-            $this->systemLogger->log('persistAll() skipped flushing data, the Doctrine EntityManager is closed. Check the logs for error message.', LOG_ERR);
             return;
         }
 
         try {
             $this->entityManager->flush();
         } catch (ORMException $exception) {
-            $this->systemLogger->logException($exception);
             $connection = $this->entityManager->getConnection();
             $connection->close();
             $connection->connect();
-            $this->systemLogger->log('Reconnected the Doctrine EntityManager to the persistence backend.', LOG_INFO);
             $this->entityManager->flush();
         }
     }
@@ -175,7 +165,7 @@ class DoctrineProjectionPersistenceManager
      *
      * @return void
      */
-    private function garbageCollection()
+    private function garbageCollection(): void
     {
         $this->numberOfPendingChanges ++;
         if ($this->numberOfPendingChanges < 100) {

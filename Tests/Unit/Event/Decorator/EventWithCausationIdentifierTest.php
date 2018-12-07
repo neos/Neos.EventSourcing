@@ -2,25 +2,25 @@
 namespace Neos\EventSourcing\Tests\Unit\Event\Decorator;
 
 use Neos\EventSourcing\Event\Decorator\EventWithCausationIdentifier;
-use Neos\EventSourcing\Event\Decorator\EventWithMetadataInterface;
-use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\Event\Decorator\DomainEventWithMetadataInterface;
+use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\Flow\Tests\UnitTestCase;
 
 class EventWithCausationIdentifierTest extends UnitTestCase
 {
     /**
-     * @var EventInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var DomainEventInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     private $mockEvent;
 
     public function setUp()
     {
-        $this->mockEvent = $this->getMockBuilder(EventInterface::class)->getMock();
+        $this->mockEvent = $this->getMockBuilder(DomainEventInterface::class)->getMock();
     }
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\Exception
+     * @expectedException \InvalidArgumentException
      */
     public function constructorDoesntAcceptEmptyCausationId()
     {
@@ -29,7 +29,7 @@ class EventWithCausationIdentifierTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\Exception
+     * @expectedException \InvalidArgumentException
      */
     public function constructorDoesntAcceptCausationIdExceedingMaxLength()
     {
@@ -62,8 +62,8 @@ class EventWithCausationIdentifierTest extends UnitTestCase
     public function metadataIsMergedWhenNestingEventsWithMetadata()
     {
         $someMetadata = ['foo' => ['bar' => 'Baz', 'foos' => 'bars'], 'causationIdentifier' => 'existing-causation-id', 'correlationIdentifier' => 'existing-causation-id'];
-        /** @var EventWithMetadataInterface|\PHPUnit_Framework_MockObject_MockObject $eventWithMetadata */
-        $eventWithMetadata = $this->getMockBuilder(EventWithMetadataInterface::class)->getMock();
+        /** @var DomainEventWithMetadataInterface|\PHPUnit_Framework_MockObject_MockObject $eventWithMetadata */
+        $eventWithMetadata = $this->getMockBuilder(DomainEventWithMetadataInterface::class)->getMock();
         $eventWithMetadata->expects($this->any())->method('getMetadata')->will($this->returnValue($someMetadata));
 
         $nestedEventWithMetadata = new EventWithCausationIdentifier($eventWithMetadata, 'overridden-causation-id');

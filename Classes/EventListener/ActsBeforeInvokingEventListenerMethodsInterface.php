@@ -10,7 +10,7 @@ namespace Neos\EventSourcing\EventListener;
  * information, please view the LICENSE file which was distributed with this
  * source code.
  */
-use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\EventSourcing\EventStore\RawEvent;
 
 /**
@@ -24,9 +24,9 @@ interface ActsBeforeInvokingEventListenerMethodsInterface extends EventListenerI
     /**
      * Called before a listener method is invoked
      *
-     * @param EventInterface $event The event to be dispatched
+     * @param DomainEventInterface $event The event to be dispatched
      * @param RawEvent $rawEvent The raw event to be dispatched
      * @return void
      */
-    public function beforeInvokingEventListenerMethod(EventInterface $event, RawEvent $rawEvent);
+    public function beforeInvokingEventListenerMethod(DomainEventInterface $event, RawEvent $rawEvent): void;
 }

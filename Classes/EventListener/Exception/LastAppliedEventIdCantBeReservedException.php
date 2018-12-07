@@ -1,6 +1,5 @@
 <?php
-namespace Neos\EventSourcing;
-
+namespace Neos\EventSourcing\EventListener\Exception;
 /*
  * This file is part of the Neos.EventSourcing package.
  *
@@ -11,9 +10,6 @@ namespace Neos\EventSourcing;
  * source code.
  */
 
-/**
- * Exception
- */
-class Exception extends \Neos\Flow\Exception
+class LastAppliedEventIdCantBeReservedException extends \RuntimeException
 {
 }

@@ -11,17 +11,17 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
-use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\Event\DomainEventInterface;
 
 /**
  * Wrapper for a event that was loaded from the Event Store.
  * It contains the original event data including raw payload, metadata and technical meta information
  * and the converted EventInterface instance
  */
-final class EventAndRawEvent
+final class EventEnvelope
 {
     /**
-     * @var EventInterface
+     * @var DomainEventInterface
      */
     private $event;
 
@@ -30,7 +30,7 @@ final class EventAndRawEvent
      */
     private $rawEvent;
 
-    public function __construct(EventInterface $event, RawEvent $rawEvent)
+    public function __construct(DomainEventInterface $event, RawEvent $rawEvent)
     {
         $this->event = $event;
         $this->rawEvent = $rawEvent;
@@ -39,9 +39,9 @@ final class EventAndRawEvent
     /**
      * The converted event instance
      *
-     * @return EventInterface
+     * @return DomainEventInterface
      */
-    public function getEvent(): EventInterface
+    public function getDomainEvent(): DomainEventInterface
     {
         return $this->event;
     }
