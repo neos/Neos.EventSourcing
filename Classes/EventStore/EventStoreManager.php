@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\EventStore;
 
 /*
@@ -133,7 +134,7 @@ final class EventStoreManager
      */
     public function getEventStoreForStreamName(StreamName $streamName): EventStore
     {
-        $boundedContext = $this->extractBoundedContextFromDesignator($streamName);
+        $boundedContext = $this->extractBoundedContextFromDesignator((string)$streamName);
         return $this->getEventStoreForBoundedContext($boundedContext);
     }
 

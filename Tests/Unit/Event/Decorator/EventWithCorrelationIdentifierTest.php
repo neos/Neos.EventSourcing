@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\Tests\Unit\Event\Decorator;
 
 use Neos\EventSourcing\Event\Decorator\EventWithCorrelationIdentifier;
@@ -22,7 +23,7 @@ class EventWithCorrelationIdentifierTest extends UnitTestCase
      * @test
      * @expectedException \InvalidArgumentException
      */
-    public function constructorDoesntAcceptEmptyCorrelationId()
+    public function constructorDoesntAcceptEmptyCorrelationId(): void
     {
         new EventWithCorrelationIdentifier($this->mockEvent, '');
     }
@@ -31,7 +32,7 @@ class EventWithCorrelationIdentifierTest extends UnitTestCase
      * @test
      * @expectedException \InvalidArgumentException
      */
-    public function constructorDoesntAcceptCorrelationIdExceedingMaxLength()
+    public function constructorDoesntAcceptCorrelationIdExceedingMaxLength(): void
     {
         new EventWithCorrelationIdentifier($this->mockEvent, str_repeat('x', 256));
     }
@@ -39,7 +40,7 @@ class EventWithCorrelationIdentifierTest extends UnitTestCase
     /**
      * @test
      */
-    public function originalEventCanBeRetrieved()
+    public function originalEventCanBeRetrieved(): void
     {
         $eventWithMetadata = new EventWithCorrelationIdentifier($this->mockEvent, 'some-id');
         $this->assertSame($this->mockEvent, $eventWithMetadata->getEvent());
@@ -48,7 +49,7 @@ class EventWithCorrelationIdentifierTest extends UnitTestCase
     /**
      * @test
      */
-    public function correlationIdentifierCanBeRetrieved()
+    public function correlationIdentifierCanBeRetrieved(): void
     {
         $someCorrelationId = 'some-id';
         $eventWithMetadata = new EventWithCorrelationIdentifier($this->mockEvent, $someCorrelationId);
@@ -59,12 +60,12 @@ class EventWithCorrelationIdentifierTest extends UnitTestCase
     /**
      * @test
      */
-    public function metadataIsMergedWhenNestingEventsWithMetadata()
+    public function metadataIsMergedWhenNestingEventsWithMetadata(): void
     {
         $someMetadata = ['foo' => ['bar' => 'Baz', 'foos' => 'bars'], 'causationIdentifier' => 'existing-causation-id', 'correlationIdentifier' => 'existing-correlation-id'];
         /** @var DomainEventWithMetadataInterface|\PHPUnit_Framework_MockObject_MockObject $eventWithMetadata */
         $eventWithMetadata = $this->getMockBuilder(DomainEventWithMetadataInterface::class)->getMock();
-        $eventWithMetadata->expects($this->any())->method('getMetadata')->will($this->returnValue($someMetadata));
+        $eventWithMetadata->method('getMetadata')->willReturn($someMetadata);
 
         $nestedEventWithMetadata = new EventWithCorrelationIdentifier($eventWithMetadata, 'overridden-correlation-id');
 
@@ -76,7 +77,7 @@ class EventWithCorrelationIdentifierTest extends UnitTestCase
     /**
      * @test
      */
-    public function eventIsUnwrappedWhenNestingEventsWithMetadata()
+    public function eventIsUnwrappedWhenNestingEventsWithMetadata(): void
     {
         $eventWithMetadata = new EventWithCorrelationIdentifier($this->mockEvent, 'some-id');
         $nestedEventWithMetadata = new EventWithCorrelationIdentifier($eventWithMetadata, 'some-id');

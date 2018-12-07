@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\EventListener;
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -20,14 +21,7 @@ use Neos\EventSourcing\EventListener\Exception\LastAppliedEventIdCantBeReservedE
 use Neos\Flow\Annotations as Flow;
 
 /**
- * A generic Doctrine-based repository for applied events logs.
- *
- * This repository can be used by projectors, process managers or other asynchronous event listeners for keeping
- * track of the highest sequence number of the applied events. This information is used and updated when catching up
- * on new events.
- *
- * Alternatively to using this repository, event listeners are free to implement their own way of storing this
- * information.
+ * TODO Document
  *
  * @api
  * @Flow\Scope("singleton")
@@ -55,12 +49,6 @@ class AppliedEventsLogRepository
         $this->dbal = $entityManager->getConnection();
     }
 
-    /**
-     * Returns the last seen sequence number of events which has been applied to the concrete event listener.
-     *
-     * @param string $eventListenerIdentifier
-     * @return string|null
-     */
     public function reserveLastAppliedEventId(string $eventListenerIdentifier): ?string
     {
         try {
@@ -111,7 +99,7 @@ class AppliedEventsLogRepository
         if ($lastAppliedEventId === false) {
             throw new LastAppliedEventIdCantBeReservedException(sprintf('Could not reserve last applied event id for listener "%s"', $eventListenerIdentifier), 1541002644);
         }
-        return $lastAppliedEventId;
+        return (string)$lastAppliedEventId;
     }
 
     public function releaseLastAppliedEventId(): void
@@ -122,14 +110,6 @@ class AppliedEventsLogRepository
         }
     }
 
-    /**
-     * Saves the $sequenceNumber as the last seen sequence number of events which have been applied to the concrete
-     * event listener.
-     *
-     * @param string $eventListenerIdentifier
-     * @param string $eventId
-     * @return void
-     */
     public function saveLastAppliedEventId(string $eventListenerIdentifier, string $eventId): void
     {
         // TODO: Fails if no matching entry exists
@@ -142,10 +122,29 @@ class AppliedEventsLogRepository
         } catch (DBALException $exception) {
             throw new \RuntimeException(sprintf('Could not save last applied event id for listener "%s"', $eventListenerIdentifier), 1544207099, $exception);
         }
+//        try {
+//            $this->dbal->commit();
+//        } catch (ConnectionException $exception) {
+//            // TODO handle exception
+//        }
+    }
+
+    /**
+     *
+     * @param string $eventListenerIdentifier
+     * @return void
+     */
+    public function removeLastAppliedEventId(string $eventListenerIdentifier): void
+    {
+        // TODO: Fails if no matching entry exists
         try {
-            $this->dbal->commit();
-        } catch (ConnectionException $exception) {
-            // TODO handle exception
+            $this->dbal->update(
+                self::TABLE_NAME,
+                ['lastappliedeventid' => null],
+                ['eventlisteneridentifier' => $eventListenerIdentifier]
+            );
+        } catch (DBALException $exception) {
+            throw new \RuntimeException(sprintf('Could not reset last applied event id for listener "%s"', $eventListenerIdentifier), 1544213138, $exception);
         }
     }
 }

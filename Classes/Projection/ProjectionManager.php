@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\Projection;
 
 /*
@@ -122,7 +123,7 @@ class ProjectionManager
 
         /** @var ProjectorInterface $projector */
         $projector = $this->objectManager->get($projection->getProjectorClassName());
-        $this->appliedEventsLogRepository->saveLastAppliedEventId($projection->getProjectorClassName(), 0);
+        $this->appliedEventsLogRepository->removeLastAppliedEventId($projection->getProjectorClassName());
         $projector->reset();
         $this->eventListenerInvoker->catchUp($projector, $progressCallback);
     }

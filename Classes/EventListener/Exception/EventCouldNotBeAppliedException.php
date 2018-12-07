@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\EventListener\Exception;
 /*
  * This file is part of the Neos.EventSourcing package.
