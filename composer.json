@@ -5,7 +5,8 @@
     "require": {
         "php": ">=7.1",
         "neos/flow": "^5.0",
-        "flowpack/jobqueue-common": "^3.0"
+        "flowpack/jobqueue-common": "^3.0",
+        "symfony/serializer": "^4.2"
     },
     "suggest": {
         "php-uuid": "For fast generation of UUIDs used in the persistence."
