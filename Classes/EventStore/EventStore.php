@@ -14,6 +14,7 @@ namespace Neos\EventSourcing\EventStore;
 
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\EventBus\EventBus;
+use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\Flow\Annotations as Flow;
 use Neos\EventSourcing\Event\Decorator\DomainEventWithMetadataInterface;
 use Neos\EventSourcing\Event\DomainEvents;
@@ -78,6 +79,7 @@ final class EventStore
      * @param StreamName $streamName
      * @param DomainEvents $events
      * @param int $expectedVersion
+     * @throws ConcurrencyException
      */
     public function commit(StreamName $streamName, DomainEvents $events, int $expectedVersion = ExpectedVersion::ANY): void
     {

@@ -14,6 +14,7 @@ namespace Neos\EventSourcing\EventStore\Storage;
 
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\EventStore\EventStream;
+use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\EventSourcing\EventStore\WritableEvents;
@@ -35,6 +36,7 @@ interface EventStorageInterface
      * @param WritableEvents $events
      * @param int $expectedVersion
      * @return void
+     * @throws ConcurrencyException
      */
     public function commit(StreamName $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): void;
 

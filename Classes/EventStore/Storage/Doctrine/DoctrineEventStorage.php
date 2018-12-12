@@ -129,7 +129,7 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
 
     /**
      * @inheritdoc
-     * @throws DBALException
+     * @throws DBALException | ConcurrencyException
      */
     public function commit(StreamName $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): void
     {
