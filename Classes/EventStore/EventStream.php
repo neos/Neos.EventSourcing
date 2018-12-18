@@ -38,9 +38,9 @@ final class EventStream implements \Iterator
 
     /**
      * @param StreamName $streamName
-     * @param \Iterator $streamIterator
+     * @param EventStreamIteratorInterface $streamIterator
      */
-    public function __construct(StreamName $streamName, \Iterator $streamIterator)
+    public function __construct(StreamName $streamName, EventStreamIteratorInterface $streamIterator)
     {
         $this->streamName = $streamName;
         $this->streamIterator = $streamIterator;

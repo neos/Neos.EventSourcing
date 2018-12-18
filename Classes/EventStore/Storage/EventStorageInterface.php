@@ -26,10 +26,10 @@ interface EventStorageInterface
 {
     /**
      * @param StreamName $filter
-     * @param string $eventIdentifier
+     * @param int $offset
      * @return EventStream
      */
-    public function load(StreamName $filter, string $eventIdentifier = null): EventStream;
+    public function load(StreamName $filter, int $offset = 0): EventStream;
 
     /**
      * @param StreamName $streamName

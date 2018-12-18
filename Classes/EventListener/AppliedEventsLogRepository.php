@@ -17,7 +17,7 @@ use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\ORM\EntityManager as DoctrineEntityManager;
-use Neos\EventSourcing\EventListener\Exception\LastAppliedEventIdCantBeReservedException;
+use Neos\EventSourcing\EventListener\Exception\HighestAppliedSequenceNumberCantBeReservedException;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -49,25 +49,25 @@ class AppliedEventsLogRepository
         $this->dbal = $entityManager->getConnection();
     }
 
-    public function reserveLastAppliedEventId(string $eventListenerIdentifier): ?string
+    public function reserveHighestAppliedEventSequenceNumber(string $eventListenerIdentifier): int
     {
         try {
-            $lastAppliedEventId = $this->fetchHighestAppliedEventId($eventListenerIdentifier);
-        } catch (LastAppliedEventIdCantBeReservedException $exception) {
+            $sequenceNumber = $this->fetchHighestAppliedSequenceNumber($eventListenerIdentifier);
+        } catch (HighestAppliedSequenceNumberCantBeReservedException $exception) {
             try {
-                $this->dbal->executeUpdate('INSERT INTO ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . ' (eventlisteneridentifier) VALUES (:eventListenerIdentifier)', [
+                $this->dbal->executeUpdate('INSERT INTO ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, 0)', [
                     'eventListenerIdentifier' => $eventListenerIdentifier
                 ]);
                 $this->dbal->commit();
             } catch (DBALException $exception) {
                 throw new \RuntimeException($exception->getMessage(), 1544207944, $exception);
             }
-            return $this->reserveLastAppliedEventId($eventListenerIdentifier);
+            return $this->reserveHighestAppliedEventSequenceNumber($eventListenerIdentifier);
         }
-        return $lastAppliedEventId;
+        return (int)$sequenceNumber;
     }
 
-    private function fetchHighestAppliedEventId(string $eventListenerIdentifier): ?string
+    private function fetchHighestAppliedSequenceNumber(string $eventListenerIdentifier): ?int
     {
         try {
             // TODO longer/configurable timeout?
@@ -77,8 +77,8 @@ class AppliedEventsLogRepository
         }
         $this->dbal->beginTransaction();
         try {
-            $lastAppliedEventId = $this->dbal->fetchColumn('
-                SELECT lastappliedeventid
+            $highestAppliedSequenceNumber = $this->dbal->fetchColumn('
+                SELECT highestAppliedSequenceNumber
                 FROM ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . '
                 WHERE eventlisteneridentifier = :eventListenerIdentifier ' . $this->dbal->getDatabasePlatform()->getForUpdateSQL(),
                 ['eventListenerIdentifier' => $eventListenerIdentifier]
@@ -92,17 +92,17 @@ class AppliedEventsLogRepository
             if ($exception->getErrorCode() !== 1205) {
                 throw new \RuntimeException($exception->getMessage(), 1544207633, $exception);
             }
-            throw new LastAppliedEventIdCantBeReservedException(sprintf('Could not reserve last applied event id for listener "%s"', $eventListenerIdentifier), 1523456892, $exception);
+            throw new HighestAppliedSequenceNumberCantBeReservedException(sprintf('Could not reserve highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1523456892, $exception);
         } catch (DBALException $exception) {
             throw new \RuntimeException($exception->getMessage(), 1544207778, $exception);
         }
-        if ($lastAppliedEventId === false) {
-            throw new LastAppliedEventIdCantBeReservedException(sprintf('Could not reserve last applied event id for listener "%s"', $eventListenerIdentifier), 1541002644);
+        if ($highestAppliedSequenceNumber === false) {
+            throw new HighestAppliedSequenceNumberCantBeReservedException(sprintf('Could not reserve highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1541002644);
         }
-        return (string)$lastAppliedEventId;
+        return (int)$highestAppliedSequenceNumber;
     }
 
-    public function releaseLastAppliedEventId(): void
+    public function releaseHighestAppliedSequenceNumber(): void
     {
         try {
             $this->dbal->commit();
@@ -110,17 +110,17 @@ class AppliedEventsLogRepository
         }
     }
 
-    public function saveLastAppliedEventId(string $eventListenerIdentifier, string $eventId): void
+    public function saveHighestAppliedSequenceNumber(string $eventListenerIdentifier, int $sequenceNumber): void
     {
         // TODO: Fails if no matching entry exists
         try {
             $this->dbal->update(
                 self::TABLE_NAME,
-                ['lastappliedeventid' => $eventId],
-                ['eventlisteneridentifier' => $eventListenerIdentifier]
+                ['highestAppliedSequenceNumber' => $sequenceNumber],
+                ['eventListenerIdentifier' => $eventListenerIdentifier]
             );
         } catch (DBALException $exception) {
-            throw new \RuntimeException(sprintf('Could not save last applied event id for listener "%s"', $eventListenerIdentifier), 1544207099, $exception);
+            throw new \RuntimeException(sprintf('Could not save highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1544207099, $exception);
         }
 //        try {
 //            $this->dbal->commit();
@@ -134,17 +134,17 @@ class AppliedEventsLogRepository
      * @param string $eventListenerIdentifier
      * @return void
      */
-    public function removeLastAppliedEventId(string $eventListenerIdentifier): void
+    public function removeHighestAppliedSequenceNumber(string $eventListenerIdentifier): void
     {
         // TODO: Fails if no matching entry exists
         try {
             $this->dbal->update(
                 self::TABLE_NAME,
-                ['lastappliedeventid' => null],
-                ['eventlisteneridentifier' => $eventListenerIdentifier]
+                ['highestAppliedSequenceNumber' => -1],
+                ['eventListenerIdentifier' => $eventListenerIdentifier]
             );
         } catch (DBALException $exception) {
-            throw new \RuntimeException(sprintf('Could not reset last applied event id for listener "%s"', $eventListenerIdentifier), 1544213138, $exception);
+            throw new \RuntimeException(sprintf('Could not reset highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1544213138, $exception);
         }
     }
 }

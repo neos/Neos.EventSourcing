@@ -67,14 +67,24 @@ final class StreamName
         return strpos($this->value, '$') === 0;
     }
 
-    public function isAll(): bool
+    public function isAllStream(): bool
     {
         return $this->value === '$all';
     }
 
+    public function isCategoryStream(): bool
+    {
+        return strpos($this->value, '$ce-') === 0;
+    }
+
+    public function isCorrelationIdStream(): bool
+    {
+        return strpos($this->value, '$correlation-') === 0;
+    }
+
     public function getCategoryName(): string
     {
-        if (strpos($this->value, '$ce-') !== 0) {
+        if (!$this->isCategoryStream()) {
             throw new \RuntimeException(sprintf('Stream "%s" is no category stream', $this->value), 1540633414);
         }
         return substr($this->value, 4);

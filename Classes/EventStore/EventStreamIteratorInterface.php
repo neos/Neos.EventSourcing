@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\EventListener\Exception;
+namespace Neos\EventSourcing\EventStore;
+
 /*
  * This file is part of the Neos.EventSourcing package.
  *
@@ -11,6 +12,8 @@ namespace Neos\EventSourcing\EventListener\Exception;
  * source code.
  */
 
-class LastAppliedEventIdCantBeReservedException extends \RuntimeException
+interface EventStreamIteratorInterface extends \Iterator
 {
+
+    public function current(): RawEvent;
 }

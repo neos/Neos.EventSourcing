@@ -44,7 +44,7 @@ final class EventListenerInvoker
      */
     public function catchUp(EventListenerInterface $listener, \Closure $progressCallback = null): void
     {
-        $lastAppliedEventId = $this->appliedEventsLogRepository->reserveLastAppliedEventId(get_class($listener));
+        $highestAppliedSequenceNumber = $this->appliedEventsLogRepository->reserveHighestAppliedEventSequenceNumber(get_class($listener));
         if ($listener instanceof StreamAwareEventListenerInterface) {
             $streamName = $listener::listensToStream();
         } else {
@@ -52,9 +52,9 @@ final class EventListenerInvoker
         }
         $eventStore = $this->eventStoreManager->getEventStoreForEventListener(get_class($listener));
         try {
-            $eventStream = $eventStore->load($streamName, $lastAppliedEventId);
+            $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber);
         } catch (EventStreamNotFoundException $exception) {
-            $this->appliedEventsLogRepository->releaseLastAppliedEventId();
+            $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
             return;
         }
         foreach ($eventStream as $eventEnvelope) {
@@ -63,7 +63,7 @@ final class EventListenerInvoker
                 $progressCallback($eventEnvelope);
             }
         }
-        $this->appliedEventsLogRepository->releaseLastAppliedEventId();
+        $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
     }
 
     /**
@@ -81,7 +81,7 @@ final class EventListenerInvoker
             throw new \RuntimeException(sprintf('Could not extract listener method name for listener %s and event %s', get_class($listener), get_class($event)), 1541003718, $exception);
         }
         if (!method_exists($listener, $listenerMethodName)) {
-            $this->appliedEventsLogRepository->saveLastAppliedEventId(get_class($listener), $rawEvent->getIdentifier());
+            $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $rawEvent->getSequenceNumber());
             return;
         }
         /** @var EventListenerInterface $listenerObject */
@@ -91,10 +91,10 @@ final class EventListenerInvoker
         try {
             $listener->$listenerMethodName($event, $rawEvent);
         } catch (\Exception $exception) {
-            $this->appliedEventsLogRepository->releaseLastAppliedEventId();
+            $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
             throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($listener)), 1544207001, $exception, $eventEnvelope, $listener);
         }
-        $this->appliedEventsLogRepository->saveLastAppliedEventId(get_class($listener), $rawEvent->getIdentifier());
+        $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $rawEvent->getSequenceNumber());
     }
 
 }

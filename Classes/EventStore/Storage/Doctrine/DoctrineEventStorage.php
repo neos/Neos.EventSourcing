@@ -87,7 +87,7 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
     /**
      * @inheritdoc
      */
-    public function load(StreamName $streamName, string $eventIdentifier = null): EventStream
+    public function load(StreamName $streamName, int $offset = 0): EventStream
     {
         $this->reconnectDatabaseConnection();
         $query = $this->connection->createQueryBuilder()
@@ -95,18 +95,17 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
             ->from($this->eventTableName)
             ->orderBy('sequencenumber', 'ASC');
 
-        if ($eventIdentifier !== null) {
-            $eventSequenceNumber = $this->getEventSequenceNumber($eventIdentifier);
-            $query->andWhere('sequenceNumber > :sequenceNumber');
-            $query->setParameter('sequenceNumber', $eventSequenceNumber);
-        }
-
         if (!$streamName->isVirtualStream()) {
             $query->andWhere('stream = :streamName');
             $query->setParameter('streamName', (string)$streamName);
-        } elseif (!$streamName->isAll()) {
+        } elseif ($streamName->isCategoryStream()) {
             $query->andWhere('stream LIKE :streamNamePrefix');
             $query->setParameter('streamNamePrefix', $streamName->getCategoryName() . '%');
+        } elseif (!$streamName->isAllStream()) {
+            throw new \InvalidArgumentException(sprintf('Unsupported virtual stream name "%s"', $streamName), 1545155909);
+        }
+        if ($offset > 0) {
+            $query->setFirstResult($offset);
         }
 
         $streamIterator = new DoctrineStreamIterator($query);
@@ -185,25 +184,6 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
             ->execute()
             ->fetchColumn();
         return $version !== null ? (int)$version : -1;
-    }
-
-    /**
-     * @param string $eventIdentifier
-     * @return int
-     */
-    private function getEventSequenceNumber(string $eventIdentifier): int
-    {
-        $sequenceNumber = $this->connection->createQueryBuilder()
-            ->select('sequenceNumber')
-            ->from($this->eventTableName)
-            ->where('id = :eventIdentifier')
-            ->setParameter('eventIdentifier', $eventIdentifier)
-            ->execute()
-            ->fetchColumn();
-        if ($sequenceNumber === null) {
-            throw new \RuntimeException(sprintf('Event with id "%s" not found', $eventIdentifier), 1540636494);
-        }
-        return (int)$sequenceNumber;
     }
 
     /**

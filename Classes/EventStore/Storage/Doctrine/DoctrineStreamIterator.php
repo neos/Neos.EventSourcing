@@ -13,13 +13,14 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
  */
 
 use Doctrine\DBAL\Query\QueryBuilder;
+use Neos\EventSourcing\EventStore\EventStreamIteratorInterface;
 use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\StreamName;
 
 /**
  * Stream Iterator for the doctrine based EventStore
  */
-final class DoctrineStreamIterator implements \Iterator
+final class DoctrineStreamIterator implements EventStreamIteratorInterface
 {
 
     /**
@@ -38,6 +39,11 @@ final class DoctrineStreamIterator implements \Iterator
      * @var int
      */
     private $currentOffset = 0;
+
+    /**
+     * @var int
+     */
+    private $initialOffset = 0;
 
     /**
      * @var \ArrayIterator
@@ -69,6 +75,7 @@ final class DoctrineStreamIterator implements \Iterator
             throw new \RuntimeException(sprintf('Could not parse recordedat timestamp "%s" as date.', $currentEventData['recordedat']), 1544211618, $exception);
         }
         return new RawEvent(
+            $this->innerIterator->key() + $this->queryBuilder->getFirstResult(),
             $currentEventData['type'],
             $payload,
             $metadata,
@@ -130,6 +137,9 @@ final class DoctrineStreamIterator implements \Iterator
         // we deliberately don't use "setFirstResult" here, as this translates to an OFFSET query. For resolving
         // an OFFSET query, the DB needs to scan the result-set from the beginning (which is slow as hell).
         $this->queryBuilder->setParameter('sequenceNumberOffset', $this->currentOffset);
+        if ($this->currentOffset === 0 && $this->initialOffset > 0) {
+            $this->queryBuilder->setFirstResult($this->initialOffset);
+        }
         $this->reconnectDatabaseConnection();
         $rawResult = $this->queryBuilder->execute()->fetchAll();
         $this->innerIterator = new \ArrayIterator($rawResult);

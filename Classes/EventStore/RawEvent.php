@@ -57,12 +57,18 @@ final class RawEvent
     private $version;
 
     /**
+     * @var int
+     */
+    private $sequenceNumber;
+
+    /**
      * @var \DateTimeInterface
      */
     private $recordedAt;
 
-    public function __construct(string $type, array $payload, array $metadata, StreamName $streamName, int $version, string $identifier, \DateTimeInterface $recordedAt)
+    public function __construct(int $sequenceNumber, string $type, array $payload, array $metadata, StreamName $streamName, int $version, string $identifier, \DateTimeInterface $recordedAt)
     {
+        $this->sequenceNumber = $sequenceNumber;
         $this->type = $type;
         $this->payload = $payload;
         $this->metadata = $metadata;
@@ -71,6 +77,12 @@ final class RawEvent
         $this->identifier = $identifier;
         $this->recordedAt = $recordedAt;
     }
+
+    public function getSequenceNumber(): int
+    {
+        return $this->sequenceNumber;
+    }
+
 
     public function getType(): string
     {

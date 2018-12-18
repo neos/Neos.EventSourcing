@@ -123,7 +123,7 @@ class ProjectionManager
 
         /** @var ProjectorInterface $projector */
         $projector = $this->objectManager->get($projection->getProjectorClassName());
-        $this->appliedEventsLogRepository->removeLastAppliedEventId($projection->getProjectorClassName());
+        $this->appliedEventsLogRepository->removeHighestAppliedSequenceNumber($projection->getProjectorClassName());
         $projector->reset();
         $this->eventListenerInvoker->catchUp($projector, $progressCallback);
     }
