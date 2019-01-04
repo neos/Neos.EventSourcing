@@ -55,7 +55,7 @@ class AppliedEventsLogRepository
             $sequenceNumber = $this->fetchHighestAppliedSequenceNumber($eventListenerIdentifier);
         } catch (HighestAppliedSequenceNumberCantBeReservedException $exception) {
             try {
-                $this->dbal->executeUpdate('INSERT INTO ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, 0)', [
+                $this->dbal->executeUpdate('INSERT INTO ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, -1)', [
                     'eventListenerIdentifier' => $eventListenerIdentifier
                 ]);
                 $this->dbal->commit();

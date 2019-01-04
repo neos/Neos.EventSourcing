@@ -52,7 +52,7 @@ final class EventListenerInvoker
         }
         $eventStore = $this->eventStoreManager->getEventStoreForEventListener(get_class($listener));
         try {
-            $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber);
+            $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
         } catch (EventStreamNotFoundException $exception) {
             $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
             return;
