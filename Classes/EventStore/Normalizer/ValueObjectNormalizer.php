@@ -22,12 +22,12 @@ final class ValueObjectNormalizer implements DenormalizerInterface, CacheableSup
     public function denormalize($data, $className, $format = null, array $context = [])
     {
         $constructorMethod = $this->resolveConstructorMethod(gettype($data), $className);
-        return $constructorMethod->isConstructor() ? $constructorMethod->getDeclaringClass()->newInstance($data) : $constructorMethod->invoke(null, $data);
+        return $constructorMethod->isConstructor() ? new $className($data) : $constructorMethod->invoke(null, $data);
     }
 
     public function supportsDenormalization($data, $className, $format = null): bool
     {
-        $supportedTypes = ['string', 'integer', 'double', 'boolean'];
+        $supportedTypes = ['array', 'string', 'integer', 'double', 'boolean'];
         $dataType = gettype($data);
         if (!in_array($dataType, $supportedTypes, true)) {
             return false;
@@ -46,6 +46,9 @@ final class ValueObjectNormalizer implements DenormalizerInterface, CacheableSup
             $reflectionClass = new \ReflectionClass($className);
         } catch (\ReflectionException $exception) {
             throw new \InvalidArgumentException(sprintf('Could not reflect class "%s"', $className), 1545233370, $exception);
+        }
+        if ($reflectionClass->isAbstract()) {
+            throw new \InvalidArgumentException(sprintf('Class "%s" is abstract', $className), 1545296135);
         }
         $namedConstructorMethod = $this->resolveNamedConstructorMethod($dataType, $className, $reflectionClass);
         $constructorMethod = $namedConstructorMethod ?? $reflectionClass->getConstructor();
