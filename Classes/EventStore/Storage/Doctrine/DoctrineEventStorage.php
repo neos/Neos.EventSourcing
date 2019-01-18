@@ -189,7 +189,7 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
     /**
      * @param int $actualVersion
      * @param int $expectedVersion
-     * @throws ConcurrencyException
+     * @throws ConcurrencyException | ConnectionException
      */
     private function verifyExpectedVersion(int $actualVersion, int $expectedVersion): void
     {
@@ -199,6 +199,7 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
         if ($expectedVersion === $actualVersion) {
             return;
         }
+        $this->connection->rollBack();
         throw new ConcurrencyException(sprintf('Expected version: %s, actual version: %s', $this->renderExpectedVersion($expectedVersion), $this->renderExpectedVersion($actualVersion)), 1477143473);
     }
 
