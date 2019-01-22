@@ -137,6 +137,9 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
         }
         $this->reconnectDatabaseConnection();
         $this->connection->beginTransaction();
+        if ($this->connection->getTransactionNestingLevel() > 1) {
+            throw new \RuntimeException('A transaction is active already, can\'t commit events!', 1547829131);
+        }
         try {
             $actualVersion = $this->getStreamVersion($streamName);
             $this->verifyExpectedVersion($actualVersion, $expectedVersion);
