@@ -12,8 +12,6 @@ namespace Neos\EventSourcing\Projection;
  * source code.
  */
 
-use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
-
 /**
  * Projection DTO
  */
@@ -72,13 +70,5 @@ class Projection
     public function getEventClassNames(): array
     {
         return $this->eventClassNames;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isAsynchronous(): bool
-    {
-        return is_subclass_of($this->getProjectorClassName(), AsynchronousEventListenerInterface::class);
     }
 }
