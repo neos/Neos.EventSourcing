@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace Neos\EventSourcing\EventListener;
+
 /*
  * This file is part of the Neos.EventSourcing package.
  *
@@ -54,14 +55,6 @@ class AppliedEventsLogRepository
         try {
             $sequenceNumber = $this->fetchHighestAppliedSequenceNumber($eventListenerIdentifier);
         } catch (HighestAppliedSequenceNumberCantBeReservedException $exception) {
-            try {
-                $this->dbal->executeUpdate('INSERT INTO ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, -1)', [
-                    'eventListenerIdentifier' => $eventListenerIdentifier
-                ]);
-                $this->dbal->commit();
-            } catch (DBALException $exception) {
-                throw new \RuntimeException($exception->getMessage(), 1544207944, $exception);
-            }
             return $this->reserveHighestAppliedEventSequenceNumber($eventListenerIdentifier);
         }
         return (int)$sequenceNumber;
@@ -97,7 +90,14 @@ class AppliedEventsLogRepository
             throw new \RuntimeException($exception->getMessage(), 1544207778, $exception);
         }
         if ($highestAppliedSequenceNumber === false) {
-            throw new HighestAppliedSequenceNumberCantBeReservedException(sprintf('Could not reserve highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1541002644);
+            $this->dbal->executeUpdate('
+                INSERT INTO ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . '
+                    (eventListenerIdentifier, highestAppliedSequenceNumber)
+                VALUES
+                    (:eventListenerIdentifier, -1)',
+                ['eventListenerIdentifier' => $eventListenerIdentifier]
+            );
+            return -1;
         }
         return (int)$highestAppliedSequenceNumber;
     }
@@ -122,11 +122,6 @@ class AppliedEventsLogRepository
         } catch (DBALException $exception) {
             throw new \RuntimeException(sprintf('Could not save highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1544207099, $exception);
         }
-//        try {
-//            $this->dbal->commit();
-//        } catch (ConnectionException $exception) {
-//            // TODO handle exception
-//        }
     }
 
     /**
