@@ -7,7 +7,7 @@ use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\EventStore\EventStream;
 
-abstract class EventSourcedAggregateRoot implements EventRecordingInterface
+abstract class AbstractEventSourcedAggregateRoot implements EventRecordingInterface
 {
 
     /**
@@ -49,7 +49,7 @@ abstract class EventSourcedAggregateRoot implements EventRecordingInterface
         return $this->reconstitutionVersion;
     }
 
-    final static function reconstituteFromEventStream(EventStream $stream): self
+    final public static function reconstituteFromEventStream(EventStream $stream): self
     {
         $instance = new static();
         $lastAppliedEventVersion = -1;
