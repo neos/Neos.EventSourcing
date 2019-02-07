@@ -92,7 +92,7 @@ final class EventListenerInvoker
             $listener->$listenerMethodName($event, $rawEvent);
         } catch (\Exception $exception) {
             $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
-            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($listener)), 1544207001, $exception, $eventEnvelope, $listener);
+            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($listener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $listener);
         }
         $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $rawEvent->getSequenceNumber());
     }
