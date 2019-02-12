@@ -99,5 +99,4 @@ final class StreamName
     {
         return $this->value;
     }
-
 }

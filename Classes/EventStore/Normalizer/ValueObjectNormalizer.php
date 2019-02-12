@@ -18,7 +18,6 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
  */
 final class ValueObjectNormalizer implements DenormalizerInterface, CacheableSupportsMethodInterface
 {
-
     public function denormalize($data, $className, $format = null, array $context = [])
     {
         $constructorMethod = $this->resolveConstructorMethod(gettype($data), $className);

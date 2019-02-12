@@ -96,5 +96,4 @@ final class EventListenerInvoker
         }
         $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $rawEvent->getSequenceNumber());
     }
-
 }

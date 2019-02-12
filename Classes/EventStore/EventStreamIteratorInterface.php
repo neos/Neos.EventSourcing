@@ -14,6 +14,5 @@ namespace Neos\EventSourcing\EventStore;
 
 interface EventStreamIteratorInterface extends \Iterator
 {
-
     public function current(): RawEvent;
 }

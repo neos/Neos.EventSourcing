@@ -76,7 +76,6 @@ class EventListenerLocator
      */
     public function getListenerClassNamesForEventClassName(string $eventClassName): array
     {
-
         if (!isset($this->eventClassNamesAndListeners[$eventClassName])) {
             return [];
         }
@@ -166,5 +165,4 @@ class EventListenerLocator
 
         return $listeners;
     }
-
 }

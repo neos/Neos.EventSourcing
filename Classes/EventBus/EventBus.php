@@ -65,5 +65,4 @@ final class EventBus
     {
         $this->flush();
     }
-
 }
