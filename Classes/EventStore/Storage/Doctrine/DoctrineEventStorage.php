@@ -87,7 +87,7 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
     /**
      * @inheritdoc
      */
-    public function load(StreamName $streamName, int $offset = 0): EventStream
+    public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStream
     {
         $this->reconnectDatabaseConnection();
         $query = $this->connection->createQueryBuilder()
@@ -104,8 +104,9 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
         } elseif (!$streamName->isAllStream()) {
             throw new \InvalidArgumentException(sprintf('Unsupported virtual stream name "%s"', $streamName), 1545155909);
         }
-        if ($offset > 0) {
-            $query->setFirstResult($offset);
+        if ($minimumSequenceNumber > 0) {
+            $query->andWhere('sequencenumber >= :minimumSequenceNumber');
+            $query->setParameter('minimumSequenceNumber', $minimumSequenceNumber);
         }
 
         $streamIterator = new DoctrineStreamIterator($query);

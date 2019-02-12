@@ -75,7 +75,7 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
             throw new \RuntimeException(sprintf('Could not parse recordedat timestamp "%s" as date.', $currentEventData['recordedat']), 1544211618, $exception);
         }
         return new RawEvent(
-            $this->innerIterator->key() + $this->queryBuilder->getFirstResult(),
+            (int)$currentEventData['sequencenumber'],
             $currentEventData['type'],
             $payload,
             $metadata,
@@ -137,9 +137,6 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
         // we deliberately don't use "setFirstResult" here, as this translates to an OFFSET query. For resolving
         // an OFFSET query, the DB needs to scan the result-set from the beginning (which is slow as hell).
         $this->queryBuilder->setParameter('sequenceNumberOffset', $this->currentOffset);
-        if ($this->currentOffset === 0 && $this->initialOffset > 0) {
-            $this->queryBuilder->setFirstResult($this->initialOffset);
-        }
         $this->reconnectDatabaseConnection();
         $rawResult = $this->queryBuilder->execute()->fetchAll();
         $this->innerIterator = new \ArrayIterator($rawResult);

@@ -66,9 +66,9 @@ final class EventStore
         $this->storage = $storage;
     }
 
-    public function load(StreamName $streamName, int $offset = 0): EventStream
+    public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStream
     {
-        $eventStream = $this->storage->load($streamName, $offset);
+        $eventStream = $this->storage->load($streamName, $minimumSequenceNumber);
         if (!$eventStream->valid()) {
             throw new EventStreamNotFoundException(sprintf('The event stream "%s" does not appear to be valid.', $streamName), 1477497156);
         }

@@ -26,10 +26,10 @@ interface EventStorageInterface
 {
     /**
      * @param StreamName $filter
-     * @param int $offset
+     * @param int $minimumSequenceNumber
      * @return EventStream
      */
-    public function load(StreamName $filter, int $offset = 0): EventStream;
+    public function load(StreamName $filter, int $minimumSequenceNumber = 0): EventStream;
 
     /**
      * @param StreamName $streamName
