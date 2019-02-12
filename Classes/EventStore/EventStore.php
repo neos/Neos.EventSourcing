@@ -100,9 +100,7 @@ final class EventStore
         }
 
         $this->storage->commit($streamName, WritableEvents::fromArray($convertedEvents), $expectedVersion);
-        foreach ($events as $event) {
-            $this->eventBus->dispatch($event);
-        }
+        $this->eventBus->publish($events);
     }
 
     /**
