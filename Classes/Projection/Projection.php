@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\Projection;
 
 /*
@@ -10,8 +11,6 @@ namespace Neos\EventSourcing\Projection;
  * information, please view the LICENSE file which was distributed with this
  * source code.
  */
-
-use Neos\EventSourcing\EventListener\AsynchronousEventListenerInterface;
 
 /**
  * Projection DTO
@@ -35,18 +34,18 @@ class Projection
      *
      * @var string[]
      */
-    private $eventTypes;
+    private $eventClassNames;
 
     /**
      * @param string $identifier
      * @param string $projectorClassName
-     * @param string[] $eventTypes
+     * @param string[] $eventClassNames
      */
-    public function __construct(string $identifier, string $projectorClassName, array $eventTypes)
+    public function __construct(string $identifier, string $projectorClassName, array $eventClassNames)
     {
         $this->fullIdentifier = $identifier;
         $this->projectorClassName = $projectorClassName;
-        $this->eventTypes = $eventTypes;
+        $this->eventClassNames = $eventClassNames;
     }
 
     /**
@@ -68,16 +67,8 @@ class Projection
     /**
      * @return string[]
      */
-    public function getEventTypes(): array
+    public function getEventClassNames(): array
     {
-        return $this->eventTypes;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isAsynchronous(): bool
-    {
-        return is_subclass_of($this->getProjectorClassName(), AsynchronousEventListenerInterface::class);
+        return $this->eventClassNames;
     }
 }

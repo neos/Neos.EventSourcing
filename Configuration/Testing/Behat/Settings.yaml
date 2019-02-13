@@ -1,0 +1,7 @@
+Flowpack:
+  JobQueue:
+    Common:
+      queues:
+        'neos-eventsourcing':
+          options:
+            async: false

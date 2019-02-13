@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\Event\Decorator;
 
 /*
@@ -11,16 +12,16 @@ namespace Neos\EventSourcing\Event\Decorator;
  * source code.
  */
 
-use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\Utility\Arrays;
 
 /**
  * Event wrapper which provides metadata additional to the event
  */
-final class EventWithMetadata implements EventWithMetadataInterface
+final class EventWithMetadata implements DomainEventWithMetadataInterface
 {
     /**
-     * @var EventInterface
+     * @var DomainEventInterface
      */
     private $event;
 
@@ -32,12 +33,12 @@ final class EventWithMetadata implements EventWithMetadataInterface
     /**
      * EventWithMetadata constructor.
      *
-     * @param EventInterface $event
+     * @param DomainEventInterface $event
      * @param array $metadata
      */
-    public function __construct(EventInterface $event, array $metadata)
+    public function __construct(DomainEventInterface $event, array $metadata)
     {
-        if ($event instanceof EventWithMetadataInterface) {
+        if ($event instanceof DomainEventWithMetadataInterface) {
             $this->event = $event->getEvent();
             $this->metadata = Arrays::arrayMergeRecursiveOverrule($event->getMetadata(), $metadata);
         } else {
@@ -47,9 +48,9 @@ final class EventWithMetadata implements EventWithMetadataInterface
     }
 
     /**
-     * @return EventInterface
+     * @return DomainEventInterface
      */
-    public function getEvent(): EventInterface
+    public function getEvent(): DomainEventInterface
     {
         return $this->event;
     }

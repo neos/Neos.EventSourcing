@@ -1,26 +1,27 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\Tests\Unit\Event\Decorator;
 
 use Neos\EventSourcing\Event\Decorator\EventWithMetadata;
-use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\Flow\Tests\UnitTestCase;
 
 class EventWithMetadataTest extends UnitTestCase
 {
     /**
-     * @var EventInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var DomainEventInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     private $mockEvent;
 
     public function setUp()
     {
-        $this->mockEvent = $this->getMockBuilder(EventInterface::class)->getMock();
+        $this->mockEvent = $this->getMockBuilder(DomainEventInterface::class)->getMock();
     }
 
     /**
      * @test
      */
-    public function originalEventCanBeRetrieved()
+    public function originalEventCanBeRetrieved(): void
     {
         $eventWithMetadata = new EventWithMetadata($this->mockEvent, []);
         $this->assertSame($this->mockEvent, $eventWithMetadata->getEvent());
@@ -29,7 +30,7 @@ class EventWithMetadataTest extends UnitTestCase
     /**
      * @test
      */
-    public function metadataCanBeRetrieved()
+    public function metadataCanBeRetrieved(): void
     {
         $someMetadata = ['foo' => ['bar' => 'Baz']];
         $eventWithMetadata = new EventWithMetadata($this->mockEvent, $someMetadata);
@@ -39,7 +40,7 @@ class EventWithMetadataTest extends UnitTestCase
     /**
      * @test
      */
-    public function metadataIsMergedWhenNestingEventsWithMetadata()
+    public function metadataIsMergedWhenNestingEventsWithMetadata(): void
     {
         $someMetadata = ['foo' => ['bar' => 'Baz', 'foos' => 'bars']];
         $eventWithMetadata = new EventWithMetadata($this->mockEvent, $someMetadata);
@@ -55,7 +56,7 @@ class EventWithMetadataTest extends UnitTestCase
     /**
      * @test
      */
-    public function eventIsUnwrappedWhenNestingEventsWithMetadata()
+    public function eventIsUnwrappedWhenNestingEventsWithMetadata(): void
     {
         $eventWithMetadata = new EventWithMetadata($this->mockEvent, []);
         $nestedEventWithMetadata = new EventWithMetadata($eventWithMetadata, []);

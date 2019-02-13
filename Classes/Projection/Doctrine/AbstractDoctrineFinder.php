@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\Projection\Doctrine;
 
 /*
@@ -12,6 +13,7 @@ namespace Neos\EventSourcing\Projection\Doctrine;
  */
 
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Persistence\Doctrine\Exception\DatabaseConnectionException;
 use Neos\Flow\Persistence\Doctrine\Query;
 use Neos\Flow\Persistence\QueryResultInterface;
 
@@ -53,7 +55,7 @@ abstract class AbstractDoctrineFinder
      *
      * @return void
      */
-    protected function initializeObject()
+    protected function initializeObject(): void
     {
         if ($this->readModelClassName === null && substr(get_class($this), -6, 6) === 'Finder') {
             $this->readModelClassName = substr(get_class($this), 0, -6);
@@ -91,6 +93,7 @@ abstract class AbstractDoctrineFinder
      *
      * @return int
      * @api
+     * @throws DatabaseConnectionException
      */
     public function countAll(): int
     {
@@ -119,14 +122,19 @@ abstract class AbstractDoctrineFinder
         if (isset($method[10]) && strpos($method, 'findOneBy') === 0) {
             $propertyName = lcfirst(substr($method, 9));
             return $query->matching($query->equals($propertyName, $arguments[0], $caseSensitive))->execute($cacheResult)->getFirst();
-        } elseif (isset($method[8]) && strpos($method, 'countBy') === 0) {
+        }
+        if (isset($method[8]) && strpos($method, 'countBy') === 0) {
             $propertyName = lcfirst(substr($method, 7));
             return $query->matching($query->equals($propertyName, $arguments[0], $caseSensitive))->count();
-        } elseif (isset($method[7]) && strpos($method, 'findBy') === 0) {
+        }
+        if (isset($method[7]) && strpos($method, 'findBy') === 0) {
             $propertyName = lcfirst(substr($method, 6));
             return $query->matching($query->equals($propertyName, $arguments[0], $caseSensitive))->execute($cacheResult);
         }
 
         trigger_error('Call to undefined method ' . get_class($this) . '::' . $method, E_USER_ERROR);
+
+        // to avoid "inconsistent return points"
+        return null;
     }
 }

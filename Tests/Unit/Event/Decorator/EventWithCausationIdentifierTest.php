@@ -1,37 +1,38 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\Tests\Unit\Event\Decorator;
 
 use Neos\EventSourcing\Event\Decorator\EventWithCausationIdentifier;
-use Neos\EventSourcing\Event\Decorator\EventWithMetadataInterface;
-use Neos\EventSourcing\Event\EventInterface;
+use Neos\EventSourcing\Event\Decorator\DomainEventWithMetadataInterface;
+use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\Flow\Tests\UnitTestCase;
 
 class EventWithCausationIdentifierTest extends UnitTestCase
 {
     /**
-     * @var EventInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var DomainEventInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     private $mockEvent;
 
     public function setUp()
     {
-        $this->mockEvent = $this->getMockBuilder(EventInterface::class)->getMock();
+        $this->mockEvent = $this->getMockBuilder(DomainEventInterface::class)->getMock();
     }
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\Exception
+     * @expectedException \InvalidArgumentException
      */
-    public function constructorDoesntAcceptEmptyCausationId()
+    public function constructorDoesntAcceptEmptyCausationId(): void
     {
         new EventWithCausationIdentifier($this->mockEvent, '');
     }
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\Exception
+     * @expectedException \InvalidArgumentException
      */
-    public function constructorDoesntAcceptCausationIdExceedingMaxLength()
+    public function constructorDoesntAcceptCausationIdExceedingMaxLength(): void
     {
         new EventWithCausationIdentifier($this->mockEvent, str_repeat('x', 256));
     }
@@ -39,7 +40,7 @@ class EventWithCausationIdentifierTest extends UnitTestCase
     /**
      * @test
      */
-    public function originalEventCanBeRetrieved()
+    public function originalEventCanBeRetrieved(): void
     {
         $eventWithMetadata = new EventWithCausationIdentifier($this->mockEvent, 'some-id');
         $this->assertSame($this->mockEvent, $eventWithMetadata->getEvent());
@@ -48,7 +49,7 @@ class EventWithCausationIdentifierTest extends UnitTestCase
     /**
      * @test
      */
-    public function causationIdentifierCanBeRetrieved()
+    public function causationIdentifierCanBeRetrieved(): void
     {
         $someCausationId = 'some-id';
         $eventWithMetadata = new EventWithCausationIdentifier($this->mockEvent, $someCausationId);
@@ -59,12 +60,12 @@ class EventWithCausationIdentifierTest extends UnitTestCase
     /**
      * @test
      */
-    public function metadataIsMergedWhenNestingEventsWithMetadata()
+    public function metadataIsMergedWhenNestingEventsWithMetadata(): void
     {
         $someMetadata = ['foo' => ['bar' => 'Baz', 'foos' => 'bars'], 'causationIdentifier' => 'existing-causation-id', 'correlationIdentifier' => 'existing-causation-id'];
-        /** @var EventWithMetadataInterface|\PHPUnit_Framework_MockObject_MockObject $eventWithMetadata */
-        $eventWithMetadata = $this->getMockBuilder(EventWithMetadataInterface::class)->getMock();
-        $eventWithMetadata->expects($this->any())->method('getMetadata')->will($this->returnValue($someMetadata));
+        /** @var DomainEventWithMetadataInterface|\PHPUnit_Framework_MockObject_MockObject $eventWithMetadata */
+        $eventWithMetadata = $this->getMockBuilder(DomainEventWithMetadataInterface::class)->getMock();
+        $eventWithMetadata->method('getMetadata')->willReturn($someMetadata);
 
         $nestedEventWithMetadata = new EventWithCausationIdentifier($eventWithMetadata, 'overridden-causation-id');
 
@@ -76,7 +77,7 @@ class EventWithCausationIdentifierTest extends UnitTestCase
     /**
      * @test
      */
-    public function eventIsUnwrappedWhenNestingEventsWithMetadata()
+    public function eventIsUnwrappedWhenNestingEventsWithMetadata(): void
     {
         $eventWithMetadata = new EventWithCausationIdentifier($this->mockEvent, 'some-id');
         $nestedEventWithMetadata = new EventWithCausationIdentifier($eventWithMetadata, 'some-id');

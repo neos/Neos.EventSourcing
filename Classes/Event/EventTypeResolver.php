@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\Event;
 
 /*
@@ -11,7 +12,6 @@ namespace Neos\EventSourcing\Event;
  * source code.
  */
 
-use Neos\EventSourcing\Exception;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ReflectionService;
@@ -45,7 +45,7 @@ class EventTypeResolver
      *
      * @param ObjectManagerInterface $objectManager
      */
-    public function injectObjectManager(ObjectManagerInterface $objectManager)
+    public function injectObjectManager(ObjectManagerInterface $objectManager): void
     {
         $this->objectManager = $objectManager;
     }
@@ -53,7 +53,7 @@ class EventTypeResolver
     /**
      * Register event listeners based on annotations
      */
-    public function initializeObject()
+    public function initializeObject(): void
     {
         $this->mapping = self::eventTypeMapping($this->objectManager);
         $this->reversedMapping = array_flip($this->mapping);
@@ -62,10 +62,10 @@ class EventTypeResolver
     /**
      * Return the event type for the given Event object
      *
-     * @param EventInterface $event
+     * @param DomainEventInterface $event
      * @return string
      */
-    public function getEventType(EventInterface $event): string
+    public function getEventType(DomainEventInterface $event): string
     {
         $className = TypeHandling::getTypeForValue($event);
         return $this->getEventTypeByClassName($className);
@@ -76,12 +76,11 @@ class EventTypeResolver
      *
      * @param string $className
      * @return string
-     * @throws Exception
      */
     public function getEventTypeByClassName(string $className): string
     {
         if (!isset($this->mapping[$className])) {
-            throw new Exception(sprintf('Event Type not found for class name "%s"', $className), 1476249954);
+            throw new \InvalidArgumentException(sprintf('Event Type not found for class name "%s"', $className), 1476249954);
         }
         return $this->mapping[$className];
     }
@@ -89,10 +88,10 @@ class EventTypeResolver
     /**
      * Return the event short name for the given Event object
      *
-     * @param EventInterface $event
+     * @param DomainEventInterface $event
      * @return string
      */
-    public function getEventShortType(EventInterface $event): string
+    public function getEventShortType(DomainEventInterface $event): string
     {
         $type = explode(':', $this->getEventType($event));
         return end($type);
@@ -126,15 +125,14 @@ class EventTypeResolver
      *
      * @param ObjectManagerInterface $objectManager
      * @return array
-     * @throws Exception
      * @Flow\CompileStatic
      */
-    public static function eventTypeMapping(ObjectManagerInterface $objectManager)
+    public static function eventTypeMapping(ObjectManagerInterface $objectManager): array
     {
         $buildEventType = function ($eventClassName) use ($objectManager) {
             $packageKey = $objectManager->getPackageKeyByObjectName($eventClassName);
             if ($packageKey === false) {
-                throw new Exception(sprintf('Could not determine package key from object name "%s"', $eventClassName), 1478088597);
+                throw new \RuntimeException(sprintf('Could not determine package key from object name "%s"', $eventClassName), 1478088597);
             }
             $shortEventClassName = (new \ReflectionClass($eventClassName))->getShortName();
             return $packageKey . ':' . $shortEventClassName;
@@ -142,15 +140,15 @@ class EventTypeResolver
         $mapping = [];
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
-        foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventInterface::class) as $eventClassName) {
+        foreach ($reflectionService->getAllImplementationClassNamesForInterface(DomainEventInterface::class) as $eventClassName) {
             if (is_subclass_of($eventClassName, ProvidesEventTypeInterface::class)) {
                 /** @noinspection PhpUndefinedMethodInspection */
                 $eventTypeIdentifier = $eventClassName::getEventType();
             } else {
                 $eventTypeIdentifier = $buildEventType($eventClassName);
             }
-            if (in_array($eventTypeIdentifier, $mapping)) {
-                throw new Exception(sprintf('Duplicate event type "%s" mapped from "%s".', $eventTypeIdentifier, $eventClassName), 1474710799);
+            if (in_array($eventTypeIdentifier, $mapping, true)) {
+                throw new \RuntimeException(sprintf('Duplicate event type "%s" mapped from "%s".', $eventTypeIdentifier, $eventClassName), 1474710799);
             }
             $mapping[$eventClassName] = $eventTypeIdentifier;
         }

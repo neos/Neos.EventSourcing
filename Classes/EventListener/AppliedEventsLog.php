@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\EventListener;
 
 /*
@@ -28,7 +29,7 @@ class AppliedEventsLog
     public $eventListenerIdentifier;
 
     /**
-     * @var integer
+     * @var string
      */
     public $highestAppliedSequenceNumber;
 }

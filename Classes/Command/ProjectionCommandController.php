@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\Command;
 
 /*
@@ -11,12 +12,12 @@ namespace Neos\EventSourcing\Command;
  * source code.
  */
 
-use Neos\EventSourcing\Projection\InvalidProjectionIdentifierException;
+use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\Projection\Projection;
 use Neos\EventSourcing\Projection\ProjectionManager;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
-use Neos\Flow\Core\Booting\Scripts;
+use Neos\Flow\Mvc\Exception\StopActionException;
 
 /**
  * CLI Command Controller for projection related commands
@@ -50,7 +51,7 @@ class ProjectionCommandController extends CommandController
      *
      * @return void
      */
-    public function listCommand()
+    public function listCommand(): void
     {
         $lastPackageKey = null;
         foreach ($this->projectionManager->getProjections() as $projection) {
@@ -75,8 +76,9 @@ class ProjectionCommandController extends CommandController
      * @param string $projection The projection identifier; see projection:list for possible options
      * @return void
      * @see neos.eventsourcing:projection:list
+     * @throws StopActionException
      */
-    public function describeCommand($projection)
+    public function describeCommand($projection): void
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
@@ -91,8 +93,8 @@ class ProjectionCommandController extends CommandController
         $this->outputLine();
 
         $this->outputLine('<b>HANDLED EVENT TYPES:</b>');
-        foreach ($projectionDto->getEventTypes() as $eventType) {
-            $this->outputLine('  * %s', [$eventType]);
+        foreach ($projectionDto->getEventClassNames() as $eventClassName) {
+            $this->outputLine('  * %s', [$eventClassName]);
         }
     }
 
@@ -104,10 +106,12 @@ class ProjectionCommandController extends CommandController
      * @param string $projection The projection identifier; see projection:list for possible options
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
+     * @throws EventCouldNotBeAppliedException
+     * @throws StopActionException
      * @see neos.eventsourcing:projection:list
      * @see neos.eventsourcing:projection:replayall
      */
-    public function replayCommand($projection, $quiet = false)
+    public function replayCommand($projection, $quiet = false): void
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
@@ -138,8 +142,9 @@ class ProjectionCommandController extends CommandController
      * @return void
      * @see neos.eventsourcing:projection:replay
      * @see neos.eventsourcing:projection:list
+     * @throws EventCouldNotBeAppliedException
      */
-    public function replayAllCommand($onlyEmpty = false, $quiet = false)
+    public function replayAllCommand($onlyEmpty = false, $quiet = false): void
     {
         if (!$quiet) {
             $this->outputLine('Replaying all%s projections', [$onlyEmpty ? ' empty' : '']);
@@ -173,79 +178,18 @@ class ProjectionCommandController extends CommandController
     }
 
     /**
-     * Forward new events to a projection
-     *
-     * This command allows you to play all relevant unseen events for one specific projection.
-     *
-     * @param string $projection The projection identifier; see projection:list for possible options
-     * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
-     * @return void
-     * @see neos.eventsourcing:projection:list
-     * @see neos.eventsourcing:projection:replay
-     */
-    public function catchUpCommand($projection, $quiet = false)
-    {
-        $projectionDto = $this->resolveProjectionOrQuit($projection);
-        if (!$quiet) {
-            $this->outputLine('Catching up projection "%s" ...', [$projectionDto->getIdentifier()]);
-            $this->output->progressStart();
-        }
-        $eventsCount = 0;
-        $this->projectionManager->catchUp($projectionDto->getIdentifier(), function () use (&$eventsCount, $quiet) {
-            $eventsCount ++;
-            if (!$quiet) {
-                $this->output->progressAdvance();
-            }
-        });
-        if (!$quiet) {
-            $this->output->progressFinish();
-            $this->outputLine('Applied %d events.', [$eventsCount]);
-        }
-    }
-
-    /**
-     * Listen to new events for a given (asynchronous) projection
-     *
-     * @param string $projection The projection identifier; see projection:list for possible options
-     * @param int $lookupInterval Pause between lookups (in seconds)
-     * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
-     * @return void
-     * @see neos.eventsourcing:projection:list
-     * @see neos.eventsourcing:projection:catchup
-     */
-    public function watchCommand($projection, $lookupInterval = 10, $quiet = false)
-    {
-        $projectionDto = $this->resolveProjectionOrQuit($projection);
-
-        if (!$quiet) {
-            $this->outputLine('Watching events for projection "%s" ...', [$projectionDto->getIdentifier()]);
-        }
-        do {
-            $catchupCommandArguments = ['projection' => $projectionDto->getIdentifier()];
-            if ($quiet) {
-                $catchupCommandArguments['quiet'] = true;
-            }
-            Scripts::executeCommand('neos.eventsourcing:projection:catchup', $this->flowSettings, !$quiet, $catchupCommandArguments);
-            if (!$quiet) {
-                $this->outputLine();
-            }
-            sleep($lookupInterval);
-        } while (true);
-    }
-
-    /**
      * Returns the shortest unambiguous projection identifier for a given $fullProjectionIdentifier
      *
      * @param string $fullProjectionIdentifier
      * @return string
      */
-    private function getShortProjectionIdentifier(string $fullProjectionIdentifier)
+    private function getShortProjectionIdentifier(string $fullProjectionIdentifier): string
     {
         if ($this->shortProjectionIdentifiers === null) {
             $projectionsByName = $projectionIdentifiers = [];
             foreach ($this->projectionManager->getProjections() as $projection) {
                 $projectionIdentifiers[] = $projection->getIdentifier();
-                list($packageKey, $projectionName) = explode(':', $projection->getIdentifier());
+                [$packageKey, $projectionName] = explode(':', $projection->getIdentifier());
                 if (!isset($projectionsByName[$projectionName])) {
                     $projectionsByName[$projectionName] = [];
                 }
@@ -253,7 +197,7 @@ class ProjectionCommandController extends CommandController
             }
             $this->shortProjectionIdentifiers = [];
             foreach ($projectionIdentifiers as $projectionIdentifier) {
-                list($packageKey, $projectionName) = explode(':', $projectionIdentifier);
+                [$packageKey, $projectionName] = explode(':', $projectionIdentifier);
                 if (count($projectionsByName[$projectionName]) === 1) {
                     $this->shortProjectionIdentifiers[$projectionIdentifier] = $projectionName;
                     continue;
@@ -271,7 +215,7 @@ class ProjectionCommandController extends CommandController
                 }
             }
         }
-        return isset($this->shortProjectionIdentifiers[$fullProjectionIdentifier]) ? $this->shortProjectionIdentifiers[$fullProjectionIdentifier] : $fullProjectionIdentifier;
+        return $this->shortProjectionIdentifiers[$fullProjectionIdentifier] ?? $fullProjectionIdentifier;
     }
 
     /**
@@ -280,12 +224,13 @@ class ProjectionCommandController extends CommandController
      *
      * @param string $projectionIdentifier
      * @return Projection
+     * @throws StopActionException
      */
     private function resolveProjectionOrQuit($projectionIdentifier): Projection
     {
         try {
             return $this->projectionManager->getProjection($projectionIdentifier);
-        } catch (InvalidProjectionIdentifierException $exception) {
+        } catch (\InvalidArgumentException $exception) {
             $this->outputLine('<error>%s</error>', [$exception->getMessage()]);
             $this->quit(1);
             return null;
@@ -299,7 +244,7 @@ class ProjectionCommandController extends CommandController
      * @param int $maximumCharacters Maximum of characters
      * @return string
      */
-    private function shortenText($text, $maximumCharacters = 36)
+    private function shortenText($text, $maximumCharacters = 36): string
     {
         $length = strlen($text);
         if ($length <= $maximumCharacters) {

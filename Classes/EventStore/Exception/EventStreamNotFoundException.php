@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\EventStore\Exception;
 
 /*
@@ -11,8 +12,6 @@ namespace Neos\EventSourcing\EventStore\Exception;
  * source code.
  */
 
-use Neos\EventSourcing\RuntimeException;
-
-class EventStreamNotFoundException extends RuntimeException
+class EventStreamNotFoundException extends \InvalidArgumentException
 {
 }

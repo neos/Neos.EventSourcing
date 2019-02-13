@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\EventStore;
 
 /*
@@ -24,6 +25,7 @@ use Neos\Flow\Annotations as Flow;
  */
 final class RawEvent
 {
+
     /**
      * @var string
      */
@@ -45,7 +47,7 @@ final class RawEvent
     private $metadata;
 
     /**
-     * @var string
+     * @var StreamName
      */
     private $streamName;
 
@@ -62,9 +64,9 @@ final class RawEvent
     /**
      * @var \DateTimeInterface
      */
-    protected $recordedAt;
+    private $recordedAt;
 
-    public function __construct(int $sequenceNumber, string $type, array $payload, array $metadata, string $streamName, int $version, string $identifier, \DateTimeInterface $recordedAt)
+    public function __construct(int $sequenceNumber, string $type, array $payload, array $metadata, StreamName $streamName, int $version, string $identifier, \DateTimeInterface $recordedAt)
     {
         $this->sequenceNumber = $sequenceNumber;
         $this->type = $type;
@@ -81,6 +83,7 @@ final class RawEvent
         return $this->sequenceNumber;
     }
 
+
     public function getType(): string
     {
         return $this->type;
@@ -96,7 +99,7 @@ final class RawEvent
         return $this->metadata;
     }
 
-    public function getStreamName(): string
+    public function getStreamName(): StreamName
     {
         return $this->streamName;
     }

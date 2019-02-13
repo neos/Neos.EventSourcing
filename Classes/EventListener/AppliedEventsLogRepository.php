@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\EventListener;
 
 /*
@@ -11,75 +12,134 @@ namespace Neos\EventSourcing\EventListener;
  * source code.
  */
 
-use Doctrine\Common\Persistence\ObjectManager as EntityManager;
+use Doctrine\Common\Persistence\ObjectManager as DoctrineObjectManager;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ConnectionException;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\DriverException;
+use Doctrine\ORM\EntityManager as DoctrineEntityManager;
+use Neos\EventSourcing\EventListener\Exception\HighestAppliedSequenceNumberCantBeReservedException;
 use Neos\Flow\Annotations as Flow;
 
 /**
- * A generic Doctrine-based repository for applied events logs.
- *
- * This repository can be used by projectors, process managers or other asynchronous event listeners for keeping
- * track of the highest sequence number of the applied events. This information is used and updated when catching up
- * on new events.
- *
- * Alternatively to using this repository, event listeners are free to implement their own way of storing this
- * information.
+ * TODO Document
  *
  * @api
  * @Flow\Scope("singleton")
  */
 class AppliedEventsLogRepository
 {
-    /**
-     * @Flow\Inject
-     * @var EntityManager
-     */
-    protected $entityManager;
+    const TABLE_NAME = 'neos_eventsourcing_eventlistener_appliedeventslog';
 
     /**
-     * Returns the last seen sequence number of events which has been applied to the concrete event listener.
-     *
-     * @param string $eventListenerClassName
-     * @return int
+     * @var Connection
      */
-    public function getHighestAppliedSequenceNumber(string $eventListenerClassName): int
+    private $dbal;
+
+    /**
+     * @param DoctrineObjectManager $entityManager
+     *
+     *
+     * // TODO use EventStore DBAL connection (?)
+     */
+    public function __construct(DoctrineObjectManager $entityManager)
     {
-        $eventListenerIdentifier = $this->renderEventListenerIdentifier($eventListenerClassName);
-        $appliedEventsLog = $this->entityManager->find(AppliedEventsLog::class, $eventListenerIdentifier);
-        return ($appliedEventsLog instanceof AppliedEventsLog ? $appliedEventsLog->highestAppliedSequenceNumber : 0);
+        if (!$entityManager instanceof DoctrineEntityManager) {
+            throw new \RuntimeException(sprintf('The injected entityManager is expected to be an instance of "%s". Given: "%s"', DoctrineEntityManager::class, get_class($entityManager)), 1521556748);
+        }
+        $this->dbal = $entityManager->getConnection();
+    }
+
+    public function reserveHighestAppliedEventSequenceNumber(string $eventListenerIdentifier): int
+    {
+        try {
+            $sequenceNumber = $this->fetchHighestAppliedSequenceNumber($eventListenerIdentifier);
+        } catch (HighestAppliedSequenceNumberCantBeReservedException $exception) {
+            return $this->reserveHighestAppliedEventSequenceNumber($eventListenerIdentifier);
+        }
+        return (int)$sequenceNumber;
+    }
+
+    private function fetchHighestAppliedSequenceNumber(string $eventListenerIdentifier): ?int
+    {
+        try {
+            // TODO longer/configurable timeout?
+            $this->dbal->executeQuery('SET innodb_lock_wait_timeout = 1');
+        } catch (DBALException $exception) {
+            throw new \RuntimeException($exception->getMessage(), 1544207612, $exception);
+        }
+        $this->dbal->beginTransaction();
+        try {
+            $highestAppliedSequenceNumber = $this->dbal->fetchColumn('
+                SELECT highestAppliedSequenceNumber
+                FROM ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . '
+                WHERE eventlisteneridentifier = :eventListenerIdentifier ' . $this->dbal->getDatabasePlatform()->getForUpdateSQL(),
+                ['eventListenerIdentifier' => $eventListenerIdentifier]
+            );
+        } catch (DriverException $exception) {
+            try {
+                $this->dbal->rollBack();
+            } catch (ConnectionException $exception) {
+            }
+            // TODO 1205 = ER_LOCK_WAIT_TIMEOUT is MySQL Specific (https://dev.mysql.com/doc/refman/8.0/en/server-error-reference.html#error_er_lock_wait_timeout)
+            if ($exception->getErrorCode() !== 1205) {
+                throw new \RuntimeException($exception->getMessage(), 1544207633, $exception);
+            }
+            throw new HighestAppliedSequenceNumberCantBeReservedException(sprintf('Could not reserve highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1523456892, $exception);
+        } catch (DBALException $exception) {
+            throw new \RuntimeException($exception->getMessage(), 1544207778, $exception);
+        }
+        if ($highestAppliedSequenceNumber === false) {
+            $this->dbal->executeUpdate('
+                INSERT INTO ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . '
+                    (eventListenerIdentifier, highestAppliedSequenceNumber)
+                VALUES
+                    (:eventListenerIdentifier, -1)',
+                ['eventListenerIdentifier' => $eventListenerIdentifier]
+            );
+            return -1;
+        }
+        return (int)$highestAppliedSequenceNumber;
+    }
+
+    public function releaseHighestAppliedSequenceNumber(): void
+    {
+        try {
+            $this->dbal->commit();
+        } catch (ConnectionException $exception) {
+        }
+    }
+
+    public function saveHighestAppliedSequenceNumber(string $eventListenerIdentifier, int $sequenceNumber): void
+    {
+        // TODO: Fails if no matching entry exists
+        try {
+            $this->dbal->update(
+                self::TABLE_NAME,
+                ['highestAppliedSequenceNumber' => $sequenceNumber],
+                ['eventListenerIdentifier' => $eventListenerIdentifier]
+            );
+        } catch (DBALException $exception) {
+            throw new \RuntimeException(sprintf('Could not save highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1544207099, $exception);
+        }
     }
 
     /**
-     * Saves the $sequenceNumber as the last seen sequence number of events which have been applied to the concrete
-     * event listener.
      *
-     * @param string $eventListenerClassName
-     * @param int $sequenceNumber
+     * @param string $eventListenerIdentifier
      * @return void
      */
-    public function saveHighestAppliedSequenceNumber(string $eventListenerClassName, int $sequenceNumber)
+    public function removeHighestAppliedSequenceNumber(string $eventListenerIdentifier): void
     {
-        $eventListenerIdentifier = $this->renderEventListenerIdentifier($eventListenerClassName);
-        $appliedEventsLog = $this->entityManager->find(AppliedEventsLog::class, $eventListenerIdentifier);
-        if ($appliedEventsLog === null) {
-            $appliedEventsLog = new AppliedEventsLog();
-            $appliedEventsLog->eventListenerIdentifier= $eventListenerIdentifier;
+        // TODO: Fails if no matching entry exists
+        try {
+            $this->dbal->update(
+                self::TABLE_NAME,
+                ['highestAppliedSequenceNumber' => -1],
+                ['eventListenerIdentifier' => $eventListenerIdentifier]
+            );
+        } catch (DBALException $exception) {
+            throw new \RuntimeException(sprintf('Could not reset highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1544213138, $exception);
         }
-        $appliedEventsLog->highestAppliedSequenceNumber = $sequenceNumber;
-        $this->entityManager->persist($appliedEventsLog);
-    }
-
-    /**
-     * Renders a event listener identifier which can be used as an id in the applied events log
-     *
-     * @param string $eventListenerClassName
-     * @return string
-     */
-    private function renderEventListenerIdentifier(string $eventListenerClassName): string
-    {
-        $identifier = strtolower(str_replace('\\', '_', $eventListenerClassName));
-        if (strlen($identifier) > 255) {
-            $identifier = substr($identifier, 0, 255 - 6) . '_' . substr(sha1($identifier), 0, 5);
-        }
-        return $identifier;
     }
 }

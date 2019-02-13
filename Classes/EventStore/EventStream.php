@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Neos\EventSourcing\EventStore;
 
 /*
@@ -11,27 +12,19 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
-use Neos\EventSourcing\Event\EventTypeResolver;
-use Neos\EventSourcing\Property\AllowAllPropertiesPropertyMappingConfiguration;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Property\PropertyMapper;
 
 /**
  * EventStream
  */
 final class EventStream implements \Iterator
 {
-    /**
-     * @Flow\Inject
-     * @var EventTypeResolver
-     */
-    protected $eventTypeResolver;
 
     /**
      * @Flow\Inject
-     * @var PropertyMapper
+     * @var EventNormalizer
      */
-    protected $propertyMapper;
+    protected $eventNormalizer;
 
     /**
      * @var \Iterator
@@ -39,30 +32,39 @@ final class EventStream implements \Iterator
     private $streamIterator;
 
     /**
-     * @param \Iterator $streamIterator
+     * @var StreamName
      */
-    public function __construct(\Iterator $streamIterator)
+    private $streamName;
+
+    /**
+     * @param StreamName $streamName
+     * @param EventStreamIteratorInterface $streamIterator
+     */
+    public function __construct(StreamName $streamName, EventStreamIteratorInterface $streamIterator)
     {
+        $this->streamName = $streamName;
         $this->streamIterator = $streamIterator;
     }
 
-    /**
-     * @return EventAndRawEvent
-     */
-    public function current()
+    public function getName(): StreamName
     {
-        $configuration = new AllowAllPropertiesPropertyMappingConfiguration();
+        return $this->streamName;
+    }
 
+    /**
+     * @return EventEnvelope
+     */
+    public function current(): EventEnvelope
+    {
         /** @var RawEvent $rawEvent */
         $rawEvent = $this->streamIterator->current();
-        $eventClassName = $this->eventTypeResolver->getEventClassNameByType($rawEvent->getType());
-        return new EventAndRawEvent(
-            $this->propertyMapper->convert($rawEvent->getPayload(), $eventClassName, $configuration),
+        return new EventEnvelope(
+            $this->eventNormalizer->denormalize($rawEvent->getPayload(), $rawEvent->getType()),
             $rawEvent
         );
     }
 
-    public function next()
+    public function next(): void
     {
         $this->streamIterator->next();
     }
@@ -72,12 +74,12 @@ final class EventStream implements \Iterator
         return $this->streamIterator->key();
     }
 
-    public function valid()
+    public function valid(): bool
     {
         return $this->streamIterator->valid();
     }
 
-    public function rewind()
+    public function rewind(): void
     {
         $this->streamIterator->rewind();
     }
