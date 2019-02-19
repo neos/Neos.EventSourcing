@@ -84,7 +84,6 @@ final class EventListenerInvoker
             $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $rawEvent->getSequenceNumber());
             return;
         }
-        /** @var EventListenerInterface $listenerObject */
         if ($listener instanceof ActsBeforeInvokingEventListenerMethodsInterface) {
             $listener->beforeInvokingEventListenerMethod($event, $rawEvent);
         }
@@ -93,6 +92,9 @@ final class EventListenerInvoker
         } catch (\Exception $exception) {
             $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
             throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($listener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $listener);
+        }
+        if ($listener instanceof ActsAfterInvokingEventListenerMethodsInterface) {
+            $listener->afterInvokingEventListenerMethod($event, $rawEvent);
         }
         $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $rawEvent->getSequenceNumber());
     }
