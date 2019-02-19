@@ -13,6 +13,8 @@ namespace Neos\EventSourcing\EventStore;
  */
 
 use Neos\Error\Messages\Result;
+use Neos\EventSourcing\Event\Decorator\DomainEventDecoratorInterface;
+use Neos\EventSourcing\Event\Decorator\DomainEventWithIdentifierInterface;
 use Neos\EventSourcing\EventBus\EventBus;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\Flow\Annotations as Flow;
@@ -88,14 +90,14 @@ final class EventStore
         }
         $convertedEvents = [];
         foreach ($events as $event) {
-            $metadata = [];
-            if ($event instanceof DomainEventWithMetadataInterface) {
-                $metadata = $event->getMetadata();
+            $eventIdentifier = $event instanceof DomainEventWithIdentifierInterface ? $event->getIdentifier() : Algorithms::generateUUID();
+            $metadata = $event instanceof DomainEventWithMetadataInterface ? $event->getMetadata() : [];
+            if ($event instanceof DomainEventDecoratorInterface) {
                 $event = $event->getEvent();
             }
             $type = $this->eventTypeResolver->getEventType($event);
             $data = $this->eventNormalizer->normalize($event);
-            $eventIdentifier = Algorithms::generateUUID();
+
             $convertedEvents[] = new WritableEvent($eventIdentifier, $type, $data, $metadata);
         }
 

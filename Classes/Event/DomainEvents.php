@@ -57,6 +57,12 @@ final class DomainEvents implements \IteratorAggregate, \Countable
         return new static($events);
     }
 
+    public function appendEvents(DomainEvents $other): self
+    {
+        $events = array_merge($this->events, $other->events);
+        return new static($events);
+    }
+
     public function getFirst(): DomainEventInterface
     {
         if ($this->isEmpty()) {
@@ -66,7 +72,7 @@ final class DomainEvents implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @return DomainEventInterface[]|\ArrayIterator<EventInterface>
+     * @return DomainEventInterface[]|\ArrayIterator<DomainEventInterface>
      */
     public function getIterator(): \ArrayIterator
     {

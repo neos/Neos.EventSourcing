@@ -12,11 +12,12 @@ namespace Neos\EventSourcing\Event\Decorator;
  * source code.
  */
 
-interface DomainEventWithMetadataInterface extends DomainEventDecoratorInterface
-{
+use Neos\EventSourcing\Event\DomainEventInterface;
 
+interface DomainEventDecoratorInterface extends DomainEventInterface
+{
     /**
-     * @return array
+     * @return DomainEventInterface
      */
-    public function getMetadata(): array;
+    public function getEvent(): DomainEventInterface;
 }

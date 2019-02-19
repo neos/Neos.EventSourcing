@@ -13,7 +13,7 @@ namespace Neos\EventSourcing\EventBus;
  */
 
 use Flowpack\JobQueue\Common\Job\JobManager;
-use Neos\EventSourcing\Event\Decorator\DomainEventWithMetadataInterface;
+use Neos\EventSourcing\Event\Decorator\DomainEventDecoratorInterface;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\EventListener\EventListenerLocator;
 use Neos\Flow\Annotations as Flow;
@@ -44,7 +44,7 @@ final class EventBus
     public function publish(DomainEvents $events): void
     {
         foreach ($events as $event) {
-            $eventClassName = $event instanceof DomainEventWithMetadataInterface ? get_class($event->getEvent()) : get_class($event);
+            $eventClassName = $event instanceof DomainEventDecoratorInterface ? get_class($event->getEvent()) : get_class($event);
             foreach ($this->eventListenerLocator->getListenerClassNamesForEventClassName($eventClassName) as $listenerClassName) {
                 $this->pendingEventListenerClassNames[$listenerClassName] = true;
             }
