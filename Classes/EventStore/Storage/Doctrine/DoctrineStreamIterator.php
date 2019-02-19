@@ -41,11 +41,6 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
     private $currentOffset = 0;
 
     /**
-     * @var int
-     */
-    private $initialOffset = 0;
-
-    /**
      * @var \ArrayIterator
      */
     private $innerIterator;
