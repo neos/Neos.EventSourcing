@@ -13,12 +13,12 @@ namespace Neos\EventSourcing\Event\Decorator;
  */
 
 use Neos\EventSourcing\Event\DomainEventInterface;
-use Neos\Utility\Arrays;
+use Neos\Flow\Utility\Algorithms;
 
 /**
- * Event wrapper which provides metadata additional to the event
+ * Event wrapper which provides an identifier additional to the event
  */
-final class EventWithMetadata implements DomainEventWithMetadataInterface
+final class EventWithIdentifier implements DomainEventWithIdentifierInterface
 {
     /**
      * @var DomainEventInterface
@@ -26,20 +26,25 @@ final class EventWithMetadata implements DomainEventWithMetadataInterface
     private $event;
 
     /**
-     * @var array
+     * @var string
      */
-    private $metadata;
+    private $identifier;
 
     /**
      * EventWithMetadata constructor.
      *
      * @param DomainEventInterface $event
-     * @param array $metadata
+     * @param string $identifier
      */
-    public function __construct(DomainEventInterface $event, array $metadata)
+    public function __construct(DomainEventInterface $event, string $identifier)
     {
         $this->event = $event instanceof DomainEventDecoratorInterface ? $event->getEvent() : $event;
-        $this->metadata = $event instanceof DomainEventWithMetadataInterface ? Arrays::arrayMergeRecursiveOverrule($event->getMetadata(), $metadata) : $metadata;
+        $this->identifier = $identifier;
+    }
+
+    public static function create(DomainEventInterface $event): self
+    {
+        return new static($event, Algorithms::generateUUID());
     }
 
     /**
@@ -51,10 +56,10 @@ final class EventWithMetadata implements DomainEventWithMetadataInterface
     }
 
     /**
-     * @return array
+     * @return string
      */
-    public function getMetadata(): array
+    public function getIdentifier(): string
     {
-        return $this->metadata;
+        return $this->identifier;
     }
 }

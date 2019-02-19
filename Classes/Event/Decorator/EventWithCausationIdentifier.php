@@ -44,13 +44,8 @@ final class EventWithCausationIdentifier implements DomainEventWithMetadataInter
         if (strlen($causationIdentifier) > 255) {
             throw new \InvalidArgumentException('Causation identifier must be 255 characters or less', 1509109339);
         }
-        if ($event instanceof DomainEventWithMetadataInterface) {
-            $this->event = $event->getEvent();
-            $this->metadata = $event->getMetadata();
-        } else {
-            $this->event = $event;
-            $this->metadata = [];
-        }
+        $this->event = $event instanceof DomainEventDecoratorInterface ? $event->getEvent() : $event;
+        $this->metadata = $event instanceof DomainEventWithMetadataInterface ? $event->getMetadata() : [];
         $this->metadata['causationIdentifier'] = $causationIdentifier;
     }
 

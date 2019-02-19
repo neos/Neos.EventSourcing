@@ -44,13 +44,8 @@ final class EventWithCorrelationIdentifier implements DomainEventWithMetadataInt
         if (strlen($correlationIdentifier) > 255) {
             throw new \InvalidArgumentException('Correlation identifier must be 255 characters or less', 1509109039);
         }
-        if ($event instanceof DomainEventWithMetadataInterface) {
-            $this->event = $event->getEvent();
-            $this->metadata = $event->getMetadata();
-        } else {
-            $this->event = $event;
-            $this->metadata = [];
-        }
+        $this->event = $event instanceof DomainEventDecoratorInterface ? $event->getEvent() : $event;
+        $this->metadata = $event instanceof DomainEventWithMetadataInterface ? $event->getMetadata() : [];
         $this->metadata['correlationIdentifier'] = $correlationIdentifier;
     }
 
