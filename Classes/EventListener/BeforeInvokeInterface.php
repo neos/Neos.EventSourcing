@@ -12,8 +12,7 @@ namespace Neos\EventSourcing\EventListener;
  * source code.
  */
 
-use Neos\EventSourcing\Event\DomainEventInterface;
-use Neos\EventSourcing\EventStore\RawEvent;
+use Neos\EventSourcing\EventStore\EventEnvelope;
 
 /**
  * If an Event Listener implements this interface, the afterInvoke() method is called
@@ -24,9 +23,8 @@ interface BeforeInvokeInterface
     /**
      * Called before a listener method is invoked
      *
-     * @param DomainEventInterface $event The event to be dispatched
-     * @param RawEvent $rawEvent The raw event to be dispatched
+     * @param EventEnvelope $eventEnvelope
      * @return void
      */
-    public function beforeInvoke(DomainEventInterface $event, RawEvent $rawEvent): void;
+    public function beforeInvoke(EventEnvelope $eventEnvelope): void;
 }
