@@ -11,16 +11,15 @@ namespace Neos\EventSourcing\EventListener;
  * information, please view the LICENSE file which was distributed with this
  * source code.
  */
+
 use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\EventSourcing\EventStore\RawEvent;
 
 /**
- * ActsAfterInvokingEventListenerMethodsInterface
- *
- * If this interface is implemented for an Event Listener class, the Event Publisher will call the respective
- * method after invoking the actual event listener method (whenSomethingHappened()).
+ * If an Event Listener implements this interface, the afterInvoke() method is called
+ * before the actual event listener method when<SomethingHappened>() was invoked.
  */
-interface ActsAfterInvokingEventListenerMethodsInterface extends EventListenerInterface
+interface BeforeInvokeInterface
 {
     /**
      * Called before a listener method is invoked
@@ -29,5 +28,5 @@ interface ActsAfterInvokingEventListenerMethodsInterface extends EventListenerIn
      * @param RawEvent $rawEvent The raw event to be dispatched
      * @return void
      */
-    public function afterInvokingEventListenerMethod(DomainEventInterface $event, RawEvent $rawEvent): void;
+    public function beforeInvoke(DomainEventInterface $event, RawEvent $rawEvent): void;
 }
