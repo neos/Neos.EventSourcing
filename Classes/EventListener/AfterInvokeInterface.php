@@ -21,7 +21,7 @@ use Neos\EventSourcing\EventStore\EventEnvelope;
 interface AfterInvokeInterface
 {
     /**
-     * Called before a listener method is invoked
+     * Called after a listener method is invoked
      *
      * @param EventEnvelope $eventEnvelope
      * @return void

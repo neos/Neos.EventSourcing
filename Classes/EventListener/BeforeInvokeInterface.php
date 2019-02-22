@@ -15,7 +15,7 @@ namespace Neos\EventSourcing\EventListener;
 use Neos\EventSourcing\EventStore\EventEnvelope;
 
 /**
- * If an Event Listener implements this interface, the afterInvoke() method is called
+ * If an Event Listener implements this interface, the beforeInvoke() method is called
  * before the actual event listener method when<SomethingHappened>() was invoked.
  */
 interface BeforeInvokeInterface
