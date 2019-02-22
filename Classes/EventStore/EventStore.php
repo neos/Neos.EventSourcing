@@ -80,7 +80,7 @@ final class EventStore
      * Example:
      *
      * $eventStore = $this->eventStoreManager->getEventStore('some-es-id');
-     * $eventStore->onPostCommit(function(DomainEvents $events, WritableEvent $persistedEvents) {
+     * $eventStore->onPostCommit(function(DomainEvents $events, WritableEvents $persistedEvents) {
      *    $this->logger->log('Published ' . $persistedEvents->count() . ' events');
      * });
      *
