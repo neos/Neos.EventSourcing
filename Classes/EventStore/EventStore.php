@@ -60,12 +60,37 @@ final class EventStore
     protected $eventBus;
 
     /**
+     * @var array
+     */
+    private $postCommitCallbacks = [];
+
+    /**
      * @internal Do not instantiate this class directly but use the EventStoreManager
      * @param EventStorageInterface $storage
      */
     public function __construct(EventStorageInterface $storage)
     {
         $this->storage = $storage;
+    }
+
+    /**
+     * Registers a callback that is invoked after events have been committed and published.
+     *
+     * The callback is invoked with the DomainEvents and the resulting WritableEvents as arguments.
+     * Example:
+     *
+     * $eventStore = $this->eventStoreManager->getEventStore('some-es-id');
+     * $eventStore->onPostCommit(function(DomainEvents $events, WritableEvent $persistedEvents) {
+     *    $this->logger->log('Published ' . $persistedEvents->count() . ' events');
+     * });
+     *
+     * @see commit()
+     *
+     * @param \Closure $callback
+     */
+    public function onPostCommit(\Closure $callback): void
+    {
+        $this->postCommitCallbacks[] = $callback;
     }
 
     public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStream
@@ -101,8 +126,12 @@ final class EventStore
             $convertedEvents[] = new WritableEvent($eventIdentifier, $type, $data, $metadata);
         }
 
-        $this->storage->commit($streamName, WritableEvents::fromArray($convertedEvents), $expectedVersion);
+        $committedEvents = WritableEvents::fromArray($convertedEvents);
+        $this->storage->commit($streamName, $committedEvents, $expectedVersion);
         $this->eventBus->publish($events);
+        foreach ($this->postCommitCallbacks as $callback) {
+            $callback($events, $committedEvents);
+        }
     }
 
     /**
