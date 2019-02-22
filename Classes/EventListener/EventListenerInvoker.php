@@ -15,7 +15,6 @@ namespace Neos\EventSourcing\EventListener;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventStore\EventEnvelope;
 use Neos\EventSourcing\EventStore\EventStoreManager;
-use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\Flow\Annotations as Flow;
@@ -45,25 +44,24 @@ final class EventListenerInvoker
     public function catchUp(EventListenerInterface $listener, \Closure $progressCallback = null): void
     {
         $highestAppliedSequenceNumber = $this->appliedEventsLogRepository->reserveHighestAppliedEventSequenceNumber(get_class($listener));
-        if ($listener instanceof StreamAwareEventListenerInterface) {
-            $streamName = $listener::listensToStream();
-        } else {
-            $streamName = StreamName::all();
-        }
-        $eventStore = $this->eventStoreManager->getEventStoreForEventListener(get_class($listener));
         try {
-            $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
-        } catch (EventStreamNotFoundException $exception) {
-            $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
-            return;
-        }
-        foreach ($eventStream as $eventEnvelope) {
-            $this->applyEvent($listener, $eventEnvelope);
-            if ($progressCallback !== null) {
-                $progressCallback($eventEnvelope);
+            if ($listener instanceof StreamAwareEventListenerInterface) {
+                $streamName = $listener::listensToStream();
+            } else {
+                $streamName = StreamName::all();
             }
+            $eventStore = $this->eventStoreManager->getEventStoreForEventListener(get_class($listener));
+            $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
+            foreach ($eventStream as $eventEnvelope) {
+                $this->applyEvent($listener, $eventEnvelope);
+                $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $eventEnvelope->getRawEvent()->getSequenceNumber());
+                if ($progressCallback !== null) {
+                    $progressCallback($eventEnvelope);
+                }
+            }
+        } finally {
+            $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
         }
-        $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
     }
 
     /**
@@ -81,7 +79,6 @@ final class EventListenerInvoker
             throw new \RuntimeException(sprintf('Could not extract listener method name for listener %s and event %s', get_class($listener), get_class($event)), 1541003718, $exception);
         }
         if (!method_exists($listener, $listenerMethodName)) {
-            $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $rawEvent->getSequenceNumber());
             return;
         }
         if ($listener instanceof BeforeInvokeInterface) {
@@ -90,12 +87,10 @@ final class EventListenerInvoker
         try {
             $listener->$listenerMethodName($event, $rawEvent);
         } catch (\Exception $exception) {
-            $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
             throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($listener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $listener);
         }
         if ($listener instanceof AfterInvokeInterface) {
             $listener->afterInvoke($eventEnvelope);
         }
-        $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $rawEvent->getSequenceNumber());
     }
 }
