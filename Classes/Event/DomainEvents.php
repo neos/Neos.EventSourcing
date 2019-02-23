@@ -85,6 +85,12 @@ final class DomainEvents implements \IteratorAggregate, \Countable
         return self::fromArray($convertedEvents);
     }
 
+    public function filter(\Closure $expression): self
+    {
+        $filteredEvents = array_filter($this->events, $expression);
+        return self::fromArray($filteredEvents);
+    }
+
     public function isEmpty(): bool
     {
         return $this->events === [];
