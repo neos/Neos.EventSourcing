@@ -38,7 +38,7 @@ final class EventWithIdentifier implements DomainEventWithIdentifierInterface
      */
     public function __construct(DomainEventInterface $event, string $identifier)
     {
-        $this->event = $event instanceof DomainEventDecoratorInterface ? $event->getEvent() : $event;
+        $this->event = $event;
         $this->identifier = $identifier;
     }
 
