@@ -152,7 +152,7 @@ class AppliedEventsLogRepository
             throw new \RuntimeException('ensureHighestAppliedSequenceNumbersAreInitialized only works not inside a transaction.');
         }
 
-        $this->dbal->transactional(function() {
+        $this->dbal->transactional(function () {
             foreach (self::getAllEventListeners($this->objectManager) as $eventListenerIdentifier) {
                 // HINT: we do a "INSERT IGNORE" here, meaning "if the primary key (eventListenerIdentifier) already exists, the insert is not done".
                 // Which is exactly what we want; "only insert "-1" if no value existed yet.
