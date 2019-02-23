@@ -15,6 +15,7 @@ namespace Neos\EventSourcing\EventBus;
 use Flowpack\JobQueue\Common\Job\JobManager;
 use Neos\EventSourcing\Event\Decorator\EventDecoratorUtilities;
 use Neos\EventSourcing\Event\DomainEvents;
+use Neos\EventSourcing\EventListener\AppliedEventsLogRepository;
 use Neos\EventSourcing\EventListener\EventListenerLocator;
 use Neos\Flow\Annotations as Flow;
 
@@ -37,6 +38,12 @@ final class EventBus
     protected $eventListenerLocator;
 
     /**
+     * @Flow\Inject
+     * @var AppliedEventsLogRepository
+     */
+    protected $appliedEventsLogRepository;
+
+    /**
      * @var array
      */
     private $pendingEventListenerClassNames = [];
@@ -53,6 +60,8 @@ final class EventBus
 
     public function flush(): void
     {
+        $this->appliedEventsLogRepository->ensureHighestAppliedSequenceNumbersAreInitialized();
+
         foreach (array_keys($this->pendingEventListenerClassNames) as $listenerClassName) {
             $job = new CatchUpEventListenerJob($listenerClassName);
             // TODO make queue name configurable (per event type?)

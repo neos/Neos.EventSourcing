@@ -20,6 +20,8 @@ use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\ORM\EntityManager as DoctrineEntityManager;
 use Neos\EventSourcing\EventListener\Exception\HighestAppliedSequenceNumberCantBeReservedException;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
+use Neos\Flow\Reflection\ReflectionService;
 
 /**
  * TODO Document
@@ -37,30 +39,26 @@ class AppliedEventsLogRepository
     private $dbal;
 
     /**
+     * @var ObjectManagerInterface
+     */
+    protected $objectManager;
+
+    /**
      * @param DoctrineObjectManager $entityManager
-     *
+     * @param ObjectManagerInterface $objectManager
      *
      * // TODO use EventStore DBAL connection (?)
      */
-    public function __construct(DoctrineObjectManager $entityManager)
+    public function __construct(DoctrineObjectManager $entityManager, ObjectManagerInterface $objectManager)
     {
         if (!$entityManager instanceof DoctrineEntityManager) {
             throw new \RuntimeException(sprintf('The injected entityManager is expected to be an instance of "%s". Given: "%s"', DoctrineEntityManager::class, get_class($entityManager)), 1521556748);
         }
         $this->dbal = $entityManager->getConnection();
+        $this->objectManager = $objectManager;
     }
 
     public function reserveHighestAppliedEventSequenceNumber(string $eventListenerIdentifier): int
-    {
-        try {
-            $sequenceNumber = $this->fetchHighestAppliedSequenceNumber($eventListenerIdentifier);
-        } catch (HighestAppliedSequenceNumberCantBeReservedException $exception) {
-            return $this->reserveHighestAppliedEventSequenceNumber($eventListenerIdentifier);
-        }
-        return (int)$sequenceNumber;
-    }
-
-    private function fetchHighestAppliedSequenceNumber(string $eventListenerIdentifier): ?int
     {
         try {
             // TODO longer/configurable timeout?
@@ -68,12 +66,18 @@ class AppliedEventsLogRepository
         } catch (DBALException $exception) {
             throw new \RuntimeException($exception->getMessage(), 1544207612, $exception);
         }
+
+        if ($this->dbal->getTransactionNestingLevel() !== 0) {
+            throw new \RuntimeException('A transaction is active already, can\'t fetch highestAppliedSequenceNumber!', 1550865301);
+        }
+
         $this->dbal->beginTransaction();
         try {
             $highestAppliedSequenceNumber = $this->dbal->fetchColumn('
                 SELECT highestAppliedSequenceNumber
                 FROM ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . '
-                WHERE eventlisteneridentifier = :eventListenerIdentifier ' . $this->dbal->getDatabasePlatform()->getForUpdateSQL(),
+                WHERE eventlisteneridentifier = :eventListenerIdentifier '
+                . $this->dbal->getDatabasePlatform()->getForUpdateSQL(),
                 ['eventListenerIdentifier' => $eventListenerIdentifier]
             );
         } catch (DriverException $exception) {
@@ -90,14 +94,7 @@ class AppliedEventsLogRepository
             throw new \RuntimeException($exception->getMessage(), 1544207778, $exception);
         }
         if ($highestAppliedSequenceNumber === false) {
-            $this->dbal->executeUpdate('
-                INSERT INTO ' . $this->dbal->quoteIdentifier(self::TABLE_NAME) . '
-                    (eventListenerIdentifier, highestAppliedSequenceNumber)
-                VALUES
-                    (:eventListenerIdentifier, -1)',
-                ['eventListenerIdentifier' => $eventListenerIdentifier]
-            );
-            return -1;
+            throw new HighestAppliedSequenceNumberCantBeReservedException(sprintf('Could not reserve highest applied sequence number for listener "%s", because the corresponding row was not found in the neos_eventsourcing_eventlistener_appliedeventslog table. This means the method ensureHighestAppliedSequenceNumbersAreInitialized() was not called beforehand.', $eventListenerIdentifier), 1550948433);
         }
         return (int)$highestAppliedSequenceNumber;
     }
@@ -112,7 +109,7 @@ class AppliedEventsLogRepository
 
     public function saveHighestAppliedSequenceNumber(string $eventListenerIdentifier, int $sequenceNumber): void
     {
-        // TODO: Fails if no matching entry exists
+        // Fails if no matching entry exists; which is fine because ensureHighestAppliedSequenceNumbersAreInitialized() must be called beforehand.
         try {
             $this->dbal->update(
                 self::TABLE_NAME,
@@ -120,7 +117,7 @@ class AppliedEventsLogRepository
                 ['eventListenerIdentifier' => $eventListenerIdentifier]
             );
         } catch (DBALException $exception) {
-            throw new \RuntimeException(sprintf('Could not save highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1544207099, $exception);
+            throw new \RuntimeException(sprintf('Could not save highest applied sequence number for listener "%s". Did you call ensureHighestAppliedSequenceNumbersAreInitialized() beforehand?', $eventListenerIdentifier), 1544207099, $exception);
         }
     }
 
@@ -131,15 +128,52 @@ class AppliedEventsLogRepository
      */
     public function removeHighestAppliedSequenceNumber(string $eventListenerIdentifier): void
     {
-        // TODO: Fails if no matching entry exists
         try {
-            $this->dbal->update(
+            $this->dbal->delete(
                 self::TABLE_NAME,
-                ['highestAppliedSequenceNumber' => -1],
                 ['eventListenerIdentifier' => $eventListenerIdentifier]
             );
         } catch (DBALException $exception) {
             throw new \RuntimeException(sprintf('Could not reset highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1544213138, $exception);
         }
+    }
+
+    /**
+     * This method should be called BEFORE the Projection Workers are actually started; as otherwise,
+     * inserting into the AppliedEventsLog might lead to a deadlock when multiple workers want to insert
+     * the "-1" default event IDs.
+     *
+     * That's why this preparation is executed in the EventBus; BEFORE dispatching to the different Jobs.
+     * It's a form of "HELPING", where the main (web) process helps the projection processes to have a known entry in the AppliedEventsLog.
+     */
+    public function ensureHighestAppliedSequenceNumbersAreInitialized()
+    {
+        if ($this->dbal->getTransactionNestingLevel() !== 0) {
+            throw new \RuntimeException('ensureHighestAppliedSequenceNumbersAreInitialized only works not inside a transaction.');
+        }
+
+        $this->dbal->transactional(function() {
+            foreach (self::getAllEventListeners($this->objectManager) as $eventListenerIdentifier) {
+                // HINT: we do a "INSERT IGNORE" here, meaning "if the primary key (eventListenerIdentifier) already exists, the insert is not done".
+                // Which is exactly what we want; "only insert "-1" if no value existed yet.
+                $this->dbal->executeUpdate('INSERT IGNORE INTO ' . self::TABLE_NAME . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, -1)',
+                    ['eventListenerIdentifier' => $eventListenerIdentifier]
+                );
+            }
+        });
+    }
+
+    /**
+     * Create mapping between Event class name and Event type
+     *
+     * @param ObjectManagerInterface $objectManager
+     * @return array
+     * @Flow\CompileStatic
+     */
+    protected static function getAllEventListeners(ObjectManagerInterface $objectManager): array
+    {
+        /** @var ReflectionService $reflectionService */
+        $reflectionService = $objectManager->get(ReflectionService::class);
+        return $reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class);
     }
 }
