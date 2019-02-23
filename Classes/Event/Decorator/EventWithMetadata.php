@@ -38,8 +38,9 @@ final class EventWithMetadata implements DomainEventWithMetadataInterface
      */
     public function __construct(DomainEventInterface $event, array $metadata)
     {
-        $this->event = $event instanceof DomainEventDecoratorInterface ? $event->getEvent() : $event;
-        $this->metadata = $event instanceof DomainEventWithMetadataInterface ? Arrays::arrayMergeRecursiveOverrule($event->getMetadata(), $metadata) : $metadata;
+        $this->event = $event;
+        $metadataOfInnerEvent = EventDecoratorUtilities::extractMetadata($event);
+        $this->metadata = Arrays::arrayMergeRecursiveOverrule($metadataOfInnerEvent, $metadata);
     }
 
     /**

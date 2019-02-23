@@ -13,17 +13,14 @@ namespace Neos\EventSourcing\EventStore;
  */
 
 use Neos\Error\Messages\Result;
-use Neos\EventSourcing\Event\Decorator\DomainEventDecoratorInterface;
-use Neos\EventSourcing\Event\Decorator\DomainEventWithIdentifierInterface;
+use Neos\EventSourcing\Event\Decorator\EventDecoratorUtilities;
 use Neos\EventSourcing\EventBus\EventBus;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\Flow\Annotations as Flow;
-use Neos\EventSourcing\Event\Decorator\DomainEventWithMetadataInterface;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\Event\EventTypeResolver;
 use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
-use Neos\Flow\Utility\Algorithms;
 
 /**
  * Main API to store and fetch events.
@@ -115,11 +112,10 @@ final class EventStore
         }
         $convertedEvents = [];
         foreach ($events as $event) {
-            $eventIdentifier = $event instanceof DomainEventWithIdentifierInterface ? $event->getIdentifier() : Algorithms::generateUUID();
-            $metadata = $event instanceof DomainEventWithMetadataInterface ? $event->getMetadata() : [];
-            if ($event instanceof DomainEventDecoratorInterface) {
-                $event = $event->getEvent();
-            }
+            $eventIdentifier = EventDecoratorUtilities::extractIdentifier($event);
+            $metadata = EventDecoratorUtilities::extractMetadata($event);
+            $event = EventDecoratorUtilities::extractUndecoratedEvent($event);
+
             $type = $this->eventTypeResolver->getEventType($event);
             $data = $this->eventNormalizer->normalize($event);
 
