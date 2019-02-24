@@ -125,7 +125,7 @@ class ProjectionManager
         $projector = $this->objectManager->get($projection->getProjectorClassName());
         $this->appliedEventsLogRepository->removeHighestAppliedSequenceNumber($projection->getProjectorClassName());
         $projector->reset();
-        $this->appliedEventsLogRepository->ensureHighestAppliedSequenceNumbersAreInitialized();
+        $this->appliedEventsLogRepository->initializeHighestAppliedSequenceNumber($projection->getProjectorClassName());
         $this->eventListenerInvoker->catchUp($projector, $progressCallback);
     }
 
