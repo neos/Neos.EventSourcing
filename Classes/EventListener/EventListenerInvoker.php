@@ -15,6 +15,7 @@ namespace Neos\EventSourcing\EventListener;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventStore\EventEnvelope;
 use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\Flow\Annotations as Flow;
@@ -59,6 +60,8 @@ final class EventListenerInvoker
                     $progressCallback($eventEnvelope);
                 }
             }
+        } catch (EventStreamNotFoundException $exception) {
+            // this is not an error
         } finally {
             $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
         }
