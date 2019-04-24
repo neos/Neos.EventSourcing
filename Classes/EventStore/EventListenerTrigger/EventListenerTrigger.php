@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\EventBus;
+namespace Neos\EventSourcing\EventStore\EventListenerTrigger;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -20,9 +20,15 @@ use Neos\EventSourcing\EventListener\EventListenerLocator;
 use Neos\Flow\Annotations as Flow;
 
 /**
+ * This class is responsible for triggering the correct event listeners (e.g. projectors) for some events which have been published
+ * on the event store recently.
+ *
+ * The published events have to be registered using {@see EventListenerTrigger::enqueueEvents()}, and to invoke the correct
+ * event listeners, the method {@see EventListenerTrigger::invoke()} has to be called.
+ *
  * @Flow\Scope("singleton")
  */
-final class EventBus
+final class EventListenerTrigger
 {
 
     /**
@@ -48,7 +54,12 @@ final class EventBus
      */
     private $pendingEventListenerClassNames = [];
 
-    public function publish(DomainEvents $events): void
+    /**
+     * Enqueue domain events, such that their corresponding Event Listeners are executed lateron.
+     *
+     * @param DomainEvents $events
+     */
+    public function enqueueEvents(DomainEvents $events): void
     {
         foreach ($events as $event) {
             $eventClassName = get_class(EventDecoratorUtilities::extractUndecoratedEvent($event));
@@ -58,7 +69,10 @@ final class EventBus
         }
     }
 
-    public function flush(): void
+    /**
+     * Invoke the event listeners which have been enqueued. NOTE: This usually runs asynchronously by an async job queue.
+     */
+    public function invoke(): void
     {
         $this->appliedEventsLogRepository->ensureHighestAppliedSequenceNumbersAreInitialized();
 
@@ -72,6 +86,6 @@ final class EventBus
 
     public function shutdownObject(): void
     {
-        $this->flush();
+        $this->invoke();
     }
 }

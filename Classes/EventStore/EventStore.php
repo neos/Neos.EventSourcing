@@ -14,7 +14,7 @@ namespace Neos\EventSourcing\EventStore;
 
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\Event\Decorator\EventDecoratorUtilities;
-use Neos\EventSourcing\EventBus\EventBus;
+use Neos\EventSourcing\EventStore\EventListenerTrigger\EventListenerTrigger;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\Flow\Annotations as Flow;
 use Neos\EventSourcing\Event\DomainEvents;
@@ -52,9 +52,9 @@ final class EventStore
 
     /**
      * @Flow\Inject
-     * @var EventBus
+     * @var EventListenerTrigger
      */
-    protected $eventBus;
+    protected $eventListenerTrigger;
 
     /**
      * @var array
@@ -62,12 +62,32 @@ final class EventStore
     private $postCommitCallbacks = [];
 
     /**
-     * @internal Do not instantiate this class directly but use the EventStoreManager
+     * should events be sent to the EventListenerTrigger?
+     * E.g. in import scenarios, it might be useful to disable it.
+     * By default, it is enabled.
+     *
+     * @var bool
+     */
+    private $enableEventListenerTrigger = true;
+
+    /**
      * @param EventStorageInterface $storage
+     * @internal Do not instantiate this class directly but use the EventStoreManager
      */
     public function __construct(EventStorageInterface $storage)
     {
         $this->storage = $storage;
+    }
+
+    /**
+     * If calling triggerEventListener(false), the Event Listeners will not be automatically notifified after new events
+     * have been published.
+     *
+     * @param bool $shouldTrigger
+     */
+    public function enableEventListenerTrigger(bool $shouldTrigger)
+    {
+        $this->enableEventListenerTrigger = $shouldTrigger;
     }
 
     /**
@@ -124,7 +144,11 @@ final class EventStore
 
         $committedEvents = WritableEvents::fromArray($convertedEvents);
         $this->storage->commit($streamName, $committedEvents, $expectedVersion);
-        $this->eventBus->publish($events);
+
+        if ($this->enableEventListenerTrigger === true) {
+            $this->eventListenerTrigger->enqueueEvents($events);
+        }
+
         foreach ($this->postCommitCallbacks as $callback) {
             $callback($events, $committedEvents);
         }
