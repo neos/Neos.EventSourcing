@@ -146,7 +146,10 @@ final class EventStoreManager
      */
     public function getEventStoreForEventListener(string $listenerClassName): EventStore
     {
-        $boundedContext = $this->objectManager->getPackageKeyByObjectName($listenerClassName) ?? '';
+        $boundedContext = $this->objectManager->getPackageKeyByObjectName($listenerClassName);
+        if ($boundedContext === false) {
+            $boundedContext = '';
+        }
         return $this->getEventStoreForBoundedContext($boundedContext);
     }
 
