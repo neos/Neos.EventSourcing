@@ -4,10 +4,12 @@ namespace Neos\EventSourcing\Tests\Unit\EventStore;
 
 use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\Exception\StorageConfigurationException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Tests\UnitTestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 
 class EventStoreManagerTest extends UnitTestCase
 {
@@ -18,21 +20,21 @@ class EventStoreManagerTest extends UnitTestCase
     private $eventStoreManager;
 
     /**
-     * @var EventStorageInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var EventStorageInterface|MockObject
      */
     private $mockEventStorage;
 
     /**
-     * @var EventStore|\PHPUnit_Framework_MockObject_MockObject
+     * @var EventStore|MockObject
      */
     private $mockEventStore;
 
     /**
-     * @var ObjectManagerInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var ObjectManagerInterface|MockObject
      */
     private $mockObjectManager;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->mockObjectManager = $this->getMockBuilder(ObjectManagerInterface::class)->getMock();
 
@@ -68,11 +70,11 @@ class EventStoreManagerTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\EventStore\Exception\StorageConfigurationException
-     * @expectedExceptionCode 1479213813
      */
     public function getEventStoreThrowsExceptionForEventStoreConfigurationsWithoutBoundedContextTarget(): void
     {
+        $this->expectException(StorageConfigurationException::class);
+        $this->expectExceptionCode(1479213813);
         $mockConfiguration = [
             'someStore' => [
                 'storage' => 'Foo',
@@ -85,11 +87,11 @@ class EventStoreManagerTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\EventStore\Exception\StorageConfigurationException
-     * @expectedExceptionCode 1479214520
      */
     public function getEventStoreThrowsExceptionIfNoFallbackStoreIsConfigured(): void
     {
+        $this->expectException(StorageConfigurationException::class);
+        $this->expectExceptionCode(1479214520);
         $mockConfiguration = [];
         $eventStoreManager = new EventStoreManager($this->mockObjectManager, $mockConfiguration);
         $eventStoreManager->getEventStore('someStore');
@@ -97,11 +99,11 @@ class EventStoreManagerTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\EventStore\Exception\StorageConfigurationException
-     * @expectedExceptionCode 1492434176
      */
     public function getEventStoreThrowsExceptionForEventStoreConfigurationsWithOverlappingBoundedContexts(): void
     {
+        $this->expectException(StorageConfigurationException::class);
+        $this->expectExceptionCode(1492434176);
         $mockConfiguration = [
             'someStore' => [
                 'storage' => 'Foo',
@@ -125,11 +127,11 @@ class EventStoreManagerTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \RuntimeException
-     * @expectedExceptionCode 1492610857
      */
     public function getEventStoreThrowsExceptionIfTheRequestedEventStoreIsNotConfigured(): void
     {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1492610857);
         $mockConfiguration = [
             'someStore' => [
                 'storage' => 'Foo',
@@ -150,11 +152,11 @@ class EventStoreManagerTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\EventStore\Exception\StorageConfigurationException
-     * @expectedExceptionCode 1492610902
      */
     public function getEventStoreThrowsExceptionIfNoStorageIsConfigured(): void
     {
+        $this->expectException(StorageConfigurationException::class);
+        $this->expectExceptionCode(1492610902);
         $mockConfiguration = [
             'someStore' => [
                 'boundedContexts' => [
@@ -168,11 +170,11 @@ class EventStoreManagerTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\EventStore\Exception\StorageConfigurationException
-     * @expectedExceptionCode 1492610908
      */
     public function getEventStoreThrowsExceptionIfConfiguredStorageIsNoEventStorageInterface(): void
     {
+        $this->expectException(StorageConfigurationException::class);
+        $this->expectExceptionCode(1492610908);
         $mockConfiguration = [
             'someStore' => [
                 'storage' => 'EventStorageClassName',
@@ -183,7 +185,7 @@ class EventStoreManagerTest extends UnitTestCase
         ];
         $eventStoreManager = new EventStoreManager($this->mockObjectManager, $mockConfiguration);
 
-        $this->mockObjectManager->expects($this->once())->method('get')->with('EventStorageClassName')->willReturn(new \stdClass());
+        $this->mockObjectManager->expects(self::once())->method('get')->with('EventStorageClassName')->willReturn(new \stdClass());
         $eventStoreManager->getEventStore('someStore');
     }
 
@@ -204,13 +206,13 @@ class EventStoreManagerTest extends UnitTestCase
         ];
         $eventStoreManager = new EventStoreManager($this->mockObjectManager, $mockConfiguration);
 
-        $this->mockObjectManager->expects($this->at(0))->method('get')->with(get_class($this->mockEventStorage), $mockStorageOptions)->willReturn($this->mockEventStorage);
-        $this->mockObjectManager->expects($this->at(1))->method('get')->with(EventStore::class, $this->mockEventStorage)->willReturn($this->mockEventStore);
+        $this->mockObjectManager->expects(self::at(0))->method('get')->with(get_class($this->mockEventStorage), $mockStorageOptions)->willReturn($this->mockEventStorage);
+        $this->mockObjectManager->expects(self::at(1))->method('get')->with(EventStore::class, $this->mockEventStorage)->willReturn($this->mockEventStore);
 
         $eventStoreManager->getEventStore('someStore');
         $eventStore = $eventStoreManager->getEventStore('someStore');
 
-        $this->mockEventStorage->expects($this->once())->method('setup');
+        $this->mockEventStorage->expects(self::once())->method('setup');
         $eventStore->setup();
     }
 
@@ -235,7 +237,7 @@ class EventStoreManagerTest extends UnitTestCase
         ];
         $eventStoreManager = new EventStoreManager($this->mockObjectManager, $mockConfiguration);
 
-        $this->mockObjectManager->expects($this->atLeastOnce())->method('get')->will($this->returnCallback(function($className) {
+        $this->mockObjectManager->expects(self::atLeastOnce())->method('get')->willReturnCallback(function ($className) {
             switch ($className) {
                 case EventStore::class:
                     return $this->mockEventStore;
@@ -245,7 +247,7 @@ class EventStoreManagerTest extends UnitTestCase
                     $this->fail(sprintf('Class "%s" were not expected to be instantiated!', $className));
             }
             return '';
-        }));
+        });
 
         $eventStoreManager->getEventStore('eventStore2');
     }
@@ -276,7 +278,7 @@ class EventStoreManagerTest extends UnitTestCase
      */
     public function getEventStoreForStreamNameTests(string $streamName, string $expectedEventStore): void
     {
-        $this->mockObjectManager->expects($this->atLeastOnce())->method('get')->will($this->returnCallback(function($className) use ($expectedEventStore) {
+        $this->mockObjectManager->expects(self::atLeastOnce())->method('get')->willReturnCallback(function ($className) use ($expectedEventStore) {
             $storageClassName = $expectedEventStore . 'Storage';
             switch ($className) {
                 case EventStore::class:
@@ -287,7 +289,7 @@ class EventStoreManagerTest extends UnitTestCase
                     $this->fail(sprintf('Class "%s" were not expected to be instantiated, expected "%s" or "%s"', $className, $storageClassName, EventStore::class));
             }
             return '';
-        }));
+        });
 
         $this->eventStoreManager->getEventStoreForStreamName(StreamName::fromString($streamName));
     }
@@ -297,11 +299,11 @@ class EventStoreManagerTest extends UnitTestCase
      */
     public function getEventStoreForEventListenerReturnsFallbackEventStoreIfAnEmptyStringIsGiven(): void
     {
-        $this->mockObjectManager->expects($this->at(0))->method('getPackageKeyByObjectName')->with('')->willReturn(false);
-        $this->mockObjectManager->expects($this->at(1))->method('get')->with('fallbackStoreStorage')->willReturn($this->mockEventStorage);
-        $this->mockObjectManager->expects($this->at(2))->method('get')->with(EventStore::class, $this->mockEventStorage)->willReturn($this->mockEventStore);
+        $this->mockObjectManager->expects(self::at(0))->method('getPackageKeyByObjectName')->with('')->willReturn(false);
+        $this->mockObjectManager->expects(self::at(1))->method('get')->with('fallbackStoreStorage')->willReturn($this->mockEventStorage);
+        $this->mockObjectManager->expects(self::at(2))->method('get')->with(EventStore::class, $this->mockEventStorage)->willReturn($this->mockEventStore);
         $eventStore = $this->eventStoreManager->getEventStoreForEventListener('');
-        $this->assertSame($this->mockEventStore, $eventStore);
+        self::assertSame($this->mockEventStore, $eventStore);
     }
 
     public function getEventStoreForEventListenerDataProvider(): array
@@ -327,8 +329,8 @@ class EventStoreManagerTest extends UnitTestCase
      */
     public function getEventStoreForEventListenerTests(string $resolvedPackageKey, string $expectedEventStore): void
     {
-        $this->mockObjectManager->expects($this->at(0))->method('getPackageKeyByObjectName')->with('listenerClassName')->willReturn($resolvedPackageKey);
-        $this->mockObjectManager->expects($this->atLeastOnce())->method('get')->will($this->returnCallback(function($className) use ($expectedEventStore) {
+        $this->mockObjectManager->expects(self::at(0))->method('getPackageKeyByObjectName')->with('listenerClassName')->willReturn($resolvedPackageKey);
+        $this->mockObjectManager->expects(self::atLeastOnce())->method('get')->willReturnCallback(function ($className) use ($expectedEventStore) {
             $storageClassName = $expectedEventStore . 'Storage';
             switch ($className) {
                 case EventStore::class:
@@ -339,7 +341,7 @@ class EventStoreManagerTest extends UnitTestCase
                     $this->fail(sprintf('Class "%s" were not expected to be instantiated, expected "%s" or "%s"', $className, $storageClassName, EventStore::class));
             }
             return '';
-        }));
+        });
 
         $this->eventStoreManager->getEventStoreForEventListener('listenerClassName');
     }
@@ -368,7 +370,7 @@ class EventStoreManagerTest extends UnitTestCase
      */
     public function getEventStoreForBoundedContextTests(string $boundedContext, string $expectedEventStore): void
     {
-        $this->mockObjectManager->expects($this->atLeastOnce())->method('get')->will($this->returnCallback(function($className) use ($expectedEventStore) {
+        $this->mockObjectManager->expects(self::atLeastOnce())->method('get')->willReturnCallback(function ($className) use ($expectedEventStore) {
             $storageClassName = $expectedEventStore . 'Storage';
             switch ($className) {
                 case EventStore::class:
@@ -379,17 +381,17 @@ class EventStoreManagerTest extends UnitTestCase
                     $this->fail(sprintf('Class "%s" were not expected to be instantiated, expected "%s" or "%s"', $className, $storageClassName, EventStore::class));
             }
             return '';
-        }));
+        });
 
         $this->eventStoreManager->getEventStoreForBoundedContext($boundedContext);
     }
 
     /**
      * @test
-     * @expectedException \Neos\EventSourcing\EventStore\Exception\StorageConfigurationException
      */
     public function getAllEventStoresThrowsExceptionIfNoEventStoreIsConfigured(): void
     {
+        $this->expectException(StorageConfigurationException::class);
         $mockConfiguration = [];
         $eventStoreManager = new EventStoreManager($this->mockObjectManager, $mockConfiguration);
         $eventStoreManager->getAllEventStores();
@@ -406,14 +408,14 @@ class EventStoreManagerTest extends UnitTestCase
             'eventStore3' => new EventStore($this->mockEventStorage),
         ];
 
-        $this->mockObjectManager->expects($this->at(0))->method('get')->with('fallbackStoreStorage')->willReturn($this->mockEventStorage);
-        $this->mockObjectManager->expects($this->at(1))->method('get')->with(EventStore::class)->willReturn($mockEventStores['fallbackStore']);
-        $this->mockObjectManager->expects($this->at(2))->method('get')->with('eventStore2Storage')->willReturn($this->mockEventStorage);
-        $this->mockObjectManager->expects($this->at(3))->method('get')->with(EventStore::class)->willReturn($mockEventStores['eventStore2']);
-        $this->mockObjectManager->expects($this->at(4))->method('get')->with('eventStore3Storage')->willReturn($this->mockEventStorage);
-        $this->mockObjectManager->expects($this->at(5))->method('get')->with(EventStore::class)->willReturn($mockEventStores['eventStore3']);
+        $this->mockObjectManager->expects(self::at(0))->method('get')->with('fallbackStoreStorage')->willReturn($this->mockEventStorage);
+        $this->mockObjectManager->expects(self::at(1))->method('get')->with(EventStore::class)->willReturn($mockEventStores['fallbackStore']);
+        $this->mockObjectManager->expects(self::at(2))->method('get')->with('eventStore2Storage')->willReturn($this->mockEventStorage);
+        $this->mockObjectManager->expects(self::at(3))->method('get')->with(EventStore::class)->willReturn($mockEventStores['eventStore2']);
+        $this->mockObjectManager->expects(self::at(4))->method('get')->with('eventStore3Storage')->willReturn($this->mockEventStorage);
+        $this->mockObjectManager->expects(self::at(5))->method('get')->with(EventStore::class)->willReturn($mockEventStores['eventStore3']);
 
         $actualResult = $this->eventStoreManager->getAllEventStores();
-        $this->assertSame($mockEventStores, $actualResult);
+        self::assertSame($mockEventStores, $actualResult);
     }
 }
