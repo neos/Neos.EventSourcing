@@ -12,7 +12,7 @@ class ValueObjectNormalizerTest extends UnitTestCase
      * @test
      * @dataProvider provideSourceDataAndClassNames
      */
-    public function ValueObjectNormalizer_supports_denormalization_of($sourceData, string $className): void
+    public function supportsDenormalizationTests($sourceData, string $className): void
     {
         $normalizer = new ValueObjectNormalizer();
         $this->assertTrue(
@@ -24,7 +24,7 @@ class ValueObjectNormalizerTest extends UnitTestCase
      * @test
      * @dataProvider provideSourceDataAndClassNames
      */
-    public function ValueObjectNormalizer_creates_instances_of_a_given_type($sourceData, string $className): void
+    public function denormalizeTests($sourceData, string $className): void
     {
         $normalizer = new ValueObjectNormalizer();
         $this->assertInstanceOf(
@@ -35,50 +35,10 @@ class ValueObjectNormalizerTest extends UnitTestCase
 
     public function provideSourceDataAndClassNames()
     {
-        yield 'integer' => [0, IntegerBasedValueObject::class];
-        yield 'string' => ['', StringBasedValueObject::class];
-        yield 'boolean' => [true, BooleanBasedValueObject::class];
-        yield 'float' => [0.0, FloatBasedValueObject::class];
-        yield 'array' => [[], ArrayBasedValueObject::class];
-    }
-}
-
-class IntegerBasedValueObject
-{
-    public static function fromInteger(int $value): self
-    {
-        return new self();
-    }
-}
-
-class StringBasedValueObject
-{
-    public static function fromString(string $value): self
-    {
-        return new self();
-    }
-}
-
-class BooleanBasedValueObject
-{
-    public static function fromBoolean(bool $value): self
-    {
-        return new self();
-    }
-}
-
-class FloatBasedValueObject
-{
-    public static function fromFloat(float $value): self
-    {
-        return new self();
-    }
-}
-
-class ArrayBasedValueObject
-{
-    public static function fromArray(array $value): self
-    {
-        return new self();
+        yield 'integer' => [0, Fixture\IntegerBasedValueObject::class];
+        yield 'string' => ['', Fixture\StringBasedValueObject::class];
+        yield 'boolean' => [true, Fixture\BooleanBasedValueObject::class];
+        yield 'float' => [0.0, Fixture\FloatBasedValueObject::class];
+        yield 'array' => [[], Fixture\ArrayBasedValueObject::class];
     }
 }
