@@ -74,7 +74,9 @@ final class EventListenerTrigger
      */
     public function invoke(): void
     {
-        $this->appliedEventsLogRepository->ensureHighestAppliedSequenceNumbersAreInitialized();
+        foreach (array_keys($this->pendingEventListenerClassNames) as $listenerClassName) {
+            $this->appliedEventsLogRepository->initializeHighestAppliedSequenceNumber($listenerClassName);
+        }
 
         foreach (array_keys($this->pendingEventListenerClassNames) as $listenerClassName) {
             $job = new CatchUpEventListenerJob($listenerClassName);
