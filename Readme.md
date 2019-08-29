@@ -29,8 +29,30 @@ Major Rewrite in process.. Stay tuned
 * At the end of the request (on `shutdownObject()` of the EventBus), the job queue `neos-eventsourcing`
   receives an `CatchUpEventListenerJob` with the event listener which should be ran.
 * Then, the event listeners are invoked asynchronously inside the queue.
-    
 
 ### Aggregates
 
 To Be Written
+
+#### Aggregate Repository
+
+This Framework does not provide an abstract Repository class for Aggregates, because an implementation is just a couple of lines of code and there is no useful abstraction that can be extracted. The Repository is just a slim wrapper around the EventStore and the Aggregate class. If you want to create a Repository for an Aggregate `Product` then the code would look like this:
+
+```php
+final class ProductRepository
+{
+    // inject an instance of EventStore somehow ...
+
+    public function load(ProductIdentifier $id): Product
+    {
+        $streamName = ...; // Build the stream name from the identifier
+        return Product::reconstituteFromEventStream($this->eventStore->load($streamName));
+    }
+
+    public function save(Product $product): void
+    {
+        $streamName = ...; // Build the stream name from $product->getIdentifier()
+        $this->eventStore->commit($streamName, $product->pullUncommittedEvents(), $product->getReconstitutionVersion());
+    }
+}
+```

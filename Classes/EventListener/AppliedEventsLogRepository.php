@@ -12,12 +12,11 @@ namespace Neos\EventSourcing\EventListener;
  * source code.
  */
 
-use Doctrine\Common\Persistence\ObjectManager as DoctrineObjectManager;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException;
-use Doctrine\ORM\EntityManager as DoctrineEntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Neos\EventSourcing\EventListener\Exception\HighestAppliedSequenceNumberCantBeReservedException;
 use Neos\Flow\Annotations as Flow;
 
@@ -29,7 +28,7 @@ use Neos\Flow\Annotations as Flow;
  */
 class AppliedEventsLogRepository
 {
-    const TABLE_NAME = 'neos_eventsourcing_eventlistener_appliedeventslog';
+    private const TABLE_NAME = 'neos_eventsourcing_eventlistener_appliedeventslog';
 
     /**
      * @var Connection
@@ -37,15 +36,12 @@ class AppliedEventsLogRepository
     private $dbal;
 
     /**
-     * @param DoctrineObjectManager $entityManager
+     * @param EntityManagerInterface $entityManager
      *
      * // TODO use EventStore DBAL connection (?)
      */
-    public function __construct(DoctrineObjectManager $entityManager)
+    public function __construct(EntityManagerInterface $entityManager)
     {
-        if (!$entityManager instanceof DoctrineEntityManager) {
-            throw new \RuntimeException(sprintf('The injected entityManager is expected to be an instance of "%s". Given: "%s"', DoctrineEntityManager::class, get_class($entityManager)), 1521556748);
-        }
         $this->dbal = $entityManager->getConnection();
     }
 

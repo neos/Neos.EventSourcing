@@ -2,18 +2,20 @@
 declare(strict_types=1);
 namespace Neos\EventSourcing\Tests\Unit\Event\Decorator;
 
+use Neos\EventSourcing\Event\Decorator\EventDecoratorUtilities;
 use Neos\EventSourcing\Event\Decorator\EventWithMetadata;
 use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\Flow\Tests\UnitTestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 
 class EventWithMetadataTest extends UnitTestCase
 {
     /**
-     * @var DomainEventInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @var DomainEventInterface|MockObject
      */
     private $mockEvent;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->mockEvent = $this->getMockBuilder(DomainEventInterface::class)->getMock();
     }
@@ -24,7 +26,7 @@ class EventWithMetadataTest extends UnitTestCase
     public function originalEventCanBeRetrieved(): void
     {
         $eventWithMetadata = new EventWithMetadata($this->mockEvent, []);
-        $this->assertSame($this->mockEvent, $eventWithMetadata->getEvent());
+        self::assertSame($this->mockEvent, $eventWithMetadata->getEvent());
     }
 
     /**
@@ -34,7 +36,7 @@ class EventWithMetadataTest extends UnitTestCase
     {
         $someMetadata = ['foo' => ['bar' => 'Baz']];
         $eventWithMetadata = new EventWithMetadata($this->mockEvent, $someMetadata);
-        $this->assertSame($someMetadata, $eventWithMetadata->getMetadata());
+        self::assertSame($someMetadata, $eventWithMetadata->getMetadata());
     }
 
     /**
@@ -50,7 +52,7 @@ class EventWithMetadataTest extends UnitTestCase
 
         $mergedMetadata = ['foo' => ['bar' => 'Baz', 'foos' => 'overridden'], 'another' => 'entry'];
 
-        $this->assertSame($mergedMetadata, $nestedEventWithMetadata->getMetadata());
+        self::assertSame($mergedMetadata, $nestedEventWithMetadata->getMetadata());
     }
 
     /**
@@ -61,6 +63,6 @@ class EventWithMetadataTest extends UnitTestCase
         $eventWithMetadata = new EventWithMetadata($this->mockEvent, []);
         $nestedEventWithMetadata = new EventWithMetadata($eventWithMetadata, []);
 
-        $this->assertSame($this->mockEvent, $nestedEventWithMetadata->getEvent());
+        self::assertSame($this->mockEvent, EventDecoratorUtilities::extractUndecoratedEvent($nestedEventWithMetadata));
     }
 }

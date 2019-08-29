@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Neos\EventSourcing\EventStore\Normalizer;
 
+use Neos\Utility\TypeHandling;
 use ReflectionMethod;
 use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -20,14 +21,14 @@ final class ValueObjectNormalizer implements DenormalizerInterface, CacheableSup
 {
     public function denormalize($data, $className, $format = null, array $context = [])
     {
-        $constructorMethod = $this->resolveConstructorMethod(gettype($data), $className);
+        $constructorMethod = $this->resolveConstructorMethod(TypeHandling::normalizeType(TypeHandling::getTypeForValue($data)), $className);
         return $constructorMethod->isConstructor() ? new $className($data) : $constructorMethod->invoke(null, $data);
     }
 
     public function supportsDenormalization($data, $className, $format = null): bool
     {
-        $supportedTypes = ['array', 'string', 'integer', 'double', 'boolean'];
-        $dataType = gettype($data);
+        $supportedTypes = ['array', 'string', 'integer', 'float', 'boolean'];
+        $dataType = TypeHandling::normalizeType(TypeHandling::getTypeForValue($data));
         if (!in_array($dataType, $supportedTypes, true)) {
             return false;
         }
@@ -62,7 +63,7 @@ final class ValueObjectNormalizer implements DenormalizerInterface, CacheableSup
         }
         $constructorParameter = $constructorMethod->getParameters()[0];
         $constructorParameterType = $constructorParameter->getType();
-        if ($constructorParameterType === null || $constructorParameterType->getName() !== $dataType) {
+        if ($constructorParameterType === null || TypeHandling::normalizeType($constructorParameterType->getName()) !== $dataType) {
             throw new \InvalidArgumentException(sprintf('The constructor %s:%s expects a different parameter type', $className, $constructorMethod->getName()), 1545233522);
         }
 

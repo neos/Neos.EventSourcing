@@ -12,12 +12,12 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine\Factory;
  * source code.
  */
 
-use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\ORM\EntityManagerInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Utility\Arrays;
 
@@ -34,9 +34,9 @@ class ConnectionFactory
      * slot is invoked. Without this an exception 'Unknown column type "flow_json_array" requested' might be thrown
      *
      * @Flow\Inject(lazy=false)
-     * @var ObjectManager
+     * @var EntityManagerInterface
      */
-    protected $doctrineObjectManager;
+    protected $doctrineEntityManager;
 
     /**
      * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence.backendOptions")

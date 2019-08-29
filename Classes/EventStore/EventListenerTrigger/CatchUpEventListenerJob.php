@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\EventBus;
+namespace Neos\EventSourcing\EventStore\EventListenerTrigger;
 
 /*
  * This file is part of the Neos.EventSourcing package.
