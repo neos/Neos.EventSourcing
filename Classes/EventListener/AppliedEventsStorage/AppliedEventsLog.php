@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\EventListener;
+namespace Neos\EventSourcing\EventListener\AppliedEventsStorage;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -18,10 +18,21 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Model for storing the applied events state of a given asynchronous event listener
  *
+ * Note: This class is merely used in order for the Doctrine Schema mapping, it is not meant to be used otherwise
+ *
  * @Flow\Entity
+ * @ORM\Table(name=AppliedEventsLog::TABLE_NAME)
+ * @internal
  */
 class AppliedEventsLog
 {
+    public const TABLE_NAME = 'neos_eventsourcing_eventlistener_appliedeventslog';
+
+    private function __construct()
+    {
+        // This class is not meant to be instantiated
+    }
+
     /**
      * @ORM\Id
      * @var string
@@ -29,7 +40,7 @@ class AppliedEventsLog
     public $eventListenerIdentifier;
 
     /**
-     * @var string
+     * @var int
      */
     public $highestAppliedSequenceNumber;
 }

@@ -12,10 +12,13 @@ namespace Neos\EventSourcing\Projection;
  * source code.
  */
 
-use Neos\EventSourcing\EventListener\AppliedEventsLogRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Neos\EventSourcing\EventListener\AppliedEventsStorage\DefaultAppliedEventsStorage;
+use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventListener\EventListenerLocator;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
+use Neos\EventSourcing\EventListener\ProvidesAppliedEventsStorageInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ClassReflection;
@@ -44,15 +47,15 @@ class ProjectionManager
 
     /**
      * @Flow\Inject
-     * @var AppliedEventsLogRepository
-     */
-    protected $appliedEventsLogRepository;
-
-    /**
-     * @Flow\Inject
      * @var EventListenerInvoker
      */
     protected $eventListenerInvoker;
+
+    /**
+     * @Flow\Inject
+     * @var EntityManagerInterface
+     */
+    protected $entityManager;
 
     /**
      * @var array in the format ['<projectionIdentifier>' => '<projectorClassName>', ...]
@@ -120,12 +123,15 @@ class ProjectionManager
     public function replay(string $projectionIdentifier, \Closure $progressCallback = null): void
     {
         $projection = $this->getProjection($projectionIdentifier);
-
         /** @var ProjectorInterface $projector */
         $projector = $this->objectManager->get($projection->getProjectorClassName());
-        $this->appliedEventsLogRepository->removeHighestAppliedSequenceNumber($projection->getProjectorClassName());
+        if ($projector instanceof ProvidesAppliedEventsStorageInterface) {
+            $appliedEventsStorage = $projector->getAppliedEventsStorage();
+        } else {
+            $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->entityManager->getConnection(), $projection->getProjectorClassName());
+        }
+        $appliedEventsStorage->saveHighestAppliedSequenceNumber(-1);
         $projector->reset();
-        $this->appliedEventsLogRepository->initializeHighestAppliedSequenceNumber($projection->getProjectorClassName());
         $this->eventListenerInvoker->catchUp($projector, $progressCallback);
     }
 
