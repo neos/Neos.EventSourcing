@@ -16,12 +16,13 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Neos\EventSourcing\EventListener\Exception\HighestAppliedSequenceNumberCantBeReservedException;
 use Neos\Flow\Annotations as Flow;
 
 /**
- * TODO Document
+ * This Repository allows stores the last applied event sequence number
  *
  * @api
  * @Flow\Scope("singleton")
@@ -31,9 +32,12 @@ class AppliedEventsLogRepository
     private const TABLE_NAME = 'neos_eventsourcing_eventlistener_appliedeventslog';
 
     /**
+     * DBAL handle
+     * Note: This field is protected so that it can be replaced (in tests)
+     *
      * @var Connection
      */
-    private $dbal;
+    protected $dbal;
 
     /**
      * @param EntityManagerInterface $entityManager
@@ -45,7 +49,6 @@ class AppliedEventsLogRepository
         $this->dbal = $entityManager->getConnection();
     }
 
-
     /**
      * This method should be called BEFORE the Projection Workers are actually started; as otherwise,
      * inserting into the AppliedEventsLog might lead to a deadlock when multiple workers want to insert
@@ -55,7 +58,6 @@ class AppliedEventsLogRepository
      * It's a form of "HELPING", where the main (web) process helps the projection processes to have a known entry in the AppliedEventsLog.
      *
      * @param string $eventListenerIdentifier
-     * @throws DBALException
      */
     public function initializeHighestAppliedSequenceNumber(string $eventListenerIdentifier): void
     {
@@ -63,25 +65,28 @@ class AppliedEventsLogRepository
             throw new \RuntimeException('initializeHighestAppliedSequenceNumber only works not inside a transaction.', 1551005203);
         }
 
-        $this->dbal->executeUpdate('INSERT IGNORE INTO ' . self::TABLE_NAME . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, -1)',
-            ['eventListenerIdentifier' => $eventListenerIdentifier]
-        );
+        try {
+            $this->dbal->executeUpdate('INSERT INTO ' . self::TABLE_NAME . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, -1)',
+                ['eventListenerIdentifier' => $eventListenerIdentifier]
+            );
+        } catch (DBALException $exception) {
+            // UniqueConstraintViolationException = The sequence number is already registered => ignore
+            if ($exception instanceof UniqueConstraintViolationException) {
+                return;
+            }
+            throw new \RuntimeException(sprintf('Failed to initialize highest sequence number for "%s": %s', $eventListenerIdentifier, $exception->getMessage()), 1567081020, $exception);
+        }
     }
 
     public function reserveHighestAppliedEventSequenceNumber(string $eventListenerIdentifier): int
     {
-        try {
-            // TODO longer/configurable timeout?
-            $this->dbal->executeQuery('SET innodb_lock_wait_timeout = 1');
-        } catch (DBALException $exception) {
-            throw new \RuntimeException($exception->getMessage(), 1544207612, $exception);
-        }
 
         if ($this->dbal->getTransactionNestingLevel() !== 0) {
             throw new \RuntimeException('A transaction is active already, can\'t fetch highestAppliedSequenceNumber!', 1550865301);
         }
 
         $this->dbal->beginTransaction();
+        $this->setLockTimeout();
         try {
             $highestAppliedSequenceNumber = $this->dbal->fetchColumn('
                 SELECT highestAppliedSequenceNumber
@@ -90,13 +95,14 @@ class AppliedEventsLogRepository
                 . $this->dbal->getDatabasePlatform()->getForUpdateSQL(),
                 ['eventListenerIdentifier' => $eventListenerIdentifier]
             );
-        } catch (DriverException $exception) {
+        } /** @noinspection PhpRedundantCatchClauseInspection */ catch (DriverException $exception) {
             try {
                 $this->dbal->rollBack();
-            } catch (ConnectionException $exception) {
+            } catch (ConnectionException $e) {
             }
-            // TODO 1205 = ER_LOCK_WAIT_TIMEOUT is MySQL Specific (https://dev.mysql.com/doc/refman/8.0/en/server-error-reference.html#error_er_lock_wait_timeout)
-            if ($exception->getErrorCode() !== 1205) {
+            // Error code "1205" = ER_LOCK_WAIT_TIMEOUT in MySQL (https://dev.mysql.com/doc/refman/8.0/en/server-error-reference.html#error_er_lock_wait_timeout)
+            // SQL State "55P03" = lock_not_available in PostgreSQL (https://www.postgresql.org/docs/9.4/errcodes-appendix.html)
+            if ($exception->getErrorCode() !== 1205 && $exception->getSQLState() !== '55P03') {
                 throw new \RuntimeException($exception->getMessage(), 1544207633, $exception);
             }
             throw new HighestAppliedSequenceNumberCantBeReservedException(sprintf('Could not reserve highest applied sequence number for listener "%s"', $eventListenerIdentifier), 1523456892, $exception);
@@ -109,11 +115,32 @@ class AppliedEventsLogRepository
         return (int)$highestAppliedSequenceNumber;
     }
 
+    private function setLockTimeout(): void
+    {
+        try {
+            $platform = $this->dbal->getDatabasePlatform()->getName();
+        } catch (DBALException $exception) {
+            throw new \RuntimeException(sprintf('Failed to determine database platform: %s', $exception->getMessage()), 1567080718, $exception);
+        }
+        if ($platform === 'mysql') {
+            $statement = 'SET innodb_lock_wait_timeout = 1';
+        } elseif ($platform === 'postgresql') {
+            $statement = 'SET LOCAL lock_timeout = \'1s\'';
+        } else {
+            return;
+        }
+        try {
+            $this->dbal->executeQuery($statement);
+        } catch (DBALException $exception) {
+            throw new \RuntimeException(sprintf('Failed to set lock timeout: %s', $exception->getMessage()), 1544207612, $exception);
+        }
+    }
+
     public function releaseHighestAppliedSequenceNumber(): void
     {
         try {
             $this->dbal->commit();
-        } catch (ConnectionException $exception) {
+        } catch (ConnectionException $e) {
         }
     }
 
