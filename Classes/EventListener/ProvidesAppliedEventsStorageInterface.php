@@ -23,7 +23,5 @@ use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageIn
  */
 interface ProvidesAppliedEventsStorageInterface
 {
-
     public function getAppliedEventsStorage(): AppliedEventsStorageInterface;
-
 }

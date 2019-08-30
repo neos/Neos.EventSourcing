@@ -43,5 +43,4 @@ interface AppliedEventsStorageInterface
      * @param int $sequenceNumber
      */
     public function saveHighestAppliedSequenceNumber(int $sequenceNumber): void;
-
 }
