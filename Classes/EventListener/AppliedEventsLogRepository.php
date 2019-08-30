@@ -80,7 +80,6 @@ class AppliedEventsLogRepository
 
     public function reserveHighestAppliedEventSequenceNumber(string $eventListenerIdentifier): int
     {
-
         if ($this->dbal->getTransactionNestingLevel() !== 0) {
             throw new \RuntimeException('A transaction is active already, can\'t fetch highestAppliedSequenceNumber!', 1550865301);
         }
