@@ -13,6 +13,7 @@ namespace Neos\EventSourcing\EventListener;
  */
 
 use Doctrine\ORM\EntityManagerInterface;
+use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DefaultAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
@@ -50,6 +51,8 @@ final class EventListenerInvoker
     {
         if ($listener instanceof ProvidesAppliedEventsStorageInterface) {
             $appliedEventsStorage = $listener->getAppliedEventsStorage();
+        } elseif ($listener instanceof AppliedEventsStorageInterface) {
+            $appliedEventsStorage = $listener;
         } else {
             $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->entityManager->getConnection(), \get_class($listener));
         }

@@ -13,6 +13,7 @@ namespace Neos\EventSourcing\Projection;
  */
 
 use Doctrine\ORM\EntityManagerInterface;
+use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DefaultAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
@@ -127,6 +128,8 @@ class ProjectionManager
         $projector = $this->objectManager->get($projection->getProjectorClassName());
         if ($projector instanceof ProvidesAppliedEventsStorageInterface) {
             $appliedEventsStorage = $projector->getAppliedEventsStorage();
+        } elseif ($projector instanceof AppliedEventsStorageInterface) {
+            $appliedEventsStorage = $projector;
         } else {
             $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->entityManager->getConnection(), $projection->getProjectorClassName());
         }
