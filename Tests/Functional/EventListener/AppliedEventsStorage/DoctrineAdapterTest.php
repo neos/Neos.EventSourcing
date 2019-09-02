@@ -36,10 +36,10 @@ class DoctrineAdapterTest extends FunctionalTestCase
             self::markTestSkipped(sprintf('DB platform "%s" is not supported', $platform));
         }
 
-        $this->adapter1 = new DoctrineAppliedEventsStorage($dbal1);
+        $this->adapter1 = new DoctrineAppliedEventsStorage($dbal1, 'someEventListenerIdentifier');
 
         $dbal2 = DriverManager::getConnection($dbal1->getParams(), new Configuration());
-        $this->adapter2 = new DoctrineAppliedEventsStorage($dbal2);
+        $this->adapter2 = new DoctrineAppliedEventsStorage($dbal2, 'someEventListenerIdentifier');
     }
 
     public function tearDown(): void
@@ -52,24 +52,13 @@ class DoctrineAdapterTest extends FunctionalTestCase
     /**
      * @test
      */
-    public function reserveHighestAppliedEventSequenceNumberFailsIfEventListenerIsNotInitialized(): void
-    {
-        $this->expectException(HighestAppliedSequenceNumberCantBeReservedException::class);
-        $this->expectExceptionCode(1550948433);
-        $this->adapter1->reserveHighestAppliedEventSequenceNumber('someEventListenerIdentifier');
-    }
-
-    /**
-     * @test
-     */
     public function reserveHighestAppliedEventSequenceNumberFailsIfSequenceNumberIsReserved(): void
     {
-        $this->adapter1->initializeHighestAppliedSequenceNumber('someEventListenerIdentifier');
-        $this->adapter1->reserveHighestAppliedEventSequenceNumber('someEventListenerIdentifier');
+        $this->adapter1->reserveHighestAppliedEventSequenceNumber();
 
         $this->expectException(HighestAppliedSequenceNumberCantBeReservedException::class);
         $this->expectExceptionCode(1523456892);
-        $this->adapter2->reserveHighestAppliedEventSequenceNumber('someEventListenerIdentifier');
+        $this->adapter2->reserveHighestAppliedEventSequenceNumber();
     }
 
     /**
@@ -77,13 +66,12 @@ class DoctrineAdapterTest extends FunctionalTestCase
      */
     public function reserveHighestAppliedEventSequenceNumberFailsWithin3Seconds(): void
     {
-        $this->adapter1->initializeHighestAppliedSequenceNumber('someEventListenerIdentifier');
-        $this->adapter1->reserveHighestAppliedEventSequenceNumber('someEventListenerIdentifier');
+        $this->adapter1->reserveHighestAppliedEventSequenceNumber();
 
         $startTime = microtime(true);
         $timeDelta = null;
         try {
-            $this->adapter2->reserveHighestAppliedEventSequenceNumber('someEventListenerIdentifier');
+            $this->adapter2->reserveHighestAppliedEventSequenceNumber();
         } catch (HighestAppliedSequenceNumberCantBeReservedException $exception) {
             $timeDelta = microtime(true) - $startTime;
         }
@@ -98,12 +86,11 @@ class DoctrineAdapterTest extends FunctionalTestCase
      */
     public function saveHighestAppliedSequenceNumberAllowsToSetSequenceNumber(): void
     {
-        $this->adapter1->initializeHighestAppliedSequenceNumber('someEventListenerIdentifier');
-        $this->adapter1->reserveHighestAppliedEventSequenceNumber('someEventListenerIdentifier');
-        $this->adapter1->saveHighestAppliedSequenceNumber('someEventListenerIdentifier', 42);
+        $this->adapter1->reserveHighestAppliedEventSequenceNumber();
+        $this->adapter1->saveHighestAppliedSequenceNumber(42);
         $this->adapter1->releaseHighestAppliedSequenceNumber();
 
-        self::assertSame(42, $this->adapter2->reserveHighestAppliedEventSequenceNumber('someEventListenerIdentifier'));
+        self::assertSame(42, $this->adapter2->reserveHighestAppliedEventSequenceNumber());
     }
 
 }
