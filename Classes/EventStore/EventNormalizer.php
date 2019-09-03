@@ -14,11 +14,11 @@ namespace Neos\EventSourcing\EventStore;
 
 use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\EventStore\Normalizer\ProxyAwareObjectNormalizer;
 use Neos\EventSourcing\EventStore\Normalizer\ValueObjectNormalizer;
 use Neos\Flow\Annotations as Flow;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
 /**
@@ -43,7 +43,7 @@ final class EventNormalizer
     protected function initializeObject(): void
     {
         // TODO: make normalizers configurable
-        $normalizers = [new DateTimeNormalizer(), new JsonSerializableNormalizer(), new ValueObjectNormalizer(), new ObjectNormalizer()];
+        $normalizers = [new DateTimeNormalizer(), new JsonSerializableNormalizer(), new ValueObjectNormalizer(), new ProxyAwareObjectNormalizer()];
         $this->serializer = new Serializer($normalizers);
     }
 
