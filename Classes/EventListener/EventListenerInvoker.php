@@ -12,6 +12,10 @@ namespace Neos\EventSourcing\EventListener;
  * source code.
  */
 
+use Doctrine\ORM\EntityManagerInterface;
+use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
+use Neos\EventSourcing\EventListener\AppliedEventsStorage\DefaultAppliedEventsStorage;
+use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventStore\EventEnvelope;
 use Neos\EventSourcing\EventStore\EventStoreManager;
@@ -25,11 +29,6 @@ use Neos\Flow\Annotations as Flow;
  */
 final class EventListenerInvoker
 {
-    /**
-     * @Flow\Inject
-     * @var AppliedEventsLogRepository
-     */
-    protected $appliedEventsLogRepository;
 
     /**
      * @Flow\Inject
@@ -38,24 +37,33 @@ final class EventListenerInvoker
     protected $eventStoreManager;
 
     /**
+     * @Flow\Inject
+     * @var EntityManagerInterface
+     */
+    protected $entityManager;
+
+    /**
      * @param EventListenerInterface $listener
      * @param \Closure $progressCallback
      * @throws EventCouldNotBeAppliedException
      */
     public function catchUp(EventListenerInterface $listener, \Closure $progressCallback = null): void
     {
-        $highestAppliedSequenceNumber = $this->appliedEventsLogRepository->reserveHighestAppliedEventSequenceNumber(get_class($listener));
+        if ($listener instanceof ProvidesAppliedEventsStorageInterface) {
+            $appliedEventsStorage = $listener->getAppliedEventsStorage();
+        } elseif ($listener instanceof AppliedEventsStorageInterface) {
+            $appliedEventsStorage = $listener;
+        } else {
+            $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->entityManager->getConnection(), \get_class($listener));
+        }
+        $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
+        $streamName = $listener instanceof StreamAwareEventListenerInterface ? $listener::listensToStream() : StreamName::all();
+        $eventStore = $this->eventStoreManager->getEventStoreForEventListener(\get_class($listener));
         try {
-            if ($listener instanceof StreamAwareEventListenerInterface) {
-                $streamName = $listener::listensToStream();
-            } else {
-                $streamName = StreamName::all();
-            }
-            $eventStore = $this->eventStoreManager->getEventStoreForEventListener(get_class($listener));
             $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
             foreach ($eventStream as $eventEnvelope) {
                 $this->applyEvent($listener, $eventEnvelope);
-                $this->appliedEventsLogRepository->saveHighestAppliedSequenceNumber(get_class($listener), $eventEnvelope->getRawEvent()->getSequenceNumber());
+                $appliedEventsStorage->saveHighestAppliedSequenceNumber($eventEnvelope->getRawEvent()->getSequenceNumber());
                 if ($progressCallback !== null) {
                     $progressCallback($eventEnvelope);
                 }
@@ -63,7 +71,7 @@ final class EventListenerInvoker
         } catch (EventStreamNotFoundException $exception) {
             // this is not an error
         } finally {
-            $this->appliedEventsLogRepository->releaseHighestAppliedSequenceNumber();
+            $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
         }
     }
 
