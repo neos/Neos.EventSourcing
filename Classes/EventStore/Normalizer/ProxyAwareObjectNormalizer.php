@@ -10,7 +10,6 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer as OriginalObjectNo
  */
 final class ProxyAwareObjectNormalizer extends OriginalObjectNormalizer
 {
-
     protected function getConstructor(array &$data, $class, array &$context, \ReflectionClass $reflectionClass, $allowedAttributes)
     {
         if ($reflectionClass->implementsInterface(ProxyInterface::class)) {
@@ -23,5 +22,4 @@ final class ProxyAwareObjectNormalizer extends OriginalObjectNormalizer
     {
         return true;
     }
-
 }
