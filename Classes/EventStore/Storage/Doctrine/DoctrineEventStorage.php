@@ -200,7 +200,7 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
         if ($expectedVersion === ExpectedVersion::ANY) {
             return;
         }
-        if ($expectedVersion === $actualVersion) {
+        if ($expectedVersion === $actualVersion || ($expectedVersion === ExpectedVersion::STREAM_EXISTS && $actualVersion > -1)) {
             return;
         }
         $this->connection->rollBack();
@@ -218,6 +218,9 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
         }
         if ($expectedVersion === ExpectedVersion::NO_STREAM) {
             return 'NO STREAM (-1)';
+        }
+        if ($expectedVersion === ExpectedVersion::STREAM_EXISTS) {
+            return 'STREAM EXISTS (-4)';
         }
         return (string)$expectedVersion;
     }

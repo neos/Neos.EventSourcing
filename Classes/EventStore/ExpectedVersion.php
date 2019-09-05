@@ -14,8 +14,20 @@ namespace Neos\EventSourcing\EventStore;
 
 final class ExpectedVersion
 {
-    const ANY          = -2;
-    const NO_STREAM    = -1;
+    /**
+     * @const int The write should not conflict with anything and should always succeed.
+     */
+    public const ANY = -2;
+
+    /**
+     * @const int The stream should not yet exist. If it does exist treat that as a concurrency problem.
+     */
+    public const NO_STREAM = -1;
+
+    /**
+     * @const int The stream should exist. If it or a metadata stream does not exist treat that as a concurrency problem.
+     */
+    public const STREAM_EXISTS = -4;
 
     private function __construct()
     {
