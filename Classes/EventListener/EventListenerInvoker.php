@@ -14,12 +14,10 @@ namespace Neos\EventSourcing\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
-use Neos\EventSourcing\EventListener\AppliedEventsStorage\DefaultAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventStore\EventEnvelope;
 use Neos\EventSourcing\EventStore\EventStoreManager;
-use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\Flow\Annotations as Flow;
@@ -59,20 +57,20 @@ final class EventListenerInvoker
         $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
         $streamName = $listener instanceof StreamAwareEventListenerInterface ? $listener::listensToStream() : StreamName::all();
         $eventStore = $this->eventStoreManager->getEventStoreForEventListener(\get_class($listener));
-        try {
-            $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
-            foreach ($eventStream as $eventEnvelope) {
+        $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
+        foreach ($eventStream as $eventEnvelope) {
+            try {
                 $this->applyEvent($listener, $eventEnvelope);
-                $appliedEventsStorage->saveHighestAppliedSequenceNumber($eventEnvelope->getRawEvent()->getSequenceNumber());
-                if ($progressCallback !== null) {
-                    $progressCallback($eventEnvelope);
-                }
+            } catch (EventCouldNotBeAppliedException $exception) {
+                $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
+                throw $exception;
             }
-        } catch (EventStreamNotFoundException $exception) {
-            // this is not an error
-        } finally {
-            $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
+            $appliedEventsStorage->saveHighestAppliedSequenceNumber($eventEnvelope->getRawEvent()->getSequenceNumber());
+            if ($progressCallback !== null) {
+                $progressCallback($eventEnvelope);
+            }
         }
+        $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
     }
 
     /**

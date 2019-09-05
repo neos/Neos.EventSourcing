@@ -19,7 +19,6 @@ use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\Flow\Annotations as Flow;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\Event\EventTypeResolver;
-use Neos\EventSourcing\EventStore\Exception\EventStreamNotFoundException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 
 /**
@@ -112,11 +111,7 @@ final class EventStore
 
     public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStream
     {
-        $eventStream = $this->storage->load($streamName, $minimumSequenceNumber);
-        if (!$eventStream->valid()) {
-            throw new EventStreamNotFoundException(sprintf('The event stream "%s" does not appear to be valid.', $streamName), 1477497156);
-        }
-        return $eventStream;
+        return $this->storage->load($streamName, $minimumSequenceNumber);
     }
 
     /**
