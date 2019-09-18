@@ -13,13 +13,14 @@ namespace Neos\EventSourcing\EventStore;
  */
 
 use Neos\Error\Messages\Result;
-use Neos\EventSourcing\Event\Decorator\EventDecoratorUtilities;
+use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\EventStore\EventListenerTrigger\EventListenerTrigger;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\Flow\Annotations as Flow;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\Event\EventTypeResolver;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
+use Neos\Flow\Utility\Algorithms;
 
 /**
  * Main API to store and fetch events.
@@ -127,13 +128,19 @@ final class EventStore
         }
         $convertedEvents = [];
         foreach ($events as $event) {
-            $eventIdentifier = EventDecoratorUtilities::extractIdentifier($event);
-            $metadata = EventDecoratorUtilities::extractMetadata($event);
-            $event = EventDecoratorUtilities::extractUndecoratedEvent($event);
-
+            $eventIdentifier = null;
+            $metadata = [];
+            if ($event instanceof DecoratedEvent) {
+                $eventIdentifier = $event->hasIdentifier() ? $event->getIdentifier() : null;
+                $metadata = $event->getMetadata();
+                $event = $event->getWrappedEvent();
+            }
             $type = $this->eventTypeResolver->getEventType($event);
             $data = $this->eventNormalizer->normalize($event);
 
+            if ($eventIdentifier === null) {
+                $eventIdentifier = Algorithms::generateUUID();
+            }
             $convertedEvents[] = new WritableEvent($eventIdentifier, $type, $data, $metadata);
         }
 

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Neos\EventSourcing;
 
-use Neos\EventSourcing\Event\Decorator\EventWithMetadata;
+use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\EventStore\EventStream;
@@ -63,8 +63,8 @@ abstract class AbstractEventSourcedAggregateRoot implements EventRecordingInterf
 
     final public function apply(DomainEventInterface $event): void
     {
-        if ($event instanceof EventWithMetadata) {
-            $event = $event->getEvent();
+        if ($event instanceof DecoratedEvent) {
+            $event = $event->getWrappedEvent();
         }
         try {
             $methodName = sprintf('when%s', (new \ReflectionClass($event))->getShortName());

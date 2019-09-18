@@ -13,7 +13,7 @@ namespace Neos\EventSourcing\EventStore\EventListenerTrigger;
  */
 
 use Flowpack\JobQueue\Common\Job\JobManager;
-use Neos\EventSourcing\Event\Decorator\EventDecoratorUtilities;
+use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\EventListener\EventListenerLocator;
 use Neos\Flow\Annotations as Flow;
@@ -55,7 +55,7 @@ final class EventListenerTrigger
     public function enqueueEvents(DomainEvents $events): void
     {
         foreach ($events as $event) {
-            $eventClassName = get_class(EventDecoratorUtilities::extractUndecoratedEvent($event));
+            $eventClassName = \get_class($event instanceof DecoratedEvent ? $event->getWrappedEvent() : $event);
             foreach ($this->eventListenerLocator->getListenerClassNamesForEventClassName($eventClassName) as $listenerClassName) {
                 $this->pendingEventListenerClassNames[$listenerClassName] = true;
             }
