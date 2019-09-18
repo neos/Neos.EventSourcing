@@ -15,7 +15,7 @@ namespace Neos\EventSourcing\Event;
 use Neos\Utility\Arrays;
 
 /**
- * TODO
+ * A decorator that wraps an DomainEventInterface adding metadata and/or an event identifier
  */
 final class DecoratedEvent implements DomainEventInterface
 {
