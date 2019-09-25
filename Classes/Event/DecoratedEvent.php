@@ -12,10 +12,13 @@ namespace Neos\EventSourcing\Event;
  * source code.
  */
 
+use Neos\Flow\Annotations as Flow;
 use Neos\Utility\Arrays;
 
 /**
  * A decorator that wraps an DomainEventInterface adding metadata and/or an event identifier
+ *
+ * @Flow\Proxy(false)
  */
 final class DecoratedEvent implements DomainEventInterface
 {
