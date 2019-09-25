@@ -337,6 +337,10 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
         $table->setPrimaryKey(['sequencenumber']);
         $table->addUniqueIndex(['id'], 'id_uniq');
         $table->addUniqueIndex(['stream', 'version'], 'stream_version_uniq');
+        $table->addIndex(['id']);
+        $table->addIndex(['type']);
+        $table->addIndex(['correlationidentifier']);
+        $table->addIndex(['causationidentifier']);
 
         return $schema;
     }
