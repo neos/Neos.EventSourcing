@@ -117,6 +117,9 @@ class EventTypeResolver
      */
     public function getEventClassNameByType(string $eventType): string
     {
+        if (!isset($this->reversedMapping[$eventType])) {
+            throw new \InvalidArgumentException(sprintf('Event class not found for event type "%s"', $eventType), 1568734531);
+        }
         return $this->reversedMapping[$eventType];
     }
 
