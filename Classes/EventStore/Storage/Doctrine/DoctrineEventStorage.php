@@ -92,8 +92,7 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
         $this->reconnectDatabaseConnection();
         $query = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->eventTableName)
-            ->orderBy('sequencenumber', 'ASC');
+            ->from($this->eventTableName);
 
         if (!$streamName->isVirtualStream()) {
             $query->andWhere('stream = :streamName');
@@ -337,10 +336,8 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
         $table->setPrimaryKey(['sequencenumber']);
         $table->addUniqueIndex(['id'], 'id_uniq');
         $table->addUniqueIndex(['stream', 'version'], 'stream_version_uniq');
-        $table->addIndex(['id']);
-        $table->addIndex(['type']);
+        $table->addIndex(['stream']);
         $table->addIndex(['correlationidentifier']);
-        $table->addIndex(['causationidentifier']);
 
         return $schema;
     }
