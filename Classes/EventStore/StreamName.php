@@ -16,55 +16,53 @@ final class StreamName
      */
     private $value;
 
+    private static $instances = [];
+
     private function __construct(string $value)
     {
         $this->value = $value;
     }
 
+    private static function constant(string $value): self
+    {
+        return self::$instances[$value] ?? self::$instances[$value] = new self($value);
+    }
+
     public static function fromString(string $value): self
     {
-        $value = trim($value);
-        if ($value === '') {
-            throw new \InvalidArgumentException('The stream name must not be empty', 1540311275);
-        }
-        if (strpos($value, '$') === 0) {
+        $value = self::trimAndValidateNotEmpty($value);
+        if (self::stringStartsWith($value, '$')) {
             throw new \InvalidArgumentException('The stream name must not start with "$"', 1540632865);
         }
-        return new static($value);
+        return self::constant($value);
     }
 
     public static function forCategory(string $categoryName): self
     {
-        $categoryName = trim($categoryName);
-        if ($categoryName === '') {
-            throw new \InvalidArgumentException('The category name must not be empty', 1540632813);
-        }
-        if (strpos($categoryName, '$') === 0) {
+        $categoryName = self::trimAndValidateNotEmpty($categoryName);
+        if (self::stringStartsWith($categoryName, '$')) {
             throw new \InvalidArgumentException('The category name must not start with "$"', 1540632884);
         }
-        return new static('$ce-' . $categoryName);
+        return self::constant('$ce-' . $categoryName);
     }
 
     public static function forCorrelationId(string $correlationId): self
     {
-        $correlationId = trim($correlationId);
-        if ($correlationId === '') {
-            throw new \InvalidArgumentException('The correlation identifier must not be empty', 1540899054);
-        }
-        if (strpos($correlationId, '$') === 0) {
+        $correlationId = self::trimAndValidateNotEmpty($correlationId);
+        if (self::stringStartsWith($correlationId, '$')) {
             throw new \InvalidArgumentException('The correlation identifier must not start with "$"', 1540899066);
         }
-        return new static('$correlation-' . $correlationId);
+        return self::constant('$correlation-' . $correlationId);
     }
 
     public static function all(): self
     {
-        return new static('$all');
+        return self::constant('$all');
     }
 
     public function isVirtualStream(): bool
     {
-        return strpos($this->value, '$') === 0;
+        return self::stringStartsWith($this->value, '$');
     }
 
     public function isAllStream(): bool
@@ -74,12 +72,12 @@ final class StreamName
 
     public function isCategoryStream(): bool
     {
-        return strpos($this->value, '$ce-') === 0;
+        return self::stringStartsWith($this->value, '$ce-');
     }
 
     public function isCorrelationIdStream(): bool
     {
-        return strpos($this->value, '$correlation-') === 0;
+        return self::stringStartsWith($this->value, '$correlation-');
     }
 
     public function getCategoryName(): string
@@ -90,9 +88,26 @@ final class StreamName
         return substr($this->value, 4);
     }
 
-    public function equals(StreamName $otherStreamName): bool
+    public function getCorrelationId(): string
     {
-        return $this->value === $otherStreamName->value;
+        if (!$this->isCorrelationIdStream()) {
+            throw new \RuntimeException(sprintf('Stream "%s" is no correlation id stream', $this->value), 1569398802);
+        }
+        return substr($this->value, 13);
+    }
+
+    private static function trimAndValidateNotEmpty(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            throw new \InvalidArgumentException('The value must not be empty', 1540311275);
+        }
+        return $value;
+    }
+
+    private static function stringStartsWith(string $string, string $search): bool
+    {
+        return strncmp($string, $search, \strlen($search)) === 0;
     }
 
     public function __toString(): string

@@ -25,8 +25,8 @@ use Neos\Error\Messages\Warning;
 use Neos\EventSourcing\EventStore\EventStream;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
-use Neos\EventSourcing\EventStore\Storage\CorrelationIdAwareEventStorageInterface;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
+use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\EventSourcing\EventStore\WritableEvents;
 use Neos\Flow\Annotations as Flow;
@@ -35,7 +35,7 @@ use Neos\Flow\Utility\Now;
 /**
  * Database event storage adapter
  */
-class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
+class DoctrineEventStorage implements EventStorageInterface
 {
     const DEFAULT_EVENT_TABLE_NAME = 'neos_eventsourcing_eventstore_events';
 
@@ -100,6 +100,9 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
         } elseif ($streamName->isCategoryStream()) {
             $query->andWhere('stream LIKE :streamNamePrefix');
             $query->setParameter('streamNamePrefix', $streamName->getCategoryName() . '%');
+        } elseif ($streamName->isCorrelationIdStream()) {
+            $query->andWhere('correlationIdentifier LIKE :correlationId');
+            $query->setParameter('correlationId', $streamName->getCorrelationId());
         } elseif (!$streamName->isAllStream()) {
             throw new \InvalidArgumentException(sprintf('Unsupported virtual stream name "%s"', $streamName), 1545155909);
         }
@@ -110,20 +113,6 @@ class DoctrineEventStorage implements CorrelationIdAwareEventStorageInterface
 
         $streamIterator = new DoctrineStreamIterator($query);
         return new EventStream($streamName, $streamIterator);
-    }
-
-    public function loadByCorrelationId(string $correlationId): EventStream
-    {
-        $this->reconnectDatabaseConnection();
-        $query = $this->connection->createQueryBuilder()
-            ->select('*')
-            ->from($this->eventTableName)
-            ->where('correlationidentifier = :correlationId')
-            ->orderBy('sequencenumber', 'ASC')
-            ->setParameter('correlationId', $correlationId);
-
-        $streamIterator = new DoctrineStreamIterator($query);
-        return new EventStream(StreamName::forCorrelationId($correlationId), $streamIterator);
     }
 
     /**
