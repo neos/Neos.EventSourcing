@@ -9,14 +9,23 @@ use Neos\Flow\Tests\UnitTestCase;
 class ValueObjectNormalizerTest extends UnitTestCase
 {
     /**
+     * @var ValueObjectNormalizer
+     */
+    private $valueObjectNormalizer;
+
+    public function setUp(): void
+    {
+        $this->valueObjectNormalizer = new ValueObjectNormalizer();
+    }
+
+    /**
      * @test
      * @dataProvider provideSourceDataAndClassNames
      */
     public function supportsDenormalizationTests($sourceData, string $className): void
     {
-        $normalizer = new ValueObjectNormalizer();
         $this->assertTrue(
-            $normalizer->supportsDenormalization($sourceData, $className)
+            $this->valueObjectNormalizer->supportsDenormalization($sourceData, $className)
         );
     }
 
@@ -26,10 +35,9 @@ class ValueObjectNormalizerTest extends UnitTestCase
      */
     public function denormalizeTests($sourceData, string $className): void
     {
-        $normalizer = new ValueObjectNormalizer();
         $this->assertInstanceOf(
             $className,
-            $normalizer->denormalize($sourceData, $className)
+            $this->valueObjectNormalizer->denormalize($sourceData, $className)
         );
     }
 
@@ -40,5 +48,22 @@ class ValueObjectNormalizerTest extends UnitTestCase
         yield 'boolean' => [true, Fixture\BooleanBasedValueObject::class];
         yield 'float' => [0.0, Fixture\FloatBasedValueObject::class];
         yield 'array' => [[], Fixture\ArrayBasedValueObject::class];
+    }
+
+    /**
+     * @test
+     */
+    public function supportsDenormalizationReturnsFalseForArrayValueObjectsWithoutNamedConstructor(): void
+    {
+        self::assertFalse($this->valueObjectNormalizer->supportsDenormalization(['some' => 'array'], Fixture\InvalidArrayBasedValueObject::class));
+    }
+
+    /**
+     * @test
+     */
+    public function denormalizeFailsForArrayValueObjectsWithoutNamedConstructor(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->valueObjectNormalizer->denormalize(['some' => 'array'], Fixture\InvalidArrayBasedValueObject::class);
     }
 }
