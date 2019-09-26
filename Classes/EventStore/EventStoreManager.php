@@ -19,7 +19,7 @@ use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 
 /**
  * The Event Store manager is responsible for building and Event Store instances as configured.
- * Whenever an Event Store is needed, it should be retrieved through this class.
+ * It is used as factory for the EventStore but can also be used explicitly when a certain event store instance is required.
  *
  * @Flow\Scope("singleton")
  */
@@ -77,6 +77,7 @@ final class EventStoreManager
             if (!isset($eventStoreConfiguration['boundedContexts']) || empty($eventStoreConfiguration['boundedContexts'])) {
                 throw new StorageConfigurationException(sprintf('The Event Store "%s" has no Bounded Context assigned. Please configure some.', $eventStoreIdentifier), 1479213813);
             }
+            /** @noinspection ForeachSourceInspection */
             foreach ($eventStoreConfiguration['boundedContexts'] as $boundedContext => $isActive) {
                 if (!$isActive) {
                     continue;
@@ -120,9 +121,7 @@ final class EventStoreManager
         if (!$storageInstance instanceof EventStorageInterface) {
             throw new StorageConfigurationException(sprintf('The configured Storage for Event Store "%s" does not implement the EventStorageInterface', $eventStoreIdentifier), 1492610908);
         }
-        /** @noinspection PhpMethodParametersCountMismatchInspection */
-        $this->initializedEventStores[$eventStoreIdentifier] = $this->objectManager->get(EventStore::class, $storageInstance);
-
+        $this->initializedEventStores[$eventStoreIdentifier] = new EventStore($storageInstance);
         return $this->initializedEventStores[$eventStoreIdentifier];
     }
 
