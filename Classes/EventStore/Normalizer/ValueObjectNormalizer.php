@@ -2,9 +2,9 @@
 declare(strict_types=1);
 namespace Neos\EventSourcing\EventStore\Normalizer;
 
+use Neos\Flow\ObjectManagement\Proxy\ProxyInterface;
 use Neos\Utility\TypeHandling;
 use ReflectionMethod;
-use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 /**
@@ -56,7 +56,11 @@ final class ValueObjectNormalizer implements DenormalizerInterface
         if ($dataType === 'array' && $namedConstructorMethod === null) {
             throw new \InvalidArgumentException(sprintf('Missing named constructor static public function fromArray(array $foo): self in class "%s"', $className), 1569500780);
         }
-        $constructorMethod = $namedConstructorMethod ?? $reflectionClass->getConstructor();
+        if ($namedConstructorMethod !== null) {
+            $constructorMethod = $namedConstructorMethod;
+        } else {
+            $constructorMethod = $reflectionClass->implementsInterface(ProxyInterface::class) ? $reflectionClass->getParentClass()->getConstructor() : $reflectionClass->getConstructor();
+        }
         if ($constructorMethod === null) {
             throw new \InvalidArgumentException(sprintf('Could not resolve constructor for class "%s"', $className), 1545233397);
         }
