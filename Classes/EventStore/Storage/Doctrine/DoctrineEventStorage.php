@@ -92,8 +92,7 @@ class DoctrineEventStorage implements EventStorageInterface
         $this->reconnectDatabaseConnection();
         $query = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->eventTableName)
-            ->orderBy('sequencenumber', 'ASC');
+            ->from($this->eventTableName);
 
         if (!$streamName->isVirtualStream()) {
             $query->andWhere('stream = :streamName');
@@ -326,6 +325,7 @@ class DoctrineEventStorage implements EventStorageInterface
         $table->setPrimaryKey(['sequencenumber']);
         $table->addUniqueIndex(['id'], 'id_uniq');
         $table->addUniqueIndex(['stream', 'version'], 'stream_version_uniq');
+        $table->addIndex(['correlationidentifier']);
 
         return $schema;
     }
