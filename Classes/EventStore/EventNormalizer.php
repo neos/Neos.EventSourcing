@@ -40,7 +40,7 @@ final class EventNormalizer
      */
     private $serializer;
 
-    protected function initializeObject(): void
+    public function __construct()
     {
         // TODO: make normalizers configurable
         $normalizers = [new DateTimeNormalizer(), new JsonSerializableNormalizer(), new ValueObjectNormalizer(), new ProxyAwareObjectNormalizer()];

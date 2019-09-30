@@ -8,6 +8,8 @@ use Neos\EventSourcing\Event\EventTypeResolver;
 use Neos\EventSourcing\EventStore\EventNormalizer;
 use Neos\EventSourcing\Tests\Functional\EventStore\Fixture\MockDomainEvent;
 use Neos\EventSourcing\Tests\Functional\EventStore\Fixture\MockDomainEvent2;
+use Neos\EventSourcing\Tests\Functional\EventStore\Fixture\MockDomainEvent3;
+use Neos\EventSourcing\Tests\Functional\EventStore\Fixture\MockValueObject;
 use Neos\Flow\Tests\FunctionalTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -49,6 +51,7 @@ class EventNormalizerTest extends FunctionalTestCase
     {
         yield [MockDomainEvent::class, ['string' => 'Some String'], new MockDomainEvent('Some String')];
         yield [MockDomainEvent2::class, ['string' => 'Some Other String'], new MockDomainEvent2('Some Other String')];
+        yield [MockDomainEvent3::class, ['value' => 'Yet another String'], new MockDomainEvent3(new MockValueObject('Yet another String'))];
     }
 
     /**
@@ -67,6 +70,7 @@ class EventNormalizerTest extends FunctionalTestCase
     {
         yield [new MockDomainEvent('foo'), ['string' => 'foo']];
         yield [new MockDomainEvent2('bar'), ['string' => 'bar']];
+        yield [new MockDomainEvent3(new MockValueObject('baz')), ['value' => 'baz']];
     }
 
 }

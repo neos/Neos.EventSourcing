@@ -2,9 +2,9 @@
 declare(strict_types=1);
 namespace Neos\EventSourcing\EventStore\Normalizer;
 
+use Neos\Flow\ObjectManagement\Proxy\ProxyInterface;
 use Neos\Utility\TypeHandling;
 use ReflectionMethod;
-use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 /**
@@ -16,8 +16,10 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
  * * they are static
  * * they expect a single parameter of the given type
  * * they have a "self" or "<TargetClassName>" return type annotation
+ *
+ * Note: For type "array" a named constructor fromArray() is required!
  */
-final class ValueObjectNormalizer implements DenormalizerInterface, CacheableSupportsMethodInterface
+final class ValueObjectNormalizer implements DenormalizerInterface
 {
     public function denormalize($data, $className, $format = null, array $context = [])
     {
@@ -29,7 +31,7 @@ final class ValueObjectNormalizer implements DenormalizerInterface, CacheableSup
     {
         $supportedTypes = ['array', 'string', 'integer', 'float', 'boolean'];
         $dataType = TypeHandling::normalizeType(TypeHandling::getTypeForValue($data));
-        if (!in_array($dataType, $supportedTypes, true)) {
+        if (!\in_array($dataType, $supportedTypes, true)) {
             return false;
         }
         try {
@@ -51,7 +53,14 @@ final class ValueObjectNormalizer implements DenormalizerInterface, CacheableSup
             throw new \InvalidArgumentException(sprintf('Class "%s" is abstract', $className), 1545296135);
         }
         $namedConstructorMethod = $this->resolveNamedConstructorMethod($dataType, $className, $reflectionClass);
-        $constructorMethod = $namedConstructorMethod ?? $reflectionClass->getConstructor();
+        if ($dataType === 'array' && $namedConstructorMethod === null) {
+            throw new \InvalidArgumentException(sprintf('Missing named constructor static public function fromArray(array $foo): self in class "%s"', $className), 1569500780);
+        }
+        if ($namedConstructorMethod !== null) {
+            $constructorMethod = $namedConstructorMethod;
+        } else {
+            $constructorMethod = $reflectionClass->implementsInterface(ProxyInterface::class) ? $reflectionClass->getParentClass()->getConstructor() : $reflectionClass->getConstructor();
+        }
         if ($constructorMethod === null) {
             throw new \InvalidArgumentException(sprintf('Could not resolve constructor for class "%s"', $className), 1545233397);
         }
@@ -90,10 +99,5 @@ final class ValueObjectNormalizer implements DenormalizerInterface, CacheableSup
             return null;
         }
         return $constructorMethod;
-    }
-
-    public function hasCacheableSupportsMethod(): bool
-    {
-        return __CLASS__ === \get_class($this);
     }
 }
