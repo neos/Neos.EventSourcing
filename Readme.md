@@ -21,8 +21,8 @@ Major Rewrite in process.. Stay tuned
     * The event MUST implement the marker interface `Neos\EventSourcing\Event\DomainEventInterface`.
     * The event SHOULD be written in past tense. Example: `WorkspaceWasCreated`
 * To actually store the event, the following must be done:
-  * retrieve an instance of `Neos\EventSourcing\EventStore\EventStoreManager`
-  * retrieve the event store by stream name: `$eventStore = $this->eventStoreManager->getEventStoreForStreamName(StreamName::fromString('Your.Package:StreamNameHere'));`
+  * retrieve an instance of `Neos\EventSourcing\EventStore` (inject the default instance or use the `Neos\EventSourcing\EventStore\EventStoreFactory`)
+  * specify the stream to which you want to publish events to: `$streamName = StreamName::fromString('some-stream');`
   * Commit the events by executing `$eventStore->commit($streamName, DomainEvents::withSingleEvent($event));`
 * The EventStore stores the event into the *Storage* and publishes them in the *Event Bus*.
   * The Event Bus remembers that certain Event Listeners (== Projections) need to be updated.

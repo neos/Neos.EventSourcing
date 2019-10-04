@@ -16,7 +16,8 @@ use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
 use Neos\Error\Messages\Result;
 use Neos\Error\Messages\Warning;
-use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\EventStore;
+use Neos\EventSourcing\EventStore\EventStoreFactory;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 use Neos\Flow\Mvc\Exception\StopActionException;
@@ -29,16 +30,16 @@ use Neos\Flow\Mvc\Exception\StopActionException;
 class EventStoreCommandController extends CommandController
 {
     /**
-     * @var EventStoreManager
      * @Flow\Inject
+     * @var EventStoreFactory
      */
-    protected $eventStoreManager;
+    protected $eventStoreFactory;
 
     /**
+     * @Flow\InjectConfiguration(path="EventStore.stores")
      * @var array
-     * @Flow\InjectConfiguration(path="EventStore.storage.options")
      */
-    protected $configuration;
+    protected $eventStoresConfiguration;
 
     /**
      * Sets up the specified Event Store backend
@@ -52,7 +53,7 @@ class EventStoreCommandController extends CommandController
      */
     public function setupCommand($eventStore): void
     {
-        $eventStores = $this->eventStoreManager->getAllEventStores();
+        $eventStores = $this->getAllEventStores();
         if (!isset($eventStores[$eventStore])) {
             $this->outputLine('<error>There is no Event Store "%s" configured</error>', [$eventStore]);
             $this->quit(1);
@@ -72,7 +73,7 @@ class EventStoreCommandController extends CommandController
      */
     public function setupAllCommand(): void
     {
-        $eventStores = $this->eventStoreManager->getAllEventStores();
+        $eventStores = $this->getAllEventStores();
         $this->outputLine('Setting up <b>%d</b> Event Store backend(s):', [count($eventStores)]);
         foreach ($eventStores as $eventStoreIdentifier => $eventStore) {
             $this->outputLine();
@@ -92,7 +93,7 @@ class EventStoreCommandController extends CommandController
      */
     public function statusCommand(): void
     {
-        $eventStores = $this->eventStoreManager->getAllEventStores();
+        $eventStores = $this->getAllEventStores();
         $this->outputLine('Displaying status information for <b>%d</b> Event Store backend(s):', [count($eventStores)]);
 
         foreach ($eventStores as $eventStoreIdentifier => $eventStore) {
@@ -139,5 +140,17 @@ class EventStoreCommandController extends CommandController
         } else {
             $this->outputLine('<success>SUCCESS</success>');
         }
+    }
+
+    /**
+     * @return EventStore[]
+     */
+    private function getAllEventStores(): array
+    {
+        $stores = [];
+        foreach (array_keys($this->eventStoresConfiguration) as $eventStoreIdentifier) {
+            $stores[$eventStoreIdentifier] = $this->eventStoreFactory->create($eventStoreIdentifier);
+        }
+        return $stores;
     }
 }

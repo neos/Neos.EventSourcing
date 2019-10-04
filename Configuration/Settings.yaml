@@ -1,13 +1,8 @@
-
 Neos:
   EventSourcing:
     EventStore:
       stores:
         'default':
-          boundedContexts:
-            # This Event Store is configured to be used as "fallback"
-            '*': true
-
           # By default the DoctrineEventStorage adapter is used, but this can be changed with the following setting:
           storage: 'Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage'
 

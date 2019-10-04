@@ -1,11 +1,10 @@
-Neos\EventSourcing\EventStore\EventStoreManager:
+Neos\EventSourcing\EventStore\EventStoreFactory:
   arguments:
     2:
       setting: 'Neos.EventSourcing.EventStore.stores'
 
 Neos\EventSourcing\EventStore\EventStore:
-  factoryObjectName: Neos\EventSourcing\EventStore\EventStoreManager
-  factoryMethodName: getEventStore
+  factoryObjectName: Neos\EventSourcing\EventStore\EventStoreFactory
   arguments:
     1:
       value: 'default'
