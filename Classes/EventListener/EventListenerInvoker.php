@@ -17,7 +17,8 @@ use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageIn
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventStore\EventEnvelope;
-use Neos\EventSourcing\EventStore\EventStoreManager;
+use Neos\EventSourcing\EventStore\EventStore;
+use Neos\EventSourcing\EventStore\EventStoreFactory;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\Flow\Annotations as Flow;
@@ -30,15 +31,21 @@ final class EventListenerInvoker
 
     /**
      * @Flow\Inject
-     * @var EventStoreManager
+     * @var EventStoreFactory
      */
-    protected $eventStoreManager;
+    protected $eventStoreFactory;
 
     /**
      * @Flow\Inject
      * @var EntityManagerInterface
      */
     protected $entityManager;
+
+    /**
+     * @Flow\InjectConfiguration(path="EventListener.listeners")
+     * @var array
+     */
+    protected $eventListenersConfiguration;
 
     /**
      * @param EventListenerInterface $listener
@@ -56,7 +63,7 @@ final class EventListenerInvoker
         }
         $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
         $streamName = $listener instanceof StreamAwareEventListenerInterface ? $listener::listensToStream() : StreamName::all();
-        $eventStore = $this->eventStoreManager->getEventStoreForEventListener(\get_class($listener));
+        $eventStore = $this->getEventStoreForEventListener($listener);
         $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
         foreach ($eventStream as $eventEnvelope) {
             try {
@@ -71,6 +78,21 @@ final class EventListenerInvoker
             }
         }
         $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
+    }
+
+    /**
+     * @param EventListenerInterface $listener
+     * @return EventStore
+     */
+    public function getEventStoreForEventListener(EventListenerInterface $listener): EventStore
+    {
+        $listenerClassName = \get_class($listener);
+        $eventStoreIdentifier = $this->eventListenersConfiguration[$listenerClassName]['eventStore'] ?? 'default';
+        try {
+            return $this->eventStoreFactory->create($eventStoreIdentifier);
+        } catch (\InvalidArgumentException $exception) {
+            throw new \RuntimeException(sprintf('Failed to build Event Store for listener "%s": %s', $listenerClassName, $exception->getMessage()), 1570191582, $exception);
+        }
     }
 
     /**

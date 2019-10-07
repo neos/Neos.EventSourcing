@@ -25,7 +25,7 @@ use Neos\Flow\Utility\Algorithms;
 /**
  * Main API to store and fetch events.
  *
- * NOTE: Do not instantiate this class directly but use the EventStoreManager
+ * NOTE: Do not instantiate this class directly but use the EventStoreFactory (or inject an instance which internally uses the factory)
  */
 final class EventStore
 {
@@ -72,7 +72,7 @@ final class EventStore
 
     /**
      * @param EventStorageInterface $storage
-     * @internal Do not instantiate this class directly but use the EventStoreManager
+     * @internal Do not instantiate this class directly but inject an instance (or use the EventStoreFactory)
      */
     public function __construct(EventStorageInterface $storage)
     {
@@ -96,7 +96,7 @@ final class EventStore
      * The callback is invoked with the DomainEvents and the resulting WritableEvents as arguments.
      * Example:
      *
-     * $eventStore = $this->eventStoreManager->getEventStore('some-es-id');
+     * $eventStore = $this->eventStoreFactory->create('some-event-store-id');
      * $eventStore->onPostCommit(function(DomainEvents $events, WritableEvents $persistedEvents) {
      *    $this->logger->log('Published ' . $persistedEvents->count() . ' events');
      * });
