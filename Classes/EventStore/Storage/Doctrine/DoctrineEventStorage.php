@@ -17,6 +17,7 @@ use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SchemaConfig;
 use Doctrine\DBAL\Types\Type;
 use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
@@ -298,7 +299,10 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     private function createEventStoreSchema(): Schema
     {
-        $schema = new Schema();
+        $defaultConfig = new SchemaConfig();
+        $defaultConfig->setDefaultTableOptions($this->defaultFlowDatabaseConfiguration);
+
+        $schema = new Schema([], [], $defaultConfig);
         $table = $schema->createTable($this->eventTableName);
 
         // The monotonic sequence number
