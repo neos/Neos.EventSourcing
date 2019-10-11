@@ -191,7 +191,6 @@ class DoctrineEventStorage implements EventStorageInterface
         if ($expectedVersion === $actualVersion || ($expectedVersion === ExpectedVersion::STREAM_EXISTS && $actualVersion > -1)) {
             return;
         }
-        $this->connection->rollBack();
         throw new ConcurrencyException(sprintf('Expected version: %s, actual version: %s', $this->renderExpectedVersion($expectedVersion), $this->renderExpectedVersion($actualVersion)), 1477143473);
     }
 
