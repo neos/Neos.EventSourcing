@@ -117,7 +117,7 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @inheritdoc
-     * @throws DBALException | ConcurrencyException
+     * @throws DBALException | ConcurrencyException | InvalidArgumentException | RuntimeException
      */
     public function commit(StreamName $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): void
     {
@@ -125,10 +125,10 @@ class DoctrineEventStorage implements EventStorageInterface
             throw new \InvalidArgumentException(sprintf('Can\'t commit to virtual stream "%s"', $streamName), 1540632984);
         }
         $this->reconnectDatabaseConnection();
-        $this->connection->beginTransaction();
-        if ($this->connection->getTransactionNestingLevel() > 1) {
+        if ($this->connection->getTransactionNestingLevel() > 0) {
             throw new \RuntimeException('A transaction is active already, can\'t commit events!', 1547829131);
         }
+        $this->connection->beginTransaction();
         try {
             $actualVersion = $this->getStreamVersion($streamName);
             $this->verifyExpectedVersion($actualVersion, $expectedVersion);
@@ -156,7 +156,7 @@ class DoctrineEventStorage implements EventStorageInterface
             }
 
             $this->connection->commit();
-        } catch (DBALException $exception) {
+        } catch (\Exception $exception) {
             $this->connection->rollBack();
             throw $exception;
         }
@@ -191,7 +191,6 @@ class DoctrineEventStorage implements EventStorageInterface
         if ($expectedVersion === $actualVersion || ($expectedVersion === ExpectedVersion::STREAM_EXISTS && $actualVersion > -1)) {
             return;
         }
-        $this->connection->rollBack();
         throw new ConcurrencyException(sprintf('Expected version: %s, actual version: %s', $this->renderExpectedVersion($expectedVersion), $this->renderExpectedVersion($actualVersion)), 1477143473);
     }
 
