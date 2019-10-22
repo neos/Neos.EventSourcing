@@ -68,6 +68,11 @@ class DoctrineEventStorage implements EventStorageInterface
     private $options;
 
     /**
+     * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence.backendOptions")
+     */
+    protected $defaultFlowDatabaseConfiguration;
+
+    /**
      * @param array $options
      */
     public function __construct(array $options)
