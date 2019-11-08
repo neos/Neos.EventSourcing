@@ -117,7 +117,7 @@ final class EventListenerInvoker
         }
         try {
             $listener->$listenerMethodName($event, $rawEvent);
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($listener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $listener);
         }
         if ($listener instanceof AfterInvokeInterface) {
