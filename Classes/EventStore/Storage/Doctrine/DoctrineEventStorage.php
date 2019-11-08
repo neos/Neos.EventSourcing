@@ -117,7 +117,7 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @inheritdoc
-     * @throws DBALException | ConcurrencyException | InvalidArgumentException | RuntimeException
+     * @throws DBALException | ConcurrencyException | \Throwable
      */
     public function commit(StreamName $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): void
     {
@@ -156,7 +156,7 @@ class DoctrineEventStorage implements EventStorageInterface
             }
 
             $this->connection->commit();
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             $this->connection->rollBack();
             throw $exception;
         }
@@ -250,8 +250,7 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @inheritdoc
-     * @throws DBALException
-     * @throws \Exception
+     * @throws DBALException | \Throwable
      */
     public function setup(): Result
     {
@@ -283,7 +282,7 @@ class DoctrineEventStorage implements EventStorageInterface
                 $this->connection->exec($statement);
             }
             $this->connection->commit();
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             $this->connection->rollBack();
             throw $exception;
         }

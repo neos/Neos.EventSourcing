@@ -85,7 +85,7 @@ class DoctrineProjectionPersistenceManager
         }
         try {
             $this->entityManager->persist($object);
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             throw new \RuntimeException('Could not persist updated object of type "' . get_class($object) . '"', 1474531485464, $exception);
         }
         $this->garbageCollection();
