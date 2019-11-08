@@ -68,11 +68,6 @@ class DoctrineEventStorage implements EventStorageInterface
     private $options;
 
     /**
-     * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence.backendOptions")
-     */
-    protected $defaultFlowDatabaseConfiguration;
-
-    /**
      * @param array $options
      */
     public function __construct(array $options)
@@ -302,10 +297,12 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     private function createEventStoreSchema(): Schema
     {
-        $defaultConfig = new SchemaConfig();
-        $defaultConfig->setDefaultTableOptions($this->defaultFlowDatabaseConfiguration);
-
-        $schema = new Schema([], [], $defaultConfig);
+        $schemaConfiguration = new SchemaConfig();
+        $connectionParameters = $this->connection->getParams();
+        if (isset($connectionParameters['defaultTableOptions'])) {
+            $schemaConfiguration->setDefaultTableOptions($connectionParameters['defaultTableOptions']);
+        }
+        $schema = new Schema([], [], $schemaConfiguration);
         $table = $schema->createTable($this->eventTableName);
 
         // The monotonic sequence number
