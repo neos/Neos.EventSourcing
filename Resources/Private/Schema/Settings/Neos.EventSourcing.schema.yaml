@@ -1,0 +1,26 @@
+type: dictionary
+additionalProperties: false
+properties:
+  'EventListener':
+    type: dictionary
+    additionalProperties: false
+    properties:
+      'listeners':
+        type: dictionary
+        additionalProperties:
+          type: dictionary
+          additionalProperties: false
+          properties:
+            'eventStore': {type: string}
+  'EventStore':
+    type: dictionary
+    additionalProperties: false
+    properties:
+      'stores':
+        type: dictionary
+        additionalProperties:
+          type: dictionary
+          additionalProperties: false
+          properties:
+            'storage': {type: string, format: class-name}
+            'storageOptions': {type: dictionary}

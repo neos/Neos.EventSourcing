@@ -18,6 +18,7 @@ use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SchemaConfig;
 use Doctrine\DBAL\Types\Type;
 use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
@@ -119,7 +120,7 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @inheritdoc
-     * @throws DBALException | ConcurrencyException
+     * @throws DBALException | ConcurrencyException | \Throwable
      */
     public function commit(StreamName $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): void
     {
@@ -134,10 +135,10 @@ class DoctrineEventStorage implements EventStorageInterface
         $retryAttempt = 0;
         while (true) {
             $this->reconnectDatabaseConnection();
-            $this->connection->beginTransaction();
-            if ($this->connection->getTransactionNestingLevel() > 1) {
+            if ($this->connection->getTransactionNestingLevel() > 0) {
                 throw new \RuntimeException('A transaction is active already, can\'t commit events!', 1547829131);
             }
+            $this->connection->beginTransaction();
             try {
                 $actualVersion = $this->getStreamVersion($streamName);
                 $this->verifyExpectedVersion($actualVersion, $expectedVersion);
@@ -160,7 +161,9 @@ class DoctrineEventStorage implements EventStorageInterface
                 throw $exception;
             }
             $this->connection->commit();
-            return;
+        } catch (\Throwable $exception) {
+            $this->connection->rollBack();
+            throw $exception;
         }
     }
 
@@ -222,7 +225,6 @@ class DoctrineEventStorage implements EventStorageInterface
         if ($expectedVersion === $actualVersion || ($expectedVersion === ExpectedVersion::STREAM_EXISTS && $actualVersion > -1)) {
             return;
         }
-        $this->connection->rollBack();
         throw new ConcurrencyException(sprintf('Expected version: %s, actual version: %s', $this->renderExpectedVersion($expectedVersion), $this->renderExpectedVersion($actualVersion)), 1477143473);
     }
 
@@ -282,8 +284,7 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @inheritdoc
-     * @throws DBALException
-     * @throws \Exception
+     * @throws DBALException | \Throwable
      */
     public function setup(): Result
     {
@@ -315,7 +316,7 @@ class DoctrineEventStorage implements EventStorageInterface
                 $this->connection->exec($statement);
             }
             $this->connection->commit();
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             $this->connection->rollBack();
             throw $exception;
         }
@@ -329,7 +330,12 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     private function createEventStoreSchema(): Schema
     {
-        $schema = new Schema();
+        $schemaConfiguration = new SchemaConfig();
+        $connectionParameters = $this->connection->getParams();
+        if (isset($connectionParameters['defaultTableOptions'])) {
+            $schemaConfiguration->setDefaultTableOptions($connectionParameters['defaultTableOptions']);
+        }
+        $schema = new Schema([], [], $schemaConfiguration);
         $table = $schema->createTable($this->eventTableName);
 
         // The monotonic sequence number
