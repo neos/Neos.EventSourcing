@@ -12,7 +12,7 @@ namespace Neos\EventSourcing\EventListener;
  * source code.
  */
 
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Connection;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
@@ -26,26 +26,37 @@ use Neos\Flow\Annotations as Flow;
 /**
  * @Flow\Scope("singleton")
  */
-final class EventListenerInvoker
+class EventListenerInvoker
 {
 
     /**
-     * @Flow\Inject
      * @var EventStoreFactory
      */
     protected $eventStoreFactory;
 
     /**
-     * @Flow\Inject
-     * @var EntityManagerInterface
+     * @var Connection
      */
-    protected $entityManager;
+    protected $connection;
 
     /**
-     * @Flow\InjectConfiguration(path="EventListener.listeners")
      * @var array
      */
     protected $eventListenersConfiguration;
+
+    /**
+     * EventListenerInvoker constructor.
+     * @param EventStoreFactory $eventStoreFactory
+     * @param Connection $connection
+     * @param array $eventListenersConfiguration
+     */
+    public function __construct(EventStoreFactory $eventStoreFactory, Connection $connection, array $eventListenersConfiguration)
+    {
+        $this->eventStoreFactory = $eventStoreFactory;
+        $this->connection = $connection;
+        $this->eventListenersConfiguration = $eventListenersConfiguration;
+    }
+
 
     /**
      * @param EventListenerInterface $listener
@@ -59,7 +70,7 @@ final class EventListenerInvoker
         } elseif ($listener instanceof AppliedEventsStorageInterface) {
             $appliedEventsStorage = $listener;
         } else {
-            $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->entityManager->getConnection(), \get_class($listener));
+            $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->connection, \get_class($listener));
         }
         $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
         $streamName = $listener instanceof StreamAwareEventListenerInterface ? $listener::listensToStream() : StreamName::all();

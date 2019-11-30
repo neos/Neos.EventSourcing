@@ -21,7 +21,6 @@ final class EventStream implements \Iterator
 {
 
     /**
-     * @Flow\Inject
      * @var EventNormalizer
      */
     protected $eventNormalizer;
@@ -39,11 +38,13 @@ final class EventStream implements \Iterator
     /**
      * @param StreamName $streamName
      * @param EventStreamIteratorInterface $streamIterator
+     * @param EventNormalizer $eventNormalizer
      */
-    public function __construct(StreamName $streamName, EventStreamIteratorInterface $streamIterator)
+    public function __construct(StreamName $streamName, EventStreamIteratorInterface $streamIterator, EventNormalizer $eventNormalizer)
     {
         $this->streamName = $streamName;
         $this->streamIterator = $streamIterator;
+        $this->eventNormalizer = $eventNormalizer;
     }
 
     public function getName(): StreamName

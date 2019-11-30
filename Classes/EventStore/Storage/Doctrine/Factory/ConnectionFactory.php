@@ -58,7 +58,9 @@ class ConnectionFactory
 
         if (isset($options['mappingTypes']) && is_array($options['mappingTypes'])) {
             foreach ($options['mappingTypes'] as $typeName => $typeConfiguration) {
-                Type::addType($typeName, $typeConfiguration['className']);
+                if (!Type::hasType($typeName)) {
+                    Type::addType($typeName, $typeConfiguration['className']);
+                }
                 $connection->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
             }
         }

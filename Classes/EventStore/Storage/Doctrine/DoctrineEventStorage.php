@@ -23,6 +23,7 @@ use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
 use Neos\Error\Messages\Result;
 use Neos\Error\Messages\Warning;
+use Neos\EventSourcing\EventStore\EventNormalizer;
 use Neos\EventSourcing\EventStore\EventStream;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
@@ -47,6 +48,11 @@ class DoctrineEventStorage implements EventStorageInterface
     protected $connectionFactory;
 
     /**
+     * @var EventNormalizer
+     */
+    protected $eventNormalizer;
+
+    /**
      * @Flow\Inject(lazy=false)
      * @var Now
      */
@@ -69,11 +75,13 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @param array $options
+     * @param EventNormalizer $eventNormalizer
      */
-    public function __construct(array $options)
+    public function __construct(array $options, EventNormalizer $eventNormalizer)
     {
         $this->options = $options;
         $this->eventTableName = $options['eventTableName'] ?? self::DEFAULT_EVENT_TABLE_NAME;
+        $this->eventNormalizer = $eventNormalizer;
     }
 
     /**
@@ -113,7 +121,7 @@ class DoctrineEventStorage implements EventStorageInterface
         }
 
         $streamIterator = new DoctrineStreamIterator($query);
-        return new EventStream($streamName, $streamIterator);
+        return new EventStream($streamName, $streamIterator, $this->eventNormalizer);
     }
 
     /**
