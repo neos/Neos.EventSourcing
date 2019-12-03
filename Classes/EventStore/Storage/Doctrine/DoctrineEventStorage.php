@@ -143,7 +143,7 @@ class DoctrineEventStorage implements EventStorageInterface
                 $actualVersion = $this->getStreamVersion($streamName);
                 $this->verifyExpectedVersion($actualVersion, $expectedVersion);
                 foreach ($events as $event) {
-                    $actualVersion ++;
+                    $actualVersion++;
                     $this->commitEvent($streamName, $event, $actualVersion);
                 }
             } catch (UniqueConstraintViolationException $exception) {
@@ -152,7 +152,7 @@ class DoctrineEventStorage implements EventStorageInterface
                     throw new ConcurrencyException(sprintf('Failed after %d retry attempts', $retryAttempt), 1573817175, $exception);
                 }
                 usleep((int)($retryWaitInterval * 1E6));
-                $retryAttempt ++;
+                $retryAttempt++;
                 $retryWaitInterval *= 2;
                 $this->connection->rollBack();
                 continue;
@@ -161,9 +161,6 @@ class DoctrineEventStorage implements EventStorageInterface
                 throw $exception;
             }
             $this->connection->commit();
-        } catch (\Throwable $exception) {
-            $this->connection->rollBack();
-            throw $exception;
         }
     }
 
