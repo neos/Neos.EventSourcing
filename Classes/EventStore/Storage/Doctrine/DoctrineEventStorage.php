@@ -15,6 +15,7 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaConfig;
@@ -29,6 +30,7 @@ use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\EventSourcing\EventStore\StreamName;
+use Neos\EventSourcing\EventStore\WritableEvent;
 use Neos\EventSourcing\EventStore\WritableEvents;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Utility\Now;
@@ -125,42 +127,70 @@ class DoctrineEventStorage implements EventStorageInterface
         if ($streamName->isVirtualStream()) {
             throw new \InvalidArgumentException(sprintf('Can\'t commit to virtual stream "%s"', $streamName), 1540632984);
         }
-        $this->reconnectDatabaseConnection();
-        if ($this->connection->getTransactionNestingLevel() > 0) {
-            throw new \RuntimeException('A transaction is active already, can\'t commit events!', 1547829131);
-        }
-        $this->connection->beginTransaction();
-        try {
-            $actualVersion = $this->getStreamVersion($streamName);
-            $this->verifyExpectedVersion($actualVersion, $expectedVersion);
 
-            foreach ($events as $event) {
-                $metadata = $event->getMetadata();
-                $this->connection->insert(
-                    $this->eventTableName,
-                    [
-                        'id' => $event->getIdentifier(),
-                        'stream' => (string)$streamName,
-                        'version' => ++$actualVersion,
-                        'type' => $event->getType(),
-                        'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
-                        'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
-                        'correlationidentifier' => $metadata['correlationIdentifier'] ?? null,
-                        'causationidentifier' => $metadata['causationIdentifier'] ?? null,
-                        'recordedat' => $this->now
-                    ],
-                    [
-                        'version' => \PDO::PARAM_INT,
-                        'recordedat' => Type::DATETIME,
-                    ]
-                );
+        # Exponential backoff: initial interval = 5ms and 8 retry attempts = max 1275ms (= 1,275 seconds)
+        # @see http://backoffcalculator.com/?attempts=8&rate=2&interval=5
+        $retryWaitInterval = 0.005;
+        $maxRetryAttempts = 8;
+        $retryAttempt = 0;
+        while (true) {
+            $this->reconnectDatabaseConnection();
+            if ($this->connection->getTransactionNestingLevel() > 0) {
+                throw new \RuntimeException('A transaction is active already, can\'t commit events!', 1547829131);
             }
-
+            $this->connection->beginTransaction();
+            try {
+                $actualVersion = $this->getStreamVersion($streamName);
+                $this->verifyExpectedVersion($actualVersion, $expectedVersion);
+                foreach ($events as $event) {
+                    $actualVersion++;
+                    $this->commitEvent($streamName, $event, $actualVersion);
+                }
+            } catch (UniqueConstraintViolationException $exception) {
+                if ($retryAttempt >= $maxRetryAttempts) {
+                    $this->connection->rollBack();
+                    throw new ConcurrencyException(sprintf('Failed after %d retry attempts', $retryAttempt), 1573817175, $exception);
+                }
+                usleep((int)($retryWaitInterval * 1E6));
+                $retryAttempt++;
+                $retryWaitInterval *= 2;
+                $this->connection->rollBack();
+                continue;
+            } catch (DBALException $exception) {
+                $this->connection->rollBack();
+                throw $exception;
+            }
             $this->connection->commit();
-        } catch (\Throwable $exception) {
-            $this->connection->rollBack();
-            throw $exception;
         }
+    }
+
+    /**
+     * @param StreamName $streamName
+     * @param WritableEvent $event
+     * @param int $version
+     * @throws DBALException | UniqueConstraintViolationException
+     */
+    private function commitEvent(StreamName $streamName, WritableEvent $event, int $version): void
+    {
+        $metadata = $event->getMetadata();
+        $this->connection->insert(
+            $this->eventTableName,
+            [
+                'id' => $event->getIdentifier(),
+                'stream' => (string)$streamName,
+                'version' => $version,
+                'type' => $event->getType(),
+                'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
+                'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
+                'correlationidentifier' => $metadata['correlationIdentifier'] ?? null,
+                'causationidentifier' => $metadata['causationIdentifier'] ?? null,
+                'recordedat' => $this->now
+            ],
+            [
+                'version' => \PDO::PARAM_INT,
+                'recordedat' => Type::DATETIME,
+            ]
+        );
     }
 
     /**
