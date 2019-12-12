@@ -156,11 +156,12 @@ class DoctrineEventStorage implements EventStorageInterface
                 $retryWaitInterval *= 2;
                 $this->connection->rollBack();
                 continue;
-            } catch (DBALException $exception) {
+            } catch (DBALException | ConcurrencyException $exception) {
                 $this->connection->rollBack();
                 throw $exception;
             }
             $this->connection->commit();
+            break;
         }
     }
 
