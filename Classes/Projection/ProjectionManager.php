@@ -12,13 +12,10 @@ namespace Neos\EventSourcing\Projection;
  * source code.
  */
 
-use Doctrine\ORM\EntityManagerInterface;
-use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
-use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
-use Neos\EventSourcing\EventListener\EventListenerLocator;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
-use Neos\EventSourcing\EventListener\ProvidesAppliedEventsStorageInterface;
+use Neos\EventSourcing\EventPublisher\Mapping\DefaultMappingProvider;
+use Neos\EventSourcing\EventStore\EventStoreFactory;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ClassReflection;
@@ -34,33 +31,31 @@ use Neos\Flow\Reflection\ReflectionService;
 class ProjectionManager
 {
     /**
-     * @Flow\Inject
      * @var ObjectManagerInterface
      */
-    protected $objectManager;
+    private $objectManager;
 
     /**
-     * @Flow\Inject
-     * @var EventListenerLocator
+     * @var EventStoreFactory
      */
-    protected $eventListenerLocator;
+    private $eventStoreFactory;
 
     /**
-     * @Flow\Inject
-     * @var EventListenerInvoker
+     * @var DefaultMappingProvider
      */
-    protected $eventListenerInvoker;
-
-    /**
-     * @Flow\Inject
-     * @var EntityManagerInterface
-     */
-    protected $entityManager;
+    private $mappingProvider;
 
     /**
      * @var array in the format ['<projectionIdentifier>' => '<projectorClassName>', ...]
      */
     private $projections = [];
+
+    public function __construct(ObjectManagerInterface $objectManager, EventStoreFactory $eventStoreFactory, DefaultMappingProvider $mappingProvider)
+    {
+        $this->objectManager = $objectManager;
+        $this->eventStoreFactory = $eventStoreFactory;
+        $this->mappingProvider = $mappingProvider;
+    }
 
     /**
      * Register event listeners based on annotations
@@ -68,7 +63,7 @@ class ProjectionManager
      */
     protected function initializeObject(): void
     {
-        $this->projections = self::detectProjectors($this->objectManager);
+        $this->projections = static::detectProjectors($this->objectManager);
     }
 
     /**
@@ -93,22 +88,7 @@ class ProjectionManager
     {
         $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
         $projectorClassName = $this->projections[$fullProjectionIdentifier];
-        $eventClassNames = $this->eventListenerLocator->getEventClassNamesByListenerClassName($projectorClassName);
-        return new Projection($fullProjectionIdentifier, $projectorClassName, $eventClassNames);
-    }
-
-    /**
-     * Tells if the specified projection is currently empty
-     *
-     * @param string $projectionIdentifier
-     * @return bool
-     */
-    public function isProjectionEmpty(string $projectionIdentifier): bool
-    {
-        $fullProjectionIdentifier = $this->normalizeProjectionIdentifier($projectionIdentifier);
-        $projectorClassName = $this->projections[$fullProjectionIdentifier];
-        $projector = $this->objectManager->get($projectorClassName);
-        return $projector->isEmpty();
+        return new Projection($fullProjectionIdentifier, $projectorClassName);
     }
 
     /**
@@ -122,19 +102,18 @@ class ProjectionManager
      */
     public function replay(string $projectionIdentifier, \Closure $progressCallback = null): void
     {
+
         $projection = $this->getProjection($projectionIdentifier);
+
+        $eventStoreIdentifier = $this->mappingProvider->getEventStoreIdentifierForListenerClassName($projection->getProjectorClassName());
+        $eventStore = $this->eventStoreFactory->create($eventStoreIdentifier);
+
         /** @var ProjectorInterface $projector */
         $projector = $this->objectManager->get($projection->getProjectorClassName());
-        if ($projector instanceof ProvidesAppliedEventsStorageInterface) {
-            $appliedEventsStorage = $projector->getAppliedEventsStorage();
-        } elseif ($projector instanceof AppliedEventsStorageInterface) {
-            $appliedEventsStorage = $projector;
-        } else {
-            $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->entityManager->getConnection(), $projection->getProjectorClassName());
-        }
-        $appliedEventsStorage->saveHighestAppliedSequenceNumber(-1);
         $projector->reset();
-        $this->eventListenerInvoker->catchUp($projector, $progressCallback);
+
+        $eventListenerInvoker = new EventListenerInvoker($eventStore);
+        $eventListenerInvoker->replay($projector, $progressCallback);
     }
 
     /**

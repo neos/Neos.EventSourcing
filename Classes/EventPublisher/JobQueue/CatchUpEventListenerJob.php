@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\EventStore\EventListenerTrigger;
+namespace Neos\EventSourcing\EventPublisher\JobQueue;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -18,6 +18,7 @@ use Flowpack\JobQueue\Common\Queue\QueueInterface;
 use Neos\EventSourcing\EventListener\EventListenerInterface;
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
+use Neos\EventSourcing\EventStore\EventStoreFactory;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 
@@ -30,10 +31,9 @@ final class CatchUpEventListenerJob implements JobInterface
     protected $listenerClassName;
 
     /**
-     * @Flow\Inject
-     * @var EventListenerInvoker
+     * @var string
      */
-    protected $eventListenerInvoker;
+    protected $eventStoreIdentifier;
 
     /**
      * @Flow\Inject
@@ -41,9 +41,10 @@ final class CatchUpEventListenerJob implements JobInterface
      */
     protected $objectManager;
 
-    public function __construct(string $listenerClassName)
+    public function __construct(string $listenerClassName, string $eventStoreIdentifier)
     {
         $this->listenerClassName = $listenerClassName;
+        $this->eventStoreIdentifier = $eventStoreIdentifier;
     }
 
     /**
@@ -56,12 +57,18 @@ final class CatchUpEventListenerJob implements JobInterface
     {
         /** @var EventListenerInterface $listener */
         $listener = $this->objectManager->get($this->listenerClassName);
-        $this->eventListenerInvoker->catchUp($listener);
+
+        /** @var EventStoreFactory $eventStoreFactory */
+        $eventStoreFactory = $this->objectManager->get(EventStoreFactory::class);
+        $eventStore = $eventStoreFactory->create($this->eventStoreIdentifier);
+
+        $eventListenerInvoker = new EventListenerInvoker($eventStore);
+        $eventListenerInvoker->catchUp($listener);
         return true;
     }
 
     public function getLabel(): string
     {
-        return sprintf('Catch up event listener "%s"', $this->listenerClassName);
+        return sprintf('Catch up event listener "%s" from store "%s"', $this->listenerClassName, $this->eventStoreIdentifier);
     }
 }

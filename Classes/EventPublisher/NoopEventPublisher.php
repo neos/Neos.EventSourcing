@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\Event\Exception;
+namespace Neos\EventSourcing\EventPublisher;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -12,11 +12,11 @@ namespace Neos\EventSourcing\Event\Exception;
  * source code.
  */
 
-use Neos\Flow\Exception;
+use Neos\EventSourcing\Event\DomainEvents;
 
-/**
- * EventBusException
- */
-class EventBusException extends Exception
+final class NoopEventPublisher implements EventPublisherInterface
 {
+    public function publish(DomainEvents $events): void
+    {
+    }
 }
