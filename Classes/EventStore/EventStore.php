@@ -14,12 +14,12 @@ namespace Neos\EventSourcing\EventStore;
 
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\Event\DecoratedEvent;
-use Neos\EventSourcing\EventStore\EventListenerTrigger\EventListenerTrigger;
-use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
-use Neos\Flow\Annotations as Flow;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\EventStore\EventListenerTrigger\EventListenerTrigger;
+use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
+use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Utility\Algorithms;
 
 /**

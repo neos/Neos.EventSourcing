@@ -12,7 +12,7 @@ namespace Neos\EventSourcing\Event;
  * source code.
  */
 
-use \Neos\Flow\Annotations as Flow;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * @Flow\Proxy(false)

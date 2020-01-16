@@ -13,7 +13,6 @@ namespace Neos\EventSourcing\EventListener\AppliedEventsStorage;
  */
 
 use Doctrine\ORM\EntityManagerInterface;
-use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\EventListenerInterface;
 use Neos\Flow\Annotations as Flow;
 

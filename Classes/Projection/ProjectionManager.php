@@ -14,7 +14,6 @@ namespace Neos\EventSourcing\Projection;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
-use Neos\EventSourcing\EventListener\AppliedEventsStorage\DefaultAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventListener\EventListenerLocator;
