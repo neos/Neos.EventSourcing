@@ -21,5 +21,4 @@ interface EventPublisherFactoryInterface
      * @return EventPublisherInterface
      */
     public function create(string $eventStoreIdentifier): EventPublisherInterface;
-
 }

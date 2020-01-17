@@ -14,5 +14,4 @@ namespace Neos\EventSourcing\EventPublisher\Exception;
 
 class InvalidEventListenerException extends EventPublisherException
 {
-
 }

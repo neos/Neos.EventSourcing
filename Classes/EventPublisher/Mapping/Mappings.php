@@ -64,7 +64,7 @@ class Mappings implements \IteratorAggregate, \JsonSerializable
             if (isset($matchingMappings[$eventClassName])) {
                 continue;
             }
-            $matchingMappings[$eventClassName] = array_filter($this->mappings, static function(Mapping $mapping) use ($eventClassName) {
+            $matchingMappings[$eventClassName] = array_filter($this->mappings, static function (Mapping $mapping) use ($eventClassName) {
                 return $mapping->getEventClassName() === $eventClassName;
             });
         }

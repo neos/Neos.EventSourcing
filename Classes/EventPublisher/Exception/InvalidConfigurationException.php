@@ -14,5 +14,4 @@ namespace Neos\EventSourcing\EventPublisher\Exception;
 
 class InvalidConfigurationException extends EventPublisherException
 {
-
 }

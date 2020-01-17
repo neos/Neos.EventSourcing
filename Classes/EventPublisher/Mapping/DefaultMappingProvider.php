@@ -95,7 +95,7 @@ class DefaultMappingProvider
         $mappings = [];
         $presets = [];
         foreach ($eventStoresConfiguration as $eventStoreIdentifier => $eventStoreConfiguration) {
-            $presetsForThisStore = array_filter($eventStoreConfiguration['listeners'] ?? [], static function($presetOptions) {
+            $presetsForThisStore = array_filter($eventStoreConfiguration['listeners'] ?? [], static function ($presetOptions) {
                 return $presetOptions !== false;
             });
             if ($presetsForThisStore === []) {
@@ -146,7 +146,9 @@ class DefaultMappingProvider
         } catch (InvalidConfigurationTypeException $e) {
             throw new \RuntimeException('Failed to load Event Store configuration', 1578579711, $e);
         }
-        return array_filter($stores, static function($storeConfiguration) { return $storeConfiguration !== false; });
+        return array_filter($stores, static function ($storeConfiguration) {
+            return $storeConfiguration !== false;
+        });
     }
 
     /**

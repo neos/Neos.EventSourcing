@@ -102,7 +102,6 @@ class ProjectionManager
      */
     public function replay(string $projectionIdentifier, \Closure $progressCallback = null): void
     {
-
         $projection = $this->getProjection($projectionIdentifier);
 
         $eventStoreIdentifier = $this->mappingProvider->getEventStoreIdentifierForListenerClassName($projection->getProjectorClassName());

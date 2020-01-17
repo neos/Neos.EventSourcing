@@ -23,7 +23,6 @@ use Neos\Flow\Annotations as Flow;
  */
 final class JobQueueEventPublisher implements EventPublisherInterface
 {
-
     private const DEFAULT_QUEUE_NAME = 'neos-eventsourcing';
 
     /**
