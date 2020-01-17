@@ -109,7 +109,7 @@ class DefaultMappingProvider
                 return $presetOptions !== false;
             });
             if ($presetsForThisStore === []) {
-                throw new InvalidConfigurationException(sprintf('Unmatched event store: "%s"', $eventStoreIdentifier), 1577534654);
+                throw new InvalidConfigurationException(sprintf('No Event Listeners are configured for Event Store "%s". Please register at least one listener via Neos.EventSourcing.EventStore.stores.*.listeners or disable this Event Store', $eventStoreIdentifier), 1577534654);
             }
             foreach ($presetsForThisStore as $pattern => $presetOptions) {
                 $presetId = $eventStoreIdentifier . '.' . $pattern;
@@ -134,13 +134,18 @@ class DefaultMappingProvider
                     }
                 }
                 if (!$presetMatchesAnyListeners) {
-                    throw new InvalidConfigurationException(sprintf('The pattern %s.%s does not match any listeners', $eventStoreIdentifier, $pattern), 1577533005);
+                    throw new InvalidConfigurationException(sprintf('The pattern "%s" for Event Store "%s" does not match any listeners. Please adjust the pattern or remove it', $pattern, $eventStoreIdentifier), 1577533005);
                 }
             }
         }
         $unmatchedListeners = array_diff_key($listeners, $matchedListeners);
         if ($unmatchedListeners !== []) {
-            throw new InvalidConfigurationException(sprintf('Unmatched listener(s): "%s"', implode('", "', array_keys($unmatchedListeners))), 1577532358);
+            if (count($unmatchedListeners) === 1) {
+                $errorMessage = 'The Event Listener "%s" is not registered to any of the configured Event Stores. Please add a new listener pattern at Neos.EventSourcing.EventStore.stores.*.listeners or remove the unused listener class';
+            } else {
+                $errorMessage = 'The following Event Listeners are not registered to any of the configured Event Stores: "%s". Please add new listener patterns at Neos.EventSourcing.EventStore.stores.*.listeners or remove the unused listener classes';
+            }
+            throw new InvalidConfigurationException(sprintf($errorMessage, implode('", "', array_keys($unmatchedListeners))), 1577532358);
         }
         return compact('mappings', 'presets');
     }
