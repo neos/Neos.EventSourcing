@@ -15,7 +15,7 @@ namespace Neos\EventSourcing\EventPublisher;
 use Neos\EventSourcing\Event\DomainEvents;
 
 /**
- * TODO
+ * An Event Publisher that doesn't publish the events immediately but stores them until the end of the current request
  */
 final class DeferEventPublisher implements EventPublisherInterface
 {
@@ -54,7 +54,9 @@ final class DeferEventPublisher implements EventPublisherInterface
     }
 
     /**
-     * TODO
+     * Invoke the wrapped Event Publisher with all the pending events (if not empty)
+     *
+     * This is usually called when this instance is destructed (during shutdown of Flow for example)
      */
     public function invoke(): void
     {

@@ -25,7 +25,9 @@ use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Reflection\ReflectionService;
 
 /**
- * TODO
+ * This factory for mappings will create Event Publisher mappings based on the configured EventStore.<store>.listeners
+ *
+ * @Flow\Scope("singleton")
  */
 class DefaultMappingProvider
 {
@@ -53,6 +55,10 @@ class DefaultMappingProvider
         }
     }
 
+    /**
+     * @param string $eventStoreIdentifier
+     * @return Mappings
+     */
     public function getMappingsForEventStore(string $eventStoreIdentifier): Mappings
     {
         if (!isset($this->mappings[$eventStoreIdentifier])) {
@@ -61,6 +67,10 @@ class DefaultMappingProvider
         return $this->mappings[$eventStoreIdentifier];
     }
 
+    /**
+     * @param string $listenerClassName
+     * @return string
+     */
     public function getEventStoreIdentifierForListenerClassName(string $listenerClassName): string
     {
         foreach ($this->mappings as $eventStoreIdentifier => $mappings) {

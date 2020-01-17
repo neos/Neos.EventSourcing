@@ -12,6 +12,9 @@ namespace Neos\EventSourcing\EventPublisher;
  * source code.
  */
 
+/**
+ * Contract for an Event Publisher factory that builds Event Publisher instances for a given Event Store identifier
+ */
 interface EventPublisherFactoryInterface
 {
     /**

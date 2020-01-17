@@ -16,13 +16,15 @@ use Neos\EventSourcing\EventPublisher\Mapping\DefaultMappingProvider;
 use Neos\Flow\Annotations as Flow;
 
 /**
+ * The default Event Publisher factory that is used within Flow if no other "eventPublisherFactory" is specified in the corresponding Event Store configuration.
+ *
  * @Flow\Scope("singleton")
  */
 final class DefaultEventPublisherFactory implements EventPublisherFactoryInterface
 {
 
     /**
-     * @var \Neos\EventSourcing\EventPublisher\Mapping\DefaultMappingProvider
+     * @var DefaultMappingProvider
      */
     private $mappingProvider;
 

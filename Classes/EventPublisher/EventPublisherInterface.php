@@ -14,6 +14,9 @@ namespace Neos\EventSourcing\EventPublisher;
 
 use Neos\EventSourcing\Event\DomainEvents;
 
+/**
+ * Contract for an Event Publisher that is invoked by the Event Store when ever new events where committed
+ */
 interface EventPublisherInterface
 {
     public function publish(DomainEvents $events): void;

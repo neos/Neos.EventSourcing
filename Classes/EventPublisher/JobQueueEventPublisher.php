@@ -19,7 +19,9 @@ use Neos\EventSourcing\EventPublisher\Mapping\Mappings;
 use Neos\Flow\Annotations as Flow;
 
 /**
- * TODO
+ * An Event Publisher that sends events to a Job Queue using the Flowpack.JobQueue package.
+ *
+ * The queue Name
  */
 final class JobQueueEventPublisher implements EventPublisherInterface
 {

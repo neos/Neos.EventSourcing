@@ -14,6 +14,9 @@ namespace Neos\EventSourcing\EventPublisher;
 
 use Neos\EventSourcing\Event\DomainEvents;
 
+/**
+ * Some dummy Event Publisher that can be used if no events should be published at all
+ */
 final class NoopEventPublisher implements EventPublisherInterface
 {
     public function publish(DomainEvents $events): void
