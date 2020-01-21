@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\EventPublisher\Mapping;
+namespace Neos\EventSourcing\EventListener\Mapping;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -19,7 +19,7 @@ use Neos\Flow\Annotations as Flow;
  *
  * @Flow\Proxy(false)
  */
-final class Mapping implements \JsonSerializable
+final class EventToListenerMapping implements \JsonSerializable
 {
     /**
      * @var string

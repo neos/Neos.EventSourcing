@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\EventPublisher\Mapping;
+namespace Neos\EventSourcing\EventListener\Mapping;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -29,11 +29,11 @@ use Neos\Flow\Reflection\ReflectionService;
  *
  * @Flow\Scope("singleton")
  */
-class DefaultMappingProvider
+class DefaultEventToListenerMappingProvider
 {
 
     /**
-     * @var Mappings[] indexed by the corresponding EventStore identifier
+     * @var EventToListenerMappings[] indexed by the corresponding EventStore identifier
      */
     private $mappings;
 
@@ -49,17 +49,17 @@ class DefaultMappingProvider
         foreach ($mappingsAndOptions['mappings'] as $eventStoreIdentifier => $mappings) {
             $eventStoreMappings = [];
             foreach ($mappings as $mapping) {
-                $eventStoreMappings[] = Mapping::create($mapping['eventClassName'], $mapping['listenerClassName'], $mapping['presetId'] ? $mappingsAndOptions['presets'][$mapping['presetId']] : []);
+                $eventStoreMappings[] = EventToListenerMapping::create($mapping['eventClassName'], $mapping['listenerClassName'], $mapping['presetId'] ? $mappingsAndOptions['presets'][$mapping['presetId']] : []);
             }
-            $this->mappings[$eventStoreIdentifier] = Mappings::fromArray($eventStoreMappings);
+            $this->mappings[$eventStoreIdentifier] = EventToListenerMappings::fromArray($eventStoreMappings);
         }
     }
 
     /**
      * @param string $eventStoreIdentifier
-     * @return Mappings
+     * @return EventToListenerMappings
      */
-    public function getMappingsForEventStore(string $eventStoreIdentifier): Mappings
+    public function getMappingsForEventStore(string $eventStoreIdentifier): EventToListenerMappings
     {
         if (!isset($this->mappings[$eventStoreIdentifier])) {
             throw new \InvalidArgumentException(sprintf('No mappings found for Event Store "%s". Configured stores are: "%s"', $eventStoreIdentifier, implode('", "', array_keys($this->mappings))), 1578656948);

@@ -15,7 +15,7 @@ namespace Neos\EventSourcing\EventPublisher;
 use Flowpack\JobQueue\Common\Job\JobManager;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\EventPublisher\JobQueue\CatchUpEventListenerJob;
-use Neos\EventSourcing\EventPublisher\Mapping\Mappings;
+use Neos\EventSourcing\EventListener\Mapping\EventToListenerMappings;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -39,11 +39,11 @@ final class JobQueueEventPublisher implements EventPublisherInterface
     private $eventStoreIdentifier;
 
     /**
-     * @var Mappings
+     * @var EventToListenerMappings
      */
     private $mappings;
 
-    public function __construct(string $eventStoreIdentifier, Mappings $mappings)
+    public function __construct(string $eventStoreIdentifier, EventToListenerMappings $mappings)
     {
         $this->eventStoreIdentifier = $eventStoreIdentifier;
         $this->mappings = $mappings;

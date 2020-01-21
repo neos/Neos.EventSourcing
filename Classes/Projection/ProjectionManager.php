@@ -14,7 +14,7 @@ namespace Neos\EventSourcing\Projection;
 
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
-use Neos\EventSourcing\EventPublisher\Mapping\DefaultMappingProvider;
+use Neos\EventSourcing\EventListener\Mapping\DefaultEventToListenerMappingProvider;
 use Neos\EventSourcing\EventStore\EventStoreFactory;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
@@ -41,7 +41,7 @@ class ProjectionManager
     private $eventStoreFactory;
 
     /**
-     * @var DefaultMappingProvider
+     * @var DefaultEventToListenerMappingProvider
      */
     private $mappingProvider;
 
@@ -50,7 +50,7 @@ class ProjectionManager
      */
     private $projections = [];
 
-    public function __construct(ObjectManagerInterface $objectManager, EventStoreFactory $eventStoreFactory, DefaultMappingProvider $mappingProvider)
+    public function __construct(ObjectManagerInterface $objectManager, EventStoreFactory $eventStoreFactory, DefaultEventToListenerMappingProvider $mappingProvider)
     {
         $this->objectManager = $objectManager;
         $this->eventStoreFactory = $eventStoreFactory;

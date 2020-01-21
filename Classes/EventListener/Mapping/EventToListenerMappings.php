@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\EventPublisher\Mapping;
+namespace Neos\EventSourcing\EventListener\Mapping;
 
 /*
  * This file is part of the Neos.EventSourcing package.
@@ -21,11 +21,11 @@ use Neos\Flow\Annotations as Flow;
  *
  * @Flow\Proxy(false)
  */
-class Mappings implements \IteratorAggregate, \JsonSerializable
+class EventToListenerMappings implements \IteratorAggregate, \JsonSerializable
 {
 
     /**
-     * @var Mapping[] indexed by EventClassName
+     * @var EventToListenerMapping[] indexed by EventClassName
      */
     private $mappings;
 
@@ -43,20 +43,20 @@ class Mappings implements \IteratorAggregate, \JsonSerializable
     }
 
     /**
-     * @param Mapping[] $mappings
+     * @param EventToListenerMapping[] $mappings
      * @return static
      */
     public static function fromArray(array $mappings): self
     {
         foreach ($mappings as $mapping) {
-            if (!$mapping instanceof Mapping) {
-                throw new \InvalidArgumentException(sprintf('Expected array of %s instances, got: %s', Mapping::class, is_object($mapping) ? get_class($mapping) : gettype($mapping)), 1578319100);
+            if (!$mapping instanceof EventToListenerMapping) {
+                throw new \InvalidArgumentException(sprintf('Expected array of %s instances, got: %s', EventToListenerMapping::class, is_object($mapping) ? get_class($mapping) : gettype($mapping)), 1578319100);
             }
         }
         return new static(array_values($mappings));
     }
 
-    public function getMappingsForEvents(DomainEvents $events): Mappings
+    public function getMappingsForEvents(DomainEvents $events): EventToListenerMappings
     {
         $matchingMappings = [];
         foreach ($events as $event) {
@@ -64,14 +64,14 @@ class Mappings implements \IteratorAggregate, \JsonSerializable
             if (isset($matchingMappings[$eventClassName])) {
                 continue;
             }
-            $matchingMappings[$eventClassName] = array_filter($this->mappings, static function (Mapping $mapping) use ($eventClassName) {
+            $matchingMappings[$eventClassName] = array_filter($this->mappings, static function (EventToListenerMapping $mapping) use ($eventClassName) {
                 return $mapping->getEventClassName() === $eventClassName;
             });
         }
         return new static(array_merge(...array_values($matchingMappings)));
     }
 
-    public function filter(\closure $callback): Mappings
+    public function filter(\closure $callback): EventToListenerMappings
     {
         return new static(array_filter($this->mappings, $callback));
     }
@@ -87,7 +87,7 @@ class Mappings implements \IteratorAggregate, \JsonSerializable
     }
 
     /**
-     * @return Mapping[]|\Iterator<Mapping>
+     * @return EventToListenerMapping[]|\Iterator<EventToListenerMapping>
      */
     public function getIterator(): \Iterator
     {

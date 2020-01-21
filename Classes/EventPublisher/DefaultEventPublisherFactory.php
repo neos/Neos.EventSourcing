@@ -12,7 +12,7 @@ namespace Neos\EventSourcing\EventPublisher;
  * source code.
  */
 
-use Neos\EventSourcing\EventPublisher\Mapping\DefaultMappingProvider;
+use Neos\EventSourcing\EventListener\Mapping\DefaultEventToListenerMappingProvider;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -24,11 +24,11 @@ final class DefaultEventPublisherFactory implements EventPublisherFactoryInterfa
 {
 
     /**
-     * @var DefaultMappingProvider
+     * @var DefaultEventToListenerMappingProvider
      */
     private $mappingProvider;
 
-    public function __construct(DefaultMappingProvider $mappingProvider)
+    public function __construct(DefaultEventToListenerMappingProvider $mappingProvider)
     {
         $this->mappingProvider = $mappingProvider;
     }

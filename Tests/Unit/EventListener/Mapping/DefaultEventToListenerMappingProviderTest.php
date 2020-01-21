@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\Tests\Unit\EventPublisher\Mapping;
+namespace Neos\EventSourcing\Tests\Unit\EventListener\Mapping;
 
 use Neos\EventSourcing\EventListener\EventListenerInterface;
 use Neos\EventSourcing\EventPublisher\Exception\InvalidConfigurationException;
 use Neos\EventSourcing\EventPublisher\Exception\InvalidEventListenerException;
-use Neos\EventSourcing\EventPublisher\Mapping\DefaultMappingProvider;
-use Neos\EventSourcing\EventPublisher\Mapping\Mappings;
+use Neos\EventSourcing\EventListener\Mapping\DefaultEventToListenerMappingProvider;
+use Neos\EventSourcing\EventListener\Mapping\EventToListenerMappings;
 use Neos\EventSourcing\Tests\Unit\EventStore\Fixture\DummyEvent1;
 use Neos\EventSourcing\Tests\Unit\EventStore\Fixture\DummyEvent2;
 use Neos\EventSourcing\Tests\Unit\EventStore\Fixture\DummyEvent3;
@@ -18,7 +18,7 @@ use Neos\Flow\Tests\UnitTestCase;
 use Neos\Utility\ObjectAccess;
 use PHPUnit\Framework\MockObject\MockObject;
 
-class DefaultMappingProviderTest extends UnitTestCase
+class DefaultEventToListenerMappingProviderTest extends UnitTestCase
 {
 
     /**
@@ -117,7 +117,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         return $this->buildMockEventListener($listenerMethods, $classNamePrefix);
     }
 
-    private function assetMappings(array $expectedMappings, DefaultMappingProvider $mappingProvider): void
+    private function assetMappings(array $expectedMappings, DefaultEventToListenerMappingProvider $mappingProvider): void
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $mappings = ObjectAccess::getProperty($mappingProvider, 'mappings', true);
@@ -135,7 +135,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->expectExceptionCode(1498123537);
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        new DefaultMappingProvider($this->mockObjectManager);
+        new DefaultEventToListenerMappingProvider($this->mockObjectManager);
     }
 
     /**
@@ -149,7 +149,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->expectExceptionCode(1472500228);
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        new DefaultMappingProvider($this->mockObjectManager);
+        new DefaultEventToListenerMappingProvider($this->mockObjectManager);
     }
 
     /**
@@ -163,7 +163,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->expectExceptionCode(1472504443);
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        new DefaultMappingProvider($this->mockObjectManager);
+        new DefaultEventToListenerMappingProvider($this->mockObjectManager);
     }
 
     /**
@@ -177,7 +177,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->expectExceptionCode(1472504303);
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        new DefaultMappingProvider($this->mockObjectManager);
+        new DefaultEventToListenerMappingProvider($this->mockObjectManager);
     }
 
     /**
@@ -191,7 +191,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->expectExceptionCode(1476442394);
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        new DefaultMappingProvider($this->mockObjectManager);
+        new DefaultEventToListenerMappingProvider($this->mockObjectManager);
     }
 
     public function invalidConfigurationDataProvider(): array
@@ -235,7 +235,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->expectExceptionCode($expectedException);
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        new DefaultMappingProvider($this->mockObjectManager);
+        new DefaultEventToListenerMappingProvider($this->mockObjectManager);
     }
 
     /**
@@ -250,7 +250,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->mockListenerClassNames = [$listenerClassName1, $listenerClassName2];
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $defaultMappingsProvider = new DefaultMappingProvider($this->mockObjectManager);
+        $defaultMappingsProvider = new DefaultEventToListenerMappingProvider($this->mockObjectManager);
         $expectedMappings = [
             'default' => [
                 ['eventClassName' => DummyEvent1::class, 'listenerClassName' => $listenerClassName1, 'options' => []],
@@ -274,7 +274,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->mockListenerClassNames = [$listenerClassName1, $listenerClassName2];
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $defaultMappingsProvider = new DefaultMappingProvider($this->mockObjectManager);
+        $defaultMappingsProvider = new DefaultEventToListenerMappingProvider($this->mockObjectManager);
         $expectedMappings = [
             'default' => [
                 ['eventClassName' => DummyEvent1::class, 'listenerClassName' => $listenerClassName1, 'options' => ['custom' => 'option']],
@@ -298,7 +298,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->mockListenerClassNames = [$listenerClassName1, $listenerClassName2];
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $defaultMappingsProvider = new DefaultMappingProvider($this->mockObjectManager);
+        $defaultMappingsProvider = new DefaultEventToListenerMappingProvider($this->mockObjectManager);
         $expectedMappings = [
             'default' => [
                 ['eventClassName' => DummyEvent1::class, 'listenerClassName' => $listenerClassName1, 'options' => []],
@@ -325,7 +325,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->mockListenerClassNames = [$listenerClassName1, $listenerClassName2, $listenerClassName3];
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $defaultMappingsProvider = new DefaultMappingProvider($this->mockObjectManager);
+        $defaultMappingsProvider = new DefaultEventToListenerMappingProvider($this->mockObjectManager);
         $expectedMappings = [
             'default' => [
                 ['eventClassName' => DummyEvent1::class, 'listenerClassName' => $listenerClassName1, 'options' => ['options' => '1']],
@@ -354,7 +354,7 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->mockListenerClassNames = [$listenerClassName1, $listenerClassName2, $listenerClassName3];
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $defaultMappingsProvider = new DefaultMappingProvider($this->mockObjectManager);
+        $defaultMappingsProvider = new DefaultEventToListenerMappingProvider($this->mockObjectManager);
 
         $this->expectException(\InvalidArgumentException::class);
 
@@ -374,10 +374,10 @@ class DefaultMappingProviderTest extends UnitTestCase
         $this->mockListenerClassNames = [$listenerClassName1, $listenerClassName2, $listenerClassName3];
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $defaultMappingsProvider = new DefaultMappingProvider($this->mockObjectManager);
+        $defaultMappingsProvider = new DefaultEventToListenerMappingProvider($this->mockObjectManager);
 
         $eventPublisher = $defaultMappingsProvider->getMappingsForEventStore('es2');
-        self::assertInstanceOf(Mappings::class, $eventPublisher);
+        self::assertInstanceOf(EventToListenerMappings::class, $eventPublisher);
     }
 
 }
