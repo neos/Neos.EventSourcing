@@ -16,6 +16,8 @@ use Neos\EventSourcing\Event\DomainEvents;
 
 /**
  * An Event Publisher that doesn't publish the events immediately but stores them until the end of the current request
+ *
+ * Note: This depends on Flow's shutdownObject() (or invoke()) method to be called at the end of the request cycle!
  */
 final class DeferEventPublisher implements EventPublisherInterface
 {

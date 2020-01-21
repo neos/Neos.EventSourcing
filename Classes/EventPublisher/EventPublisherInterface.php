@@ -16,6 +16,9 @@ use Neos\EventSourcing\Event\DomainEvents;
 
 /**
  * Contract for an Event Publisher that is invoked by the Event Store when ever new events where committed
+ *
+ * The task of an Event Publisher is to inform 3rd parties whenever new events have been written to the Event Store.
+ * Usually the recipients are Projectors or other Event Listeners that then apply those Events to update their state and/or react otherwise.
  */
 interface EventPublisherInterface
 {
