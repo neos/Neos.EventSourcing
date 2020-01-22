@@ -12,8 +12,6 @@ namespace Neos\EventSourcing\EventListener\Mapping;
  * source code.
  */
 
-use Neos\EventSourcing\Event\DecoratedEvent;
-use Neos\EventSourcing\Event\DomainEvents;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -61,21 +59,6 @@ class EventToListenerMappings implements \IteratorAggregate, \JsonSerializable
             }
         }
         return new static(array_values($mappings));
-    }
-
-    public function getMappingsForEvents(DomainEvents $events): EventToListenerMappings
-    {
-        $matchingMappings = [];
-        foreach ($events as $event) {
-            $eventClassName = \get_class($event instanceof DecoratedEvent ? $event->getWrappedEvent() : $event);
-            if (isset($matchingMappings[$eventClassName])) {
-                continue;
-            }
-            $matchingMappings[$eventClassName] = array_filter($this->mappings, static function (EventToListenerMapping $mapping) use ($eventClassName) {
-                return $mapping->getEventClassName() === $eventClassName;
-            });
-        }
-        return new static(array_merge(...array_values($matchingMappings)));
     }
 
     public function filter(\closure $callback): EventToListenerMappings

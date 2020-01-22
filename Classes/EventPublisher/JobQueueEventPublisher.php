@@ -13,9 +13,11 @@ namespace Neos\EventSourcing\EventPublisher;
  */
 
 use Flowpack\JobQueue\Common\Job\JobManager;
+use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\Event\DomainEvents;
-use Neos\EventSourcing\EventPublisher\JobQueue\CatchUpEventListenerJob;
+use Neos\EventSourcing\EventListener\Mapping\EventToListenerMapping;
 use Neos\EventSourcing\EventListener\Mapping\EventToListenerMappings;
+use Neos\EventSourcing\EventPublisher\JobQueue\CatchUpEventListenerJob;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -50,22 +52,33 @@ final class JobQueueEventPublisher implements EventPublisherInterface
     }
 
     /**
-     * Enqueue domain events, such that their corresponding Event Listeners are executed lateron.
+     * Iterate through EventToListenerMappings and queue a CatchUpEventListenerJob for every affected Event Listener
      *
      * @param DomainEvents $events
      */
     public function publish(DomainEvents $events): void
     {
         $queuedEventListenerClassNames = [];
-        foreach ($this->mappings->getMappingsForEvents($events) as $mapping) {
-            $listenerClassName = $mapping->getListenerClassName();
-            if (isset($queuedEventListenerClassNames[$listenerClassName])) {
+        $processedEventClassNames = [];
+        foreach ($events as $event) {
+            $eventClassName = \get_class($event instanceof DecoratedEvent ? $event->getWrappedEvent() : $event);
+            // only process every Event type once
+            if (isset($processedEventClassNames[$eventClassName])) {
                 continue;
             }
-            $queueName = $mapping->getOption('queueName', self::DEFAULT_QUEUE_NAME);
-            $options = $mapping->getOption('queueOptions', []);
-            $this->jobManager->queue($queueName, new CatchUpEventListenerJob($listenerClassName, $this->eventStoreIdentifier), $options);
-            $queuedEventListenerClassNames[$listenerClassName] = true;
+            foreach ($this->mappings as $mapping) {
+                if ($mapping->getEventClassName() !== $eventClassName) {
+                    continue;
+                }
+                // only process every Event Listener once
+                if (isset($queuedEventListenerClassNames[$mapping->getListenerClassName()])) {
+                    continue;
+                }
+                $queueName = $mapping->getOption('queueName', self::DEFAULT_QUEUE_NAME);
+                $options = $mapping->getOption('queueOptions', []);
+                $this->jobManager->queue($queueName, new CatchUpEventListenerJob($mapping->getListenerClassName(), $this->eventStoreIdentifier), $options);
+                $queuedEventListenerClassNames[$mapping->getListenerClassName()] = true;
+            }
         }
     }
 }
