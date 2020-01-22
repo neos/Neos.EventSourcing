@@ -47,6 +47,16 @@ final class CatchUpEventListenerJob implements JobInterface
         $this->eventStoreIdentifier = $eventStoreIdentifier;
     }
 
+    public function getListenerClassName(): string
+    {
+        return $this->listenerClassName;
+    }
+
+    public function getEventStoreIdentifier(): string
+    {
+        return $this->eventStoreIdentifier;
+    }
+
     /**
      * @param QueueInterface $queue
      * @param Message $message

@@ -42,6 +42,13 @@ class EventToListenerMappings implements \IteratorAggregate, \JsonSerializable
         return new static([]);
     }
 
+    public function withMapping(EventToListenerMapping $mapping): self
+    {
+        $mappings = $this->mappings;
+        $mappings[] = $mapping;
+        return new static($mappings);
+    }
+
     /**
      * @param EventToListenerMapping[] $mappings
      * @return static
