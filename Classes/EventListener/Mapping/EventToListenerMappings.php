@@ -35,7 +35,7 @@ class EventToListenerMappings implements \IteratorAggregate, \JsonSerializable
     /**
      * @return static
      */
-    public static function create(): self
+    public static function createEmpty(): self
     {
         return new static([]);
     }

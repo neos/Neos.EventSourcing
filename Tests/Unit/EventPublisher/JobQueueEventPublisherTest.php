@@ -49,7 +49,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
      */
     public function publishDoesNotQueueJobsIfDomainEventsAreEmpty(): void
     {
-        $jobQueueEventPublisher = $this->buildPublisher('some-event-store', EventToListenerMappings::create());
+        $jobQueueEventPublisher = $this->buildPublisher('some-event-store', EventToListenerMappings::createEmpty());
 
         $this->mockJobManager->expects($this->never())->method('queue');
 
@@ -61,7 +61,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
      */
     public function publishDoesNotQueueJobsIfMappingsIsEmpty(): void
     {
-        $jobQueueEventPublisher = $this->buildPublisher('some-event-store', EventToListenerMappings::create());
+        $jobQueueEventPublisher = $this->buildPublisher('some-event-store', EventToListenerMappings::createEmpty());
 
         $this->mockJobManager->expects($this->never())->method('queue');
 
@@ -75,7 +75,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
      */
     public function publishDoesNotQueueJobsIfNoMatchingMappingExists(): void
     {
-        $mappings = EventToListenerMappings::create()
+        $mappings = EventToListenerMappings::createEmpty()
             ->withMapping(EventToListenerMapping::create('SomeEventClassName', 'SomeListenerClassName', []))
             ->withMapping(EventToListenerMapping::create('SomeOtherEventClassName', 'SomeListenerClassName', []));
         $jobQueueEventPublisher = $this->buildPublisher('some-event-store', $mappings);
@@ -93,7 +93,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
     public function publishPassesTheEventStoreIdToTheJob(): void
     {
         $someEventStoreId = 'some-event-store';
-        $mappings = EventToListenerMappings::create()
+        $mappings = EventToListenerMappings::createEmpty()
             ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName', []));
         $jobQueueEventPublisher = $this->buildPublisher($someEventStoreId, $mappings);
 
@@ -109,7 +109,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
      */
     public function publishQueuesTheJobInTheDefaultQueueByDefault(): void
     {
-        $mappings = EventToListenerMappings::create()
+        $mappings = EventToListenerMappings::createEmpty()
             ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName', []));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
 
@@ -126,7 +126,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
     public function publishQueuesTheJobInTheSpecifiedQueue(): void
     {
         $queueName = 'Some-Queue';
-        $mappings = EventToListenerMappings::create()
+        $mappings = EventToListenerMappings::createEmpty()
             ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName', ['queueName' => $queueName]));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
 
@@ -143,7 +143,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
     public function publishPassesQueueOptionsToJob(): void
     {
         $queueOptions = ['foo' => ['bar' => 'Baz']];
-        $mappings = EventToListenerMappings::create()
+        $mappings = EventToListenerMappings::createEmpty()
             ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName', ['queueOptions' => $queueOptions]));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
 
@@ -160,7 +160,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
     public function publishQueuesOnlyOneJobPerListener(): void
     {
         $eventListenerClassName = 'SomeListenerClassName';
-        $mappings = EventToListenerMappings::create()
+        $mappings = EventToListenerMappings::createEmpty()
             ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), $eventListenerClassName, []))
             ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent2), $eventListenerClassName, []));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
@@ -177,7 +177,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
      */
     public function publishQueuesAJobForEachListener(): void
     {
-        $mappings = EventToListenerMappings::create()
+        $mappings = EventToListenerMappings::createEmpty()
             ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName1', []))
             ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName2', []))
             ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent2), 'SomeListenerClassName1', []));
