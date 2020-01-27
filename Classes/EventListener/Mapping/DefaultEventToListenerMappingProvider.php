@@ -14,9 +14,8 @@ namespace Neos\EventSourcing\EventListener\Mapping;
 
 use Neos\EventSourcing\Event\DomainEventInterface;
 use Neos\EventSourcing\EventListener\EventListenerInterface;
-use Neos\EventSourcing\EventPublisher\Exception\EventPublisherException;
-use Neos\EventSourcing\EventPublisher\Exception\InvalidConfigurationException;
-use Neos\EventSourcing\EventPublisher\Exception\InvalidEventListenerException;
+use Neos\EventSourcing\EventListener\Exception\InvalidConfigurationException;
+use Neos\EventSourcing\EventListener\Exception\InvalidEventListenerException;
 use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Configuration\ConfigurationManager;
@@ -41,7 +40,7 @@ class DefaultEventToListenerMappingProvider
      * This class is usually not instantiated manually but injected like other singletons
      *
      * @param ObjectManagerInterface $objectManager
-     * @throws EventPublisherException
+     * @throws InvalidConfigurationException | InvalidEventListenerException
      */
     public function __construct(ObjectManagerInterface $objectManager)
     {
@@ -84,7 +83,7 @@ class DefaultEventToListenerMappingProvider
     /**
      * @param ObjectManagerInterface $objectManager
      * @return array
-     * @throws EventPublisherException
+     * @throws InvalidConfigurationException | InvalidEventListenerException
      * @Flow\CompileStatic
      */
     protected static function prepareMappings(ObjectManagerInterface $objectManager): array

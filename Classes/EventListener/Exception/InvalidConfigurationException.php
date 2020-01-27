@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\EventPublisher\Exception;
+namespace Neos\EventSourcing\EventListener\Exception;
 
 /*
  * This file is part of the Neos.EventStore package.
@@ -12,6 +12,6 @@ namespace Neos\EventSourcing\EventPublisher\Exception;
  * source code.
  */
 
-class InvalidConfigurationException extends EventPublisherException
+class InvalidConfigurationException extends \Exception
 {
 }

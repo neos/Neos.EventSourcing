@@ -3,8 +3,8 @@ declare(strict_types=1);
 namespace Neos\EventSourcing\Tests\Unit\EventListener\Mapping;
 
 use Neos\EventSourcing\EventListener\EventListenerInterface;
-use Neos\EventSourcing\EventPublisher\Exception\InvalidConfigurationException;
-use Neos\EventSourcing\EventPublisher\Exception\InvalidEventListenerException;
+use Neos\EventSourcing\EventListener\Exception\InvalidConfigurationException;
+use Neos\EventSourcing\EventListener\Exception\InvalidEventListenerException;
 use Neos\EventSourcing\EventListener\Mapping\DefaultEventToListenerMappingProvider;
 use Neos\EventSourcing\EventListener\Mapping\EventToListenerMappings;
 use Neos\EventSourcing\Tests\Unit\EventStore\Fixture\DummyEvent1;
