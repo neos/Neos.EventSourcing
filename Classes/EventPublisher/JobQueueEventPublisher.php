@@ -15,18 +15,40 @@ namespace Neos\EventSourcing\EventPublisher;
 use Flowpack\JobQueue\Common\Job\JobManager;
 use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\Event\DomainEvents;
-use Neos\EventSourcing\EventListener\Mapping\EventToListenerMapping;
 use Neos\EventSourcing\EventListener\Mapping\EventToListenerMappings;
 use Neos\EventSourcing\EventPublisher\JobQueue\CatchUpEventListenerJob;
 use Neos\Flow\Annotations as Flow;
 
 /**
- * An Event Publisher that sends events to a Job Queue using the Flowpack.JobQueue package.
+ * An Event Publisher that uses a Job Queue from the Flowpack.JobQueue package to notify Event Listeners of new Events.
  *
- * The queue Name
+ * It sends a CatchUpEventListenerJob to the configured queue for each individual Event Listener class that is affected (i.e. that is registered
+ * for at least one of the published Events).
+ * This job then makes sure that the corresponding Event Listener fetches all new Events from the Event Store until it is caught up.
+ * This is done in order to reduce the risk of lost events and to move deduplication logic to the framework to achieve "Exactly-once Delivery".
+ *
+ * The queue name is "neos-eventsourcing" by default, but that can be changed with the "queueName" option.
+ * Other options can be specified via ("queueOptions") – see "Submit options" documentation of the corresponding JobQueue implementation.
+ *
+ * Example configuration:
+ *
+ * Neos:
+ *   EventSourcing:
+ *     EventStore:
+ *       stores:
+ *         'Some.Package:SomeStore':
+ *           // ...
+ *           listeners:
+ *             'Some.Package\.*': true
+ *               queueName: 'custom-queue'
+ *               queueOptions:
+ *                 priority: 2048
  */
 final class JobQueueEventPublisher implements EventPublisherInterface
 {
+    /**
+     * @const string
+     */
     private const DEFAULT_QUEUE_NAME = 'neos-eventsourcing';
 
     /**
