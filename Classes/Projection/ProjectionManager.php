@@ -12,6 +12,7 @@ namespace Neos\EventSourcing\Projection;
  * source code.
  */
 
+use Doctrine\ORM\EntityManagerInterface;
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventListener\Mapping\DefaultEventToListenerMappingProvider;
@@ -111,7 +112,8 @@ class ProjectionManager
         $projector = $this->objectManager->get($projection->getProjectorClassName());
         $projector->reset();
 
-        $eventListenerInvoker = new EventListenerInvoker($eventStore);
+        $connection = $this->objectManager->get(EntityManagerInterface::class)->getConnection();
+        $eventListenerInvoker = new EventListenerInvoker($eventStore, $connection);
         $eventListenerInvoker->replay($projector, $progressCallback);
     }
 
