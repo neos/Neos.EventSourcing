@@ -4,6 +4,62 @@ _This package is currently under development and not fully tested, please don't 
 
 Major Rewrite in process.. Stay tuned
 
+### Minimal Setup
+
+With 2.0 there is no default Event Store configured any more.
+Instead the initial Event Store setup is now expected to be defined in the corresponding package or distribution.
+
+The following configuration (to be put into `Settings.yaml`) configures an Event Store with the id "default" that
+uses the current Flow database connection to persist events and is being used for all Event Listeners:
+
+```yaml
+Neos:
+  EventSourcing:
+    EventStore:
+      stores:
+        'default':
+          storage: 'Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage'
+          listeners:
+            '.*': true
+```
+
+This won't work with multiple Event Stores though, so it's recommended to use a unique namespace for the identifier and for the listener patterns.
+The following configures an Event Store with the id "Your.Package:DefaultEventStore" that is being used for all Event Listeners of the `Your\Package` namespaces:
+
+```yaml
+Neos:
+  EventSourcing:
+    EventStore:
+      stores:
+        'Your.Package:DefaultEventStore':
+          storage: 'Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage'
+          listeners:
+            'Your\Package\.*': true
+```
+
+A slightly more advanced configuration could look like this:
+
+```yaml
+Neos:
+  EventSourcing:
+    EventStore:
+      stores:
+        'Your.Package:DefaultEventStore':
+          storage: 'Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage'
+          storageOptions:
+            eventTableName: 'your_package_events'
+            backendOptions:
+              dbname: 'other_db'
+
+          # A class that implements the EventPublisherFactoryInterface
+          eventPublisherFactory: 'Your\Package\SomeCustomEventPublisherFactory'
+
+          listeners:
+            'Your\Package\Domain\SomeListener':
+              'some': 'publisher-option'
+            'Your\Package\Domain\Some(Other|Third)Listener': true
+```
+
 
 ### Basic Event Flow
 

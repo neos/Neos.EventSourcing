@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
-namespace Neos\EventSourcing\Event\Exception;
+namespace Neos\EventSourcing\EventListener\Exception;
 
 /*
- * This file is part of the Neos.EventSourcing package.
+ * This file is part of the Neos.EventStore package.
  *
  * (c) Contributors of the Neos Project - www.neos.io
  *
@@ -12,11 +12,6 @@ namespace Neos\EventSourcing\Event\Exception;
  * source code.
  */
 
-use Neos\Flow\Exception;
-
-/**
- * EventBusException
- */
-class EventBusException extends Exception
+class InvalidEventListenerException extends \Exception
 {
 }

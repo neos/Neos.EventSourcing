@@ -18,22 +18,17 @@ use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsS
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventStore\EventEnvelope;
 use Neos\EventSourcing\EventStore\EventStore;
-use Neos\EventSourcing\EventStore\EventStoreFactory;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\Flow\Annotations as Flow;
 
-/**
- * @Flow\Scope("singleton")
- */
 final class EventListenerInvoker
 {
 
     /**
-     * @Flow\Inject
-     * @var EventStoreFactory
+     * @var EventStore
      */
-    protected $eventStoreFactory;
+    private $eventStore;
 
     /**
      * @Flow\Inject
@@ -41,11 +36,41 @@ final class EventListenerInvoker
      */
     protected $entityManager;
 
+    public function __construct(EventStore $eventStore)
+    {
+        $this->eventStore = $eventStore;
+    }
+
     /**
-     * @Flow\InjectConfiguration(path="EventListener.listeners")
-     * @var array
+     * @param EventListenerInterface $listener
+     * @param \Closure $progressCallback
+     * @throws EventCouldNotBeAppliedException
      */
-    protected $eventListenersConfiguration;
+    public function replay(EventListenerInterface $listener, \Closure $progressCallback = null): void
+    {
+        $appliedEventsStorage = $this->getAppliedEventsStorageForListener($listener);
+        $highestAppliedSequenceNumber = -1;
+        $appliedEventsStorage->saveHighestAppliedSequenceNumber($highestAppliedSequenceNumber);
+        $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
+
+        $streamName = $listener instanceof StreamAwareEventListenerInterface ? $listener::listensToStream() : StreamName::all();
+        $eventStream = $this->eventStore->load($streamName);
+        foreach ($eventStream as $eventEnvelope) {
+            try {
+                $this->applyEvent($listener, $eventEnvelope);
+                $highestAppliedSequenceNumber = $eventEnvelope->getRawEvent()->getSequenceNumber();
+            } catch (EventCouldNotBeAppliedException $exception) {
+                $appliedEventsStorage->saveHighestAppliedSequenceNumber($highestAppliedSequenceNumber);
+                $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
+                throw $exception;
+            }
+            if ($progressCallback !== null) {
+                $progressCallback($eventEnvelope);
+            }
+        }
+        $appliedEventsStorage->saveHighestAppliedSequenceNumber($highestAppliedSequenceNumber);
+        $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
+    }
 
     /**
      * @param EventListenerInterface $listener
@@ -54,17 +79,10 @@ final class EventListenerInvoker
      */
     public function catchUp(EventListenerInterface $listener, \Closure $progressCallback = null): void
     {
-        if ($listener instanceof ProvidesAppliedEventsStorageInterface) {
-            $appliedEventsStorage = $listener->getAppliedEventsStorage();
-        } elseif ($listener instanceof AppliedEventsStorageInterface) {
-            $appliedEventsStorage = $listener;
-        } else {
-            $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->entityManager->getConnection(), \get_class($listener));
-        }
+        $appliedEventsStorage = $this->getAppliedEventsStorageForListener($listener);
         $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
         $streamName = $listener instanceof StreamAwareEventListenerInterface ? $listener::listensToStream() : StreamName::all();
-        $eventStore = $this->getEventStoreForEventListener($listener);
-        $eventStream = $eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
+        $eventStream = $this->eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
         foreach ($eventStream as $eventEnvelope) {
             try {
                 $this->applyEvent($listener, $eventEnvelope);
@@ -78,21 +96,6 @@ final class EventListenerInvoker
             }
         }
         $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
-    }
-
-    /**
-     * @param EventListenerInterface $listener
-     * @return EventStore
-     */
-    public function getEventStoreForEventListener(EventListenerInterface $listener): EventStore
-    {
-        $listenerClassName = \get_class($listener);
-        $eventStoreIdentifier = $this->eventListenersConfiguration[$listenerClassName]['eventStore'] ?? 'default';
-        try {
-            return $this->eventStoreFactory->create($eventStoreIdentifier);
-        } catch (\InvalidArgumentException $exception) {
-            throw new \RuntimeException(sprintf('Failed to build Event Store for listener "%s": %s', $listenerClassName, $exception->getMessage()), 1570191582, $exception);
-        }
     }
 
     /**
@@ -123,5 +126,17 @@ final class EventListenerInvoker
         if ($listener instanceof AfterInvokeInterface) {
             $listener->afterInvoke($eventEnvelope);
         }
+    }
+
+    private function getAppliedEventsStorageForListener(EventListenerInterface $listener): AppliedEventsStorageInterface
+    {
+        if ($listener instanceof ProvidesAppliedEventsStorageInterface) {
+            $appliedEventsStorage = $listener->getAppliedEventsStorage();
+        } elseif ($listener instanceof AppliedEventsStorageInterface) {
+            $appliedEventsStorage = $listener;
+        } else {
+            $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->entityManager->getConnection(), \get_class($listener));
+        }
+        return $appliedEventsStorage;
     }
 }

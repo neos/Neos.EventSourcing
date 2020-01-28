@@ -33,12 +33,6 @@ class ProjectionCommandController extends CommandController
     protected $projectionManager;
 
     /**
-     * @Flow\InjectConfiguration(package="Neos.Flow")
-     * @var array
-     */
-    protected $flowSettings;
-
-    /**
      * @var array in the format ['<shortIdentifier>' => '<fullIdentifier>', ...]
      */
     private $shortProjectionIdentifiers;
@@ -78,7 +72,7 @@ class ProjectionCommandController extends CommandController
      * @see neos.eventsourcing:projection:list
      * @throws StopActionException
      */
-    public function describeCommand($projection): void
+    public function describeCommand(string $projection): void
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
@@ -90,12 +84,6 @@ class ProjectionCommandController extends CommandController
         $this->outputLine();
         $this->outputLine('<b>PROJECTOR:</b>');
         $this->outputLine('  %s', [$projectionDto->getProjectorClassName()]);
-        $this->outputLine();
-
-        $this->outputLine('<b>HANDLED EVENT TYPES:</b>');
-        foreach ($projectionDto->getEventClassNames() as $eventClassName) {
-            $this->outputLine('  * %s', [$eventClassName]);
-        }
     }
 
     /**
@@ -111,7 +99,7 @@ class ProjectionCommandController extends CommandController
      * @see neos.eventsourcing:projection:list
      * @see neos.eventsourcing:projection:replayall
      */
-    public function replayCommand($projection, $quiet = false): void
+    public function replayCommand(string $projection, $quiet = false): void
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
@@ -137,26 +125,19 @@ class ProjectionCommandController extends CommandController
      *
      * This command allows you to replay all relevant events for all known projections.
      *
-     * @param bool $onlyEmpty If specified, only projections which are currently empty will be considered
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
      * @see neos.eventsourcing:projection:replay
      * @see neos.eventsourcing:projection:list
      * @throws EventCouldNotBeAppliedException
      */
-    public function replayAllCommand($onlyEmpty = false, $quiet = false): void
+    public function replayAllCommand($quiet = false): void
     {
         if (!$quiet) {
-            $this->outputLine('Replaying all%s projections', [$onlyEmpty ? ' empty' : '']);
+            $this->outputLine('Replaying all projections');
         }
         $eventsCount = 0;
         foreach ($this->projectionManager->getProjections() as $projection) {
-            if ($onlyEmpty && !$this->projectionManager->isProjectionEmpty($projection->getIdentifier())) {
-                if (!$quiet) {
-                    $this->outputLine('Skipping non-empty projection "%s" ...', [$projection->getIdentifier()]);
-                }
-                continue;
-            }
             if (!$quiet) {
                 $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
                 $this->output->progressStart();
