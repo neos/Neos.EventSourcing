@@ -12,7 +12,7 @@ final class ProxyAwareObjectNormalizer extends OriginalObjectNormalizer
 {
     protected function getConstructor(array &$data, $class, array &$context, \ReflectionClass $reflectionClass, $allowedAttributes)
     {
-        if (interface_exists('Neos\Flow\ObjectManagement\Proxy\ProxyInterface') && $reflectionClass->implementsInterface(ProxyInterface::class)) {
+        if (interface_exists(ProxyInterface::class) && $reflectionClass->implementsInterface(ProxyInterface::class)) {
             return $reflectionClass->getParentClass()->getConstructor();
         }
         return $reflectionClass->getConstructor();
