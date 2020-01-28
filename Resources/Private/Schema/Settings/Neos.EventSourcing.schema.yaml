@@ -1,17 +1,6 @@
 type: dictionary
 additionalProperties: false
 properties:
-  'EventListener':
-    type: dictionary
-    additionalProperties: false
-    properties:
-      'listeners':
-        type: dictionary
-        additionalProperties:
-          type: dictionary
-          additionalProperties: false
-          properties:
-            'eventStore': {type: string}
   'EventStore':
     type: dictionary
     additionalProperties: false
@@ -19,8 +8,18 @@ properties:
       'stores':
         type: dictionary
         additionalProperties:
-          type: dictionary
-          additionalProperties: false
-          properties:
-            'storage': {type: string, format: class-name}
-            'storageOptions': {type: dictionary}
+          type:
+            -
+              type: boolean
+            -
+              type: dictionary
+              additionalProperties: false
+              properties:
+                'storage': {type: string, format: class-name, required: true}
+                'storageOptions': {type: dictionary}
+                'eventPublisherFactory': {type: string, format: class-name}
+                'listeners':
+                  required: true
+                  type: dictionary
+                  additionalProperties:
+                    type: [boolean, dictionary]

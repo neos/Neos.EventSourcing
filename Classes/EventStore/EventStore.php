@@ -14,12 +14,12 @@ namespace Neos\EventSourcing\EventStore;
 
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\Event\DecoratedEvent;
-use Neos\EventSourcing\EventStore\EventListenerTrigger\EventListenerTrigger;
-use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
-use Neos\Flow\Annotations as Flow;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\EventPublisher\EventPublisherInterface;
+use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
+use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Utility\Algorithms;
 
 /**
@@ -33,6 +33,11 @@ final class EventStore
      * @var EventStorageInterface
      */
     private $storage;
+
+    /**
+     * @var EventPublisherInterface
+     */
+    private $eventPublisher;
 
     /**
      * TODO replace
@@ -51,63 +56,14 @@ final class EventStore
     protected $eventNormalizer;
 
     /**
-     * @Flow\Inject
-     * @var EventListenerTrigger
-     */
-    protected $eventListenerTrigger;
-
-    /**
-     * @var array
-     */
-    private $postCommitCallbacks = [];
-
-    /**
-     * should events be sent to the EventListenerTrigger?
-     * E.g. in import scenarios, it might be useful to disable it.
-     * By default, it is enabled.
-     *
-     * @var bool
-     */
-    private $enableEventListenerTrigger = true;
-
-    /**
      * @param EventStorageInterface $storage
+     * @param EventPublisherInterface $eventPublisher
      * @internal Do not instantiate this class directly but inject an instance (or use the EventStoreFactory)
      */
-    public function __construct(EventStorageInterface $storage)
+    public function __construct(EventStorageInterface $storage, EventPublisherInterface $eventPublisher)
     {
         $this->storage = $storage;
-    }
-
-    /**
-     * If calling triggerEventListener(false), the Event Listeners will not be automatically notifified after new events
-     * have been published.
-     *
-     * @param bool $shouldTrigger
-     */
-    public function enableEventListenerTrigger(bool $shouldTrigger)
-    {
-        $this->enableEventListenerTrigger = $shouldTrigger;
-    }
-
-    /**
-     * Registers a callback that is invoked after events have been committed and published.
-     *
-     * The callback is invoked with the DomainEvents and the resulting WritableEvents as arguments.
-     * Example:
-     *
-     * $eventStore = $this->eventStoreFactory->create('some-event-store-id');
-     * $eventStore->onPostCommit(function(DomainEvents $events, WritableEvents $persistedEvents) {
-     *    $this->logger->log('Published ' . $persistedEvents->count() . ' events');
-     * });
-     *
-     * @see commit()
-     *
-     * @param \Closure $callback
-     */
-    public function onPostCommit(\Closure $callback): void
-    {
-        $this->postCommitCallbacks[] = $callback;
+        $this->eventPublisher = $eventPublisher;
     }
 
     public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStream
@@ -139,21 +95,18 @@ final class EventStore
             $data = $this->eventNormalizer->normalize($event);
 
             if ($eventIdentifier === null) {
-                $eventIdentifier = Algorithms::generateUUID();
+                try {
+                    $eventIdentifier = Algorithms::generateUUID();
+                } catch (\Exception $exception) {
+                    throw new \RuntimeException('Failed to generate UUID for event', 1576421966, $exception);
+                }
             }
             $convertedEvents[] = new WritableEvent($eventIdentifier, $type, $data, $metadata);
         }
 
         $committedEvents = WritableEvents::fromArray($convertedEvents);
         $this->storage->commit($streamName, $committedEvents, $expectedVersion);
-
-        if ($this->enableEventListenerTrigger === true) {
-            $this->eventListenerTrigger->enqueueEvents($events);
-        }
-
-        foreach ($this->postCommitCallbacks as $callback) {
-            $callback($events, $committedEvents);
-        }
+        $this->eventPublisher->publish($events);
     }
 
     /**

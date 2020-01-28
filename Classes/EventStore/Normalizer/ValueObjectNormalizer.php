@@ -21,6 +21,16 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
  */
 final class ValueObjectNormalizer implements DenormalizerInterface
 {
+    /**
+     * @var array
+     */
+    private $resolveConstructorMethodCache = [];
+
+    /**
+     * @var array
+     */
+    private $resolveNamedConstructorMethodCache = [];
+
     public function denormalize($data, $className, $format = null, array $context = [])
     {
         $constructorMethod = $this->resolveConstructorMethod(TypeHandling::normalizeType(TypeHandling::getTypeForValue($data)), $className);
@@ -44,6 +54,11 @@ final class ValueObjectNormalizer implements DenormalizerInterface
 
     private function resolveConstructorMethod(string $dataType, string $className): ReflectionMethod
     {
+        $cacheIdentifier = md5($dataType . '|' . $className);
+        if (array_key_exists($cacheIdentifier, $this->resolveConstructorMethodCache)) {
+            return $this->resolveConstructorMethodCache[$cacheIdentifier];
+        }
+
         try {
             $reflectionClass = new \ReflectionClass($className);
         } catch (\ReflectionException $exception) {
@@ -76,13 +91,19 @@ final class ValueObjectNormalizer implements DenormalizerInterface
             throw new \InvalidArgumentException(sprintf('The constructor %s:%s expects a different parameter type', $className, $constructorMethod->getName()), 1545233522);
         }
 
+        $this->resolveConstructorMethodCache[$cacheIdentifier] = $constructorMethod;
         return $constructorMethod;
     }
 
     private function resolveNamedConstructorMethod(string $dataType, string $className, \ReflectionClass $reflectionClass): ?ReflectionMethod
     {
+        $cacheIdentifier = md5($dataType . '|' . $className);
+        if (array_key_exists($cacheIdentifier, $this->resolveNamedConstructorMethodCache)) {
+            return $this->resolveNamedConstructorMethodCache[$cacheIdentifier];
+        }
         $staticConstructorName = 'from' . ucfirst($dataType);
         try {
+            $this->resolveNamedConstructorMethodCache[$cacheIdentifier] = null;
             $constructorMethod = $reflectionClass->getMethod($staticConstructorName);
         } catch (\ReflectionException $exception) {
             return null;
@@ -98,6 +119,7 @@ final class ValueObjectNormalizer implements DenormalizerInterface
         if ($constructorMethodReturnTypeName !== $className && $constructorMethodReturnTypeName !== 'self') {
             return null;
         }
+        $this->resolveNamedConstructorMethodCache[$cacheIdentifier] = $constructorMethod;
         return $constructorMethod;
     }
 }

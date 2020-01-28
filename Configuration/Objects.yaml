@@ -3,19 +3,8 @@ Neos\EventSourcing\EventStore\EventStoreFactory:
     2:
       setting: 'Neos.EventSourcing.EventStore.stores'
 
-Neos\EventSourcing\EventStore\EventStore:
-  factoryObjectName: Neos\EventSourcing\EventStore\EventStoreFactory
-  arguments:
-    1:
-      value: 'default'
-
-
 Neos\EventSourcing\EventListener\EventListenerInvoker:
   arguments:
-    1:
-      object: Neos\EventSourcing\EventStore\EventStoreFactory
     2:
       object:
         factoryObjectName: Neos\EventSourcing\EventListener\EventListenerInvokerConnectionFactory
-    3:
-      setting: 'Neos.EventSourcing.EventListener.listeners'

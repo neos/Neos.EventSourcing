@@ -12,8 +12,8 @@ namespace Neos\EventSourcing\EventListener\AppliedEventsStorage;
  * source code.
  */
 
-use Neos\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * Model for storing the applied events state of a given asynchronous event listener

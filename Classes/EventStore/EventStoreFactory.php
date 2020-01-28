@@ -12,6 +12,8 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
+use Neos\EventSourcing\EventPublisher\DefaultEventPublisherFactory;
+use Neos\EventSourcing\EventPublisher\EventPublisherFactoryInterface;
 use Neos\EventSourcing\EventStore\Exception\StorageConfigurationException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\Flow\Annotations as Flow;
@@ -45,7 +47,7 @@ final class EventStoreFactory
 
     /**
      * This class is usually not instantiated manually but injected like other singletons
-     * Note: ObjectManager and configuration is constructor-injected in order to ease testing & composition
+     * Note: Dependencies are constructor-injected in order to ease testing & composition
      *
      * @param ObjectManagerInterface $objectManager
      * @param array $configuration
@@ -84,9 +86,25 @@ final class EventStoreFactory
             throw new StorageConfigurationException(sprintf('The configured Storage "%s" for Event Store "%s" is unknown', $storageClassName, $eventStoreIdentifier), 1570194203, $exception);
         }
         if (!$storageInstance instanceof EventStorageInterface) {
-            throw new StorageConfigurationException(sprintf('The configured Storage "%s" for Event Store "%s" does not implement the EventStorageInterface', $storageClassName, $eventStoreIdentifier), 1492610908);
+            throw new StorageConfigurationException(sprintf('The configured Storage "%s" for Event Store "%s" does not implement the %s', $storageClassName, $eventStoreIdentifier, EventStorageInterface::class), 1492610908);
         }
-        $this->initializedEventStores[$eventStoreIdentifier] = new EventStore($storageInstance);
+
+        if (isset($this->configuration[$eventStoreIdentifier]['eventPublisherFactory'])) {
+            $eventPublisherFactoryClassName = $this->configuration[$eventStoreIdentifier]['eventPublisherFactory'];
+            try {
+                $eventPublisherFactory = $this->objectManager->get($eventPublisherFactoryClassName);
+            } /** @noinspection PhpRedundantCatchClauseInspection */ catch (UnknownObjectException $exception) {
+                throw new StorageConfigurationException(sprintf('The configured eventPublisherFactory "%s" for Event Store "%s" is unknown', $eventPublisherFactoryClassName, $eventStoreIdentifier), 1579098129, $exception);
+            }
+            if (!$eventPublisherFactory instanceof EventPublisherFactoryInterface) {
+                throw new StorageConfigurationException(sprintf('The configured eventPublisherFactory "%s" for Event Store "%s" does not implement the %s', $eventPublisherFactoryClassName, $eventStoreIdentifier, EventPublisherFactoryInterface::class), 1579101180);
+            }
+        } else {
+            $eventPublisherFactory = $this->objectManager->get(DefaultEventPublisherFactory::class);
+        }
+
+        $eventPublisher = $eventPublisherFactory->create($eventStoreIdentifier);
+        $this->initializedEventStores[$eventStoreIdentifier] = new EventStore($storageInstance, $eventPublisher);
         return $this->initializedEventStores[$eventStoreIdentifier];
     }
 }
