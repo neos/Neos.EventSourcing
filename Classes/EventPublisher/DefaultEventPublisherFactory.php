@@ -28,6 +28,13 @@ final class DefaultEventPublisherFactory implements EventPublisherFactoryInterfa
      */
     private $mappingProvider;
 
+    /**
+     * A list of all initialized Event Publisher instances, indexed by the "Event Store identifier"
+     *
+     * @var EventPublisherInterface[]
+     */
+    private $eventPublisherInstances;
+
     public function __construct(DefaultEventToListenerMappingProvider $mappingProvider)
     {
         $this->mappingProvider = $mappingProvider;
@@ -35,7 +42,10 @@ final class DefaultEventPublisherFactory implements EventPublisherFactoryInterfa
 
     public function create(string $eventStoreIdentifier): EventPublisherInterface
     {
-        $mappings = $this->mappingProvider->getMappingsForEventStore($eventStoreIdentifier);
-        return DeferEventPublisher::forPublisher(new JobQueueEventPublisher($eventStoreIdentifier, $mappings));
+        if (!isset($this->eventPublisherInstances[$eventStoreIdentifier])) {
+            $mappings = $this->mappingProvider->getMappingsForEventStore($eventStoreIdentifier);
+            $this->eventPublisherInstances[$eventStoreIdentifier] = DeferEventPublisher::forPublisher(new JobQueueEventPublisher($eventStoreIdentifier, $mappings));
+        }
+        return $this->eventPublisherInstances[$eventStoreIdentifier];
     }
 }
