@@ -35,5 +35,4 @@ namespace Neos\EventSourcing\EventListener;
  */
 interface CatchAllEventListenerInterface
 {
-
 }
