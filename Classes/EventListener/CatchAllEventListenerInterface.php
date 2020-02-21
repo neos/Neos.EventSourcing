@@ -12,13 +12,28 @@ namespace Neos\EventSourcing\EventListener;
  * source code.
  */
 
-use Neos\EventSourcing\Event\DomainEventInterface;
-
 /**
- * TODO description
+ * Marker interface for Event Listeners (including Projectors) that handle all event types
+ *
+ * Usage:
+ *
+ *  final class SomeLogProjector implements ProjectorInterface, CatchAllEventListener, BeforeInvokeInterface
+ *  {
+ *
+ *    public function beforeInvoke(EventEnvelope $eventEnvelope): void
+ *    {
+ *      // process $eventEnvelope->getRawEvent() or $eventEnvelope->getDomainEvent()
+ *    }
+ *
+ *    public function whenSomeEventType(SomeEventType $event): void
+ *    {
+ *      // this method CAN still be implemented and will be invoked for the corresponding event type
+ *    }
+ *
+ *    // ...
+ *  }
  */
 interface CatchAllEventListenerInterface
 {
 
-    public static function canHandle(DomainEventInterface $event): bool;
 }
