@@ -12,6 +12,7 @@ namespace Neos\EventSourcing\EventPublisher\JobQueue;
  * source code.
  */
 
+use Doctrine\ORM\EntityManagerInterface;
 use Flowpack\JobQueue\Common\Job\JobInterface;
 use Flowpack\JobQueue\Common\Queue\Message;
 use Flowpack\JobQueue\Common\Queue\QueueInterface;
@@ -40,6 +41,12 @@ final class CatchUpEventListenerJob implements JobInterface
      * @var ObjectManagerInterface
      */
     protected $objectManager;
+
+    /**
+     * @Flow\Inject
+     * @var EntityManagerInterface
+     */
+    protected $entityManager;
 
     public function __construct(string $listenerClassName, string $eventStoreIdentifier)
     {
@@ -72,8 +79,8 @@ final class CatchUpEventListenerJob implements JobInterface
         $eventStoreFactory = $this->objectManager->get(EventStoreFactory::class);
         $eventStore = $eventStoreFactory->create($this->eventStoreIdentifier);
 
-        $eventListenerInvoker = new EventListenerInvoker($eventStore);
-        $eventListenerInvoker->catchUp($listener);
+        $eventListenerInvoker = new EventListenerInvoker($eventStore, $listener, $this->entityManager->getConnection());
+        $eventListenerInvoker->catchUp();
         return true;
     }
 
