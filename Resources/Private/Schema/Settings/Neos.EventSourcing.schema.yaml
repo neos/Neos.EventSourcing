@@ -19,7 +19,7 @@ properties:
                 'storageOptions': {type: dictionary}
                 'eventPublisherFactory': {type: string, format: class-name}
                 'listeners':
-                  required: true
+                  required: false
                   type: dictionary
                   additionalProperties:
                     type: [boolean, dictionary]

@@ -201,10 +201,6 @@ class DefaultEventToListenerMappingProviderTest extends UnitTestCase
                 'eventStoresConfiguration' => ['es1' => ['listeners' => ['Mock_EventListener_1.*' => []]], 'es2' => ['listeners' => ['Mock_EventListener_2.*' => []]]],
                 'expectedException' => 1577532358,
             ],
-            'missing es listeners' => [
-                'eventStoresConfiguration' => ['es1' => ['listeners' => ['.*' => []]], 'es2' => ['listeners' => ['some-pattern' => false]]],
-                'expectedException' => 1577534654,
-            ],
             'overlapping listeners' => [
                 'eventStoresConfiguration' => ['es1' => ['listeners' => ['.*' => []]], 'es2' => ['listeners' => ['Mock_EventListener_2.*' => []]]],
                 'expectedException' => 1577532711,
@@ -315,7 +311,7 @@ class DefaultEventToListenerMappingProviderTest extends UnitTestCase
     /**
      * @test
      */
-    public function constructorCreatesMappingsForMultipleStoresWithMultipleoptionss(): void
+    public function constructorCreatesMappingsForMultipleStoresWithMultipleOptions(): void
     {
         $this->eventStoresConfiguration = ['default' => ['listeners' => ['Mock_EventListener_1.*' => ['options' => '1'], 'Mock_EventListener_3.*' => ['options' => '2']]], 'es2' => ['listeners' => ['Mock_EventListener_2.*' => ['options' => '3']]]];
 
@@ -336,6 +332,32 @@ class DefaultEventToListenerMappingProviderTest extends UnitTestCase
             'es2' => [
                 ['eventClassName' => DummyEvent2::class, 'listenerClassName' => $listenerClassName2, 'options' => ['options' => '3']],
                 ['eventClassName' => DummyEvent3::class, 'listenerClassName' => $listenerClassName2, 'options' => ['options' => '3']],
+            ]
+        ];
+        $this->assetMappings($expectedMappings, $defaultMappingsProvider);
+    }
+
+    /**
+     * @test
+     */
+    public function constructorCreatesEmptyMappingsForStoresWithoutListenersConfiguration(): void
+    {
+        $this->eventStoresConfiguration = ['es1' => ['listeners' => ['.*' => []]], 'es2' => ['listeners' => ['some-pattern' => false]]];
+
+        $listenerClassName1 = $this->buildMockEventListenerForEvents([DummyEvent1::class, DummyEvent2::class], 'Mock_EventListener_1');
+        $listenerClassName2 = $this->buildMockEventListenerForEvents([DummyEvent2::class, DummyEvent3::class], 'Mock_EventListener_2');
+        $this->mockListenerClassNames = [$listenerClassName1, $listenerClassName2];
+
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $defaultMappingsProvider = new DefaultEventToListenerMappingProvider($this->mockObjectManager);
+        $expectedMappings = [
+            'es1' => [
+                ['eventClassName' => DummyEvent1::class, 'listenerClassName' => $listenerClassName1, 'options' => []],
+                ['eventClassName' => DummyEvent2::class, 'listenerClassName' => $listenerClassName1, 'options' => []],
+                ['eventClassName' => DummyEvent2::class, 'listenerClassName' => $listenerClassName2, 'options' => []],
+                ['eventClassName' => DummyEvent3::class, 'listenerClassName' => $listenerClassName2, 'options' => []],
+            ],
+            'es2' => [
             ]
         ];
         $this->assetMappings($expectedMappings, $defaultMappingsProvider);

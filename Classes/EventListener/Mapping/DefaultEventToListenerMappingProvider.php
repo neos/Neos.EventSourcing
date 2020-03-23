@@ -34,7 +34,7 @@ class DefaultEventToListenerMappingProvider
     /**
      * @var EventToListenerMappings[] indexed by the corresponding EventStore identifier
      */
-    private $mappings;
+    private $mappings = [];
 
     /**
      * This class is usually not instantiated manually but injected like other singletons
@@ -108,7 +108,7 @@ class DefaultEventToListenerMappingProvider
                 return $presetOptions !== false;
             });
             if ($presetsForThisStore === []) {
-                throw new InvalidConfigurationException(sprintf('No Event Listeners are configured for Event Store "%s". Please register at least one listener via Neos.EventSourcing.EventStore.stores.*.listeners or disable this Event Store', $eventStoreIdentifier), 1577534654);
+                $mappings[$eventStoreIdentifier] = [];
             }
             foreach ($presetsForThisStore as $pattern => $presetOptions) {
                 $presetId = $eventStoreIdentifier . '.' . $pattern;
