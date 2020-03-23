@@ -113,8 +113,11 @@ class ProjectionManager
         $projector->reset();
 
         $connection = $this->objectManager->get(EntityManagerInterface::class)->getConnection();
-        $eventListenerInvoker = new EventListenerInvoker($eventStore, $connection);
-        $eventListenerInvoker->replay($projector, $progressCallback);
+        $eventListenerInvoker = new EventListenerInvoker($eventStore, $projector, $connection);
+        if ($progressCallback !== null) {
+            $eventListenerInvoker->onProgress($progressCallback);
+        }
+        $eventListenerInvoker->replay();
     }
 
     /**

@@ -30,111 +30,153 @@ final class EventListenerInvoker
     private $eventStore;
 
     /**
+     * @var EventListenerInterface
+     */
+    private $eventListener;
+
+    /**
+     * DBAL connection for the DoctrineAppliedEventsStorage (@see getAppliedEventsStorageForListener())
+     *
      * @var Connection
      */
-    protected $connection;
+    private $connection;
 
-    public function __construct(EventStore $eventStore, Connection $connection)
+    /**
+     * @var \Closure[]
+     */
+    private $progressCallbacks = [];
+
+    /**
+     * How many events should be applied until the whole transaction is committed
+     * and the highest applied sequence number is persisted.
+     * By default the transaction is committed for every event (batch size = 1)
+     *
+     * @var int
+     */
+    private $transactionBatchSize = 1;
+
+    public function __construct(EventStore $eventStore, EventListenerInterface $eventListener, Connection $connection)
     {
         $this->eventStore = $eventStore;
+        $this->eventListener = $eventListener;
         $this->connection = $connection;
     }
 
     /**
-     * @param EventListenerInterface $listener
-     * @param \Closure $progressCallback
+     * Register a callback that is invoked for every event that is applied during replay/catchup
+     *
+     * @param \Closure $callback
+     */
+    public function onProgress(\Closure $callback): void
+    {
+        $this->progressCallbacks[] = $callback;
+    }
+
+    /**
+     * Returns an instance with the transaction batch size.
+     * This allows for faster replays/catchups at the cost of an "at least once delivery" if an error occurs.
+     *
+     * Usage:
+     * $eventListenerInvoker = (new EventListenerInvoker($eventStore, $listener, $connection))->withTransactionBatchSize(100)->catchUp($listener);
+     *
+     * @param int $batchSize
+     * @return $this
+     */
+    public function withTransactionBatchSize(int $batchSize): self
+    {
+        if ($batchSize < 1) {
+            throw new \InvalidArgumentException('The batch size must not be smaller than 1', 1584276378);
+        }
+        $instance = new static($this->eventStore, $this->eventListener, $this->connection);
+        $instance->progressCallbacks = $this->progressCallbacks;
+        $instance->transactionBatchSize = $batchSize;
+        return $instance;
+    }
+
+    /**
      * @throws EventCouldNotBeAppliedException
      */
-    public function replay(EventListenerInterface $listener, \Closure $progressCallback = null): void
+    public function replay(): void
     {
-        $appliedEventsStorage = $this->getAppliedEventsStorageForListener($listener);
+        $appliedEventsStorage = $this->getAppliedEventsStorage();
         $highestAppliedSequenceNumber = -1;
         $appliedEventsStorage->saveHighestAppliedSequenceNumber($highestAppliedSequenceNumber);
-        $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
-
-        $streamName = $listener instanceof StreamAwareEventListenerInterface ? $listener::listensToStream() : StreamName::all();
-        $eventStream = $this->eventStore->load($streamName);
-        foreach ($eventStream as $eventEnvelope) {
-            try {
-                $this->applyEvent($listener, $eventEnvelope);
-                $highestAppliedSequenceNumber = $eventEnvelope->getRawEvent()->getSequenceNumber();
-            } catch (EventCouldNotBeAppliedException $exception) {
-                $appliedEventsStorage->saveHighestAppliedSequenceNumber($highestAppliedSequenceNumber);
-                $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
-                throw $exception;
-            }
-            if ($progressCallback !== null) {
-                $progressCallback($eventEnvelope);
-            }
-        }
-        $appliedEventsStorage->saveHighestAppliedSequenceNumber($highestAppliedSequenceNumber);
-        $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
+        $this->catchUp();
     }
 
     /**
-     * @param EventListenerInterface $listener
-     * @param \Closure $progressCallback
      * @throws EventCouldNotBeAppliedException
      */
-    public function catchUp(EventListenerInterface $listener, \Closure $progressCallback = null): void
+    public function catchUp(): void
     {
-        $appliedEventsStorage = $this->getAppliedEventsStorageForListener($listener);
+        $appliedEventsStorage = $this->getAppliedEventsStorage();
         $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
-        $streamName = $listener instanceof StreamAwareEventListenerInterface ? $listener::listensToStream() : StreamName::all();
+        $streamName = $this->eventListener instanceof StreamAwareEventListenerInterface ? $this->eventListener::listensToStream() : StreamName::all();
         $eventStream = $this->eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
+        $appliedEventsCounter = 0;
         foreach ($eventStream as $eventEnvelope) {
+            $sequenceNumber = $eventEnvelope->getRawEvent()->getSequenceNumber();
+            if ($sequenceNumber <= $highestAppliedSequenceNumber) {
+                continue;
+            }
             try {
-                $this->applyEvent($listener, $eventEnvelope);
+                $this->applyEvent($eventEnvelope);
             } catch (EventCouldNotBeAppliedException $exception) {
                 $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
                 throw $exception;
             }
+            $appliedEventsCounter ++;
             $appliedEventsStorage->saveHighestAppliedSequenceNumber($eventEnvelope->getRawEvent()->getSequenceNumber());
-            if ($progressCallback !== null) {
-                $progressCallback($eventEnvelope);
+            if ($this->transactionBatchSize === 1 || $appliedEventsCounter % $this->transactionBatchSize === 0) {
+                $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
+                $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
+            } else {
+                $highestAppliedSequenceNumber = $sequenceNumber;
+            }
+            foreach ($this->progressCallbacks as $callback) {
+                $callback($eventEnvelope);
             }
         }
         $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
     }
 
     /**
-     * @param EventListenerInterface $listener
      * @param EventEnvelope $eventEnvelope
      * @throws EventCouldNotBeAppliedException
      */
-    private function applyEvent(EventListenerInterface $listener, EventEnvelope $eventEnvelope): void
+    private function applyEvent(EventEnvelope $eventEnvelope): void
     {
         $event = $eventEnvelope->getDomainEvent();
         $rawEvent = $eventEnvelope->getRawEvent();
         try {
             $listenerMethodName = 'when' . (new \ReflectionClass($event))->getShortName();
         } catch (\ReflectionException $exception) {
-            throw new \RuntimeException(sprintf('Could not extract listener method name for listener %s and event %s', get_class($listener), get_class($event)), 1541003718, $exception);
+            throw new \RuntimeException(sprintf('Could not extract listener method name for listener %s and event %s', get_class($this->eventListener), get_class($event)), 1541003718, $exception);
         }
-        if (!method_exists($listener, $listenerMethodName)) {
+        if (!method_exists($this->eventListener, $listenerMethodName)) {
             return;
         }
-        if ($listener instanceof BeforeInvokeInterface) {
-            $listener->beforeInvoke($eventEnvelope);
+        if ($this->eventListener instanceof BeforeInvokeInterface) {
+            $this->eventListener->beforeInvoke($eventEnvelope);
         }
         try {
-            $listener->$listenerMethodName($event, $rawEvent);
+            $this->eventListener->$listenerMethodName($event, $rawEvent);
         } catch (\Throwable $exception) {
-            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($listener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $listener);
+            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($this->eventListener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $this->eventListener);
         }
-        if ($listener instanceof AfterInvokeInterface) {
-            $listener->afterInvoke($eventEnvelope);
+        if ($this->eventListener instanceof AfterInvokeInterface) {
+            $this->eventListener->afterInvoke($eventEnvelope);
         }
     }
 
-    private function getAppliedEventsStorageForListener(EventListenerInterface $listener): AppliedEventsStorageInterface
+    private function getAppliedEventsStorage(): AppliedEventsStorageInterface
     {
-        if ($listener instanceof ProvidesAppliedEventsStorageInterface) {
-            $appliedEventsStorage = $listener->getAppliedEventsStorage();
-        } elseif ($listener instanceof AppliedEventsStorageInterface) {
-            $appliedEventsStorage = $listener;
+        if ($this->eventListener instanceof ProvidesAppliedEventsStorageInterface) {
+            $appliedEventsStorage = $this->eventListener->getAppliedEventsStorage();
+        } elseif ($this->eventListener instanceof AppliedEventsStorageInterface) {
+            $appliedEventsStorage = $this->eventListener;
         } else {
-            $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->connection, \get_class($listener));
+            $appliedEventsStorage = new DoctrineAppliedEventsStorage($this->connection, \get_class($this->eventListener));
         }
         return $appliedEventsStorage;
     }

@@ -79,8 +79,8 @@ final class CatchUpEventListenerJob implements JobInterface
         $eventStoreFactory = $this->objectManager->get(EventStoreFactory::class);
         $eventStore = $eventStoreFactory->create($this->eventStoreIdentifier);
 
-        $eventListenerInvoker = new EventListenerInvoker($eventStore, $this->entityManager->getConnection());
-        $eventListenerInvoker->catchUp($listener);
+        $eventListenerInvoker = new EventListenerInvoker($eventStore, $listener, $this->entityManager->getConnection());
+        $eventListenerInvoker->catchUp();
         return true;
     }
 
