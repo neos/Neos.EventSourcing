@@ -12,6 +12,7 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
+use Neos\EventSourcing\Event\EventTypeResolverInterface;
 use Neos\EventSourcing\EventPublisher\DefaultEventPublisherFactory;
 use Neos\EventSourcing\EventPublisher\EventPublisherFactoryInterface;
 use Neos\EventSourcing\EventStore\Exception\StorageConfigurationException;
@@ -46,16 +47,28 @@ final class EventStoreFactory
     private $initializedEventStores;
 
     /**
+     * @var EventTypeResolverInterface
+     */
+    private $eventTypeResolver;
+
+    /**
+     * @var EventNormalizer
+     */
+    private $eventNormalizer;
+
+    /**
      * This class is usually not instantiated manually but injected like other singletons
      * Note: Dependencies are constructor-injected in order to ease testing & composition
      *
      * @param ObjectManagerInterface $objectManager
      * @param array $configuration
      */
-    public function __construct(ObjectManagerInterface $objectManager, array $configuration)
+    public function __construct(ObjectManagerInterface $objectManager, array $configuration, EventTypeResolverInterface $eventTypeResolver, EventNormalizer $eventNormalizer)
     {
         $this->objectManager = $objectManager;
         $this->configuration = $configuration;
+        $this->eventTypeResolver = $eventTypeResolver;
+        $this->eventNormalizer = $eventNormalizer;
     }
 
     /**
@@ -104,7 +117,7 @@ final class EventStoreFactory
         }
 
         $eventPublisher = $eventPublisherFactory->create($eventStoreIdentifier);
-        $this->initializedEventStores[$eventStoreIdentifier] = new EventStore($storageInstance, $eventPublisher);
+        $this->initializedEventStores[$eventStoreIdentifier] = new EventStore($storageInstance, $eventPublisher, $this->eventTypeResolver, $this->eventNormalizer);
         return $this->initializedEventStores[$eventStoreIdentifier];
     }
 }

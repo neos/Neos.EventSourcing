@@ -13,10 +13,11 @@ namespace Neos\EventSourcing\EventStore;
  */
 
 use Neos\EventSourcing\Event\DomainEventInterface;
-use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\Event\EventTypeResolverInterface;
 use Neos\EventSourcing\EventStore\Normalizer\ProxyAwareObjectNormalizer;
 use Neos\EventSourcing\EventStore\Normalizer\ValueObjectNormalizer;
 use Neos\Flow\Annotations as Flow;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerException;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
 use Symfony\Component\Serializer\Serializer;
@@ -30,32 +31,49 @@ final class EventNormalizer
 {
 
     /**
-     * @Flow\Inject
-     * @var EventTypeResolver
+     * @var EventTypeResolverInterface
      */
-    protected $eventTypeResolver;
+    private $eventTypeResolver;
 
     /**
      * @var Serializer
      */
     private $serializer;
 
-    public function __construct()
+    /**
+     * @param EventTypeResolverInterface $eventTypeResolver
+     */
+    public function __construct(EventTypeResolverInterface $eventTypeResolver)
     {
+        $this->eventTypeResolver = $eventTypeResolver;
+
         // TODO: make normalizers configurable
         $normalizers = [new DateTimeNormalizer(), new JsonSerializableNormalizer(), new ValueObjectNormalizer(), new ProxyAwareObjectNormalizer()];
         $this->serializer = new Serializer($normalizers);
     }
 
+    /**
+     * @param DomainEventInterface $event
+     * @return array
+     * @throws SerializerException
+     */
     public function normalize(DomainEventInterface $event): array
     {
         return $this->serializer->normalize($event);
     }
 
+    /**
+     * @param array $eventData
+     * @param string $eventType
+     * @return DomainEventInterface
+     * @throws SerializerException
+     */
     public function denormalize(array $eventData, string $eventType): DomainEventInterface
     {
         // TODO allow to hook into event type => class conversion in order to enable upcasting, ...
         $eventClassName = $this->eventTypeResolver->getEventClassNameByType($eventType);
-        return $this->serializer->denormalize($eventData, $eventClassName);
+        /** @var DomainEventInterface $event */
+        $event = $this->serializer->denormalize($eventData, $eventClassName);
+        return $event;
     }
 }

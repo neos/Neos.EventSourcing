@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Neos\EventSourcing\Tests\Functional\EventStore;
 
 use Neos\EventSourcing\Event\DomainEventInterface;
-use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\Event\EventTypeResolverInterface;
 use Neos\EventSourcing\EventStore\EventNormalizer;
 use Neos\EventSourcing\Tests\Functional\EventStore\Fixture\MockDomainEvent;
 use Neos\EventSourcing\Tests\Functional\EventStore\Fixture\MockDomainEvent2;
@@ -12,6 +12,7 @@ use Neos\EventSourcing\Tests\Functional\EventStore\Fixture\MockDomainEvent3;
 use Neos\EventSourcing\Tests\Functional\EventStore\Fixture\MockValueObject;
 use Neos\Flow\Tests\FunctionalTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerException;
 
 class EventNormalizerTest extends FunctionalTestCase
 {
@@ -21,15 +22,14 @@ class EventNormalizerTest extends FunctionalTestCase
     private $eventNormalizer;
 
     /**
-     * @var EventTypeResolver|MockObject
+     * @var EventTypeResolverInterface|MockObject
      */
     private $mockEventTypeResolver;
 
     public function setUp(): void
     {
-        $this->mockEventTypeResolver = $this->getMockBuilder(EventTypeResolver::class)->disableOriginalConstructor()->getMock();
-        $this->eventNormalizer = new EventNormalizer();
-        $this->inject($this->eventNormalizer, 'eventTypeResolver', $this->mockEventTypeResolver);
+        $this->mockEventTypeResolver = $this->getMockBuilder(EventTypeResolverInterface::class)->getMock();
+        $this->eventNormalizer = new EventNormalizer($this->mockEventTypeResolver);
     }
 
     /**
@@ -38,6 +38,7 @@ class EventNormalizerTest extends FunctionalTestCase
      * @param object $expectedResult
      * @test
      * @dataProvider denormalizeDataProvider
+     * @throws SerializerException
      */
     public function denormalizeTests(string $eventClassName, array $data, $expectedResult): void
     {
@@ -59,6 +60,7 @@ class EventNormalizerTest extends FunctionalTestCase
      * @param array $expectedResult
      * @test
      * @dataProvider normalizeDataProvider
+     * @throws SerializerException
      */
     public function normalizeTests(DomainEventInterface $event, array $expectedResult): void
     {

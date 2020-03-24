@@ -33,8 +33,6 @@ use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\EventSourcing\EventStore\WritableEvent;
 use Neos\EventSourcing\EventStore\WritableEvents;
-use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Utility\Now;
 
 /**
  * Database event storage adapter
@@ -45,20 +43,13 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @var ConnectionFactory
-     * @Flow\Inject
      */
-    protected $connectionFactory;
+    private $connectionFactory;
 
     /**
      * @var EventNormalizer
      */
     protected $eventNormalizer;
-
-    /**
-     * @Flow\Inject(lazy=false)
-     * @var Now
-     */
-    protected $now;
 
     /**
      * @var Connection
@@ -78,12 +69,14 @@ class DoctrineEventStorage implements EventStorageInterface
     /**
      * @param array $options
      * @param EventNormalizer $eventNormalizer
+     * @param ConnectionFactory $connectionFactory
      */
-    public function __construct(array $options, EventNormalizer $eventNormalizer)
+    public function __construct(array $options, EventNormalizer $eventNormalizer, ConnectionFactory $connectionFactory)
     {
         $this->options = $options;
         $this->eventTableName = $options['eventTableName'] ?? self::DEFAULT_EVENT_TABLE_NAME;
         $this->eventNormalizer = $eventNormalizer;
+        $this->connectionFactory = $connectionFactory;
     }
 
     /**
@@ -193,11 +186,11 @@ class DoctrineEventStorage implements EventStorageInterface
                 'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
                 'correlationidentifier' => $metadata['correlationIdentifier'] ?? null,
                 'causationidentifier' => $metadata['causationIdentifier'] ?? null,
-                'recordedat' => $this->now
+                'recordedat' => new \DateTimeImmutable('now'),
             ],
             [
                 'version' => \PDO::PARAM_INT,
-                'recordedat' => Type::DATETIME,
+                'recordedat' => Type::DATETIME_IMMUTABLE,
             ]
         );
     }

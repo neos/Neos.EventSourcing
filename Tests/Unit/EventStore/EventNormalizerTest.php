@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Neos\EventSourcing\Tests\Unit\EventStore;
 
 use Neos\EventSourcing\Event\EventTypeResolver;
+use Neos\EventSourcing\Event\EventTypeResolverInterface;
 use Neos\EventSourcing\EventStore\EventNormalizer;
 use Neos\Flow\Tests\UnitTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -22,9 +23,8 @@ class EventNormalizerTest extends UnitTestCase
 
     public function setUp(): void
     {
-        $this->eventNormalizer = new EventNormalizer();
-        $this->mockEventTypeResolver = $this->getMockBuilder(EventTypeResolver::class)->disableOriginalConstructor()->getMock();
-        $this->inject($this->eventNormalizer, 'eventTypeResolver', $this->mockEventTypeResolver);
+        $this->mockEventTypeResolver = $this->getMockBuilder(EventTypeResolverInterface::class)->getMock();
+        $this->eventNormalizer = new EventNormalizer($this->mockEventTypeResolver);
     }
 
     /**
