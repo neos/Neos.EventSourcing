@@ -19,7 +19,7 @@ use Neos\EventSourcing\Event\EventTypeResolverInterface;
 use Neos\EventSourcing\EventPublisher\EventPublisherInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
-use Neos\Flow\Utility\Algorithms;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerException;
 
 /**
@@ -94,7 +94,7 @@ final class EventStore
 
             if ($eventIdentifier === null) {
                 try {
-                    $eventIdentifier = Algorithms::generateUUID();
+                    $eventIdentifier = (string)Uuid::uuid4();
                 } catch (\Exception $exception) {
                     throw new \RuntimeException('Failed to generate UUID for event', 1576421966, $exception);
                 }
