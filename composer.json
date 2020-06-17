@@ -3,16 +3,16 @@
     "type": "neos-package",
     "description": "Lean and opinionated way to integrate Event Sourcing and CQRS pattern in your Flow framework package",
     "require": {
-        "php": ">=7.1",
-        "neos/flow": "*",
+        "php": ">=7.2",
+        "neos/flow": "^5.3 || ^6.0",
         "flowpack/jobqueue-common": "^3.0 || dev-master",
-        "symfony/serializer": "^4.2",
+        "symfony/serializer": "^5.1",
         "symfony/property-access": "^3.4",
         "ramsey/uuid": "^4.0"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master",
-        "dg/bypass-finals": "^1.1"
+        "dg/bypass-finals": "^1.2"
     },
     "autoload": {
         "psr-4": {
