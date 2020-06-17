@@ -7,7 +7,7 @@
         "neos/flow": "^5.3 || ^6.0",
         "flowpack/jobqueue-common": "^3.0 || dev-master",
         "symfony/serializer": "^5.1",
-        "symfony/property-access": "^3.4",
+        "symfony/property-access": "^5.1",
         "ramsey/uuid": "^3.9"
     },
     "require-dev": {
