@@ -42,11 +42,6 @@ class DoctrineEventStorage implements EventStorageInterface
     const DEFAULT_EVENT_TABLE_NAME = 'neos_eventsourcing_eventstore_events';
 
     /**
-     * @var ConnectionFactory
-     */
-    private $connectionFactory;
-
-    /**
      * @var EventNormalizer
      */
     protected $eventNormalizer;
@@ -62,30 +57,24 @@ class DoctrineEventStorage implements EventStorageInterface
     private $eventTableName;
 
     /**
-     * @var array
-     */
-    private $options;
-
-    /**
      * @param array $options
      * @param EventNormalizer $eventNormalizer
-     * @param ConnectionFactory $connectionFactory
+     * @param Connection $connection
      */
-    public function __construct(array $options, EventNormalizer $eventNormalizer, ConnectionFactory $connectionFactory)
+    public function __construct(array $options, EventNormalizer $eventNormalizer, Connection $connection)
     {
-        $this->options = $options;
         $this->eventTableName = $options['eventTableName'] ?? self::DEFAULT_EVENT_TABLE_NAME;
         $this->eventNormalizer = $eventNormalizer;
-        $this->connectionFactory = $connectionFactory;
-    }
-
-    /**
-     * @return void
-     * @throws DBALException
-     */
-    public function initializeObject(): void
-    {
-        $this->connection = $this->connectionFactory->create($this->options);
+        if (isset($options['backendOptions'])) {
+            $factory = new ConnectionFactory();
+            try {
+                $this->connection = $factory->create($options);
+            } catch (DBALException $e) {
+                throw new \InvalidArgumentException('Failed to create DBAL connection for the given options', 1592381267, $e);
+            }
+        } else {
+            $this->connection = $connection;
+        }
     }
 
     /**
