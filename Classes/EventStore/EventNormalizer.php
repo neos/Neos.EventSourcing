@@ -76,4 +76,15 @@ final class EventNormalizer
         $event = $this->serializer->denormalize($eventData, $eventClassName);
         return $event;
     }
+
+    /**
+     * Return the event type for the given Event object
+     *
+     * @param DomainEventInterface $event An Domain Event instance
+     * @return string The corresponding Event Type, for example "Some.Package:SomeEvent"
+     */
+    public function getEventType(DomainEventInterface $event): string
+    {
+        return $this->eventTypeResolver->getEventType($event);
+    }
 }

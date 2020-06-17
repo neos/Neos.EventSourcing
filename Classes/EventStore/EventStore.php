@@ -15,7 +15,6 @@ namespace Neos\EventSourcing\EventStore;
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\Event\DomainEvents;
-use Neos\EventSourcing\Event\EventTypeResolverInterface;
 use Neos\EventSourcing\EventPublisher\EventPublisherInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
@@ -40,11 +39,6 @@ final class EventStore
     private $eventPublisher;
 
     /**
-     * @var EventTypeResolverInterface
-     */
-    private $eventTypeResolver;
-
-    /**
      * @var EventNormalizer
      */
     private $eventNormalizer;
@@ -52,15 +46,13 @@ final class EventStore
     /**
      * @param EventStorageInterface $storage
      * @param EventPublisherInterface $eventPublisher
-     * @param EventTypeResolverInterface $eventTypeResolver
      * @param EventNormalizer $eventNormalizer
      * @internal Do not instantiate this class directly but inject an instance (or use the EventStoreFactory)
      */
-    public function __construct(EventStorageInterface $storage, EventPublisherInterface $eventPublisher, EventTypeResolverInterface $eventTypeResolver, EventNormalizer $eventNormalizer)
+    public function __construct(EventStorageInterface $storage, EventPublisherInterface $eventPublisher, EventNormalizer $eventNormalizer)
     {
         $this->storage = $storage;
         $this->eventPublisher = $eventPublisher;
-        $this->eventTypeResolver = $eventTypeResolver;
         $this->eventNormalizer = $eventNormalizer;
     }
 
@@ -89,7 +81,7 @@ final class EventStore
                 $metadata = $event->getMetadata();
                 $event = $event->getWrappedEvent();
             }
-            $type = $this->eventTypeResolver->getEventType($event);
+            $type = $this->eventNormalizer->getEventType($event);
             $data = $this->eventNormalizer->normalize($event);
 
             if ($eventIdentifier === null) {

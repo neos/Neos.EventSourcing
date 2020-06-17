@@ -47,11 +47,6 @@ final class EventStoreFactory
     private $initializedEventStores;
 
     /**
-     * @var EventTypeResolverInterface
-     */
-    private $eventTypeResolver;
-
-    /**
      * @var EventNormalizer
      */
     private $eventNormalizer;
@@ -62,12 +57,12 @@ final class EventStoreFactory
      *
      * @param ObjectManagerInterface $objectManager
      * @param array $configuration
+     * @param EventNormalizer $eventNormalizer
      */
-    public function __construct(ObjectManagerInterface $objectManager, array $configuration, EventTypeResolverInterface $eventTypeResolver, EventNormalizer $eventNormalizer)
+    public function __construct(ObjectManagerInterface $objectManager, array $configuration, EventNormalizer $eventNormalizer)
     {
         $this->objectManager = $objectManager;
         $this->configuration = $configuration;
-        $this->eventTypeResolver = $eventTypeResolver;
         $this->eventNormalizer = $eventNormalizer;
     }
 
@@ -117,7 +112,7 @@ final class EventStoreFactory
         }
 
         $eventPublisher = $eventPublisherFactory->create($eventStoreIdentifier);
-        $this->initializedEventStores[$eventStoreIdentifier] = new EventStore($storageInstance, $eventPublisher, $this->eventTypeResolver, $this->eventNormalizer);
+        $this->initializedEventStores[$eventStoreIdentifier] = new EventStore($storageInstance, $eventPublisher, $this->eventNormalizer);
         return $this->initializedEventStores[$eventStoreIdentifier];
     }
 }
