@@ -20,6 +20,7 @@ use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaConfig;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
 use Neos\Error\Messages\Result;
@@ -327,25 +328,25 @@ class DoctrineEventStorage implements EventStorageInterface
         $table = $schema->createTable($this->eventTableName);
 
         // The monotonic sequence number
-        $table->addColumn('sequencenumber', Type::INTEGER, ['autoincrement' => true]);
+        $table->addColumn('sequencenumber', Types::INTEGER, ['autoincrement' => true]);
         // The stream name, usually in the format "<BoundedContext>:<StreamName>"
-        $table->addColumn('stream', Type::STRING, ['length' => 255]);
+        $table->addColumn('stream', Types::STRING, ['length' => 255]);
         // Version of the event in the respective stream
-        $table->addColumn('version', Type::BIGINT, ['unsigned' => true]);
+        $table->addColumn('version', Types::BIGINT, ['unsigned' => true]);
         // The event type in the format "<BoundedContext>:<EventType>"
-        $table->addColumn('type', Type::STRING, ['length' => 255]);
+        $table->addColumn('type', Types::STRING, ['length' => 255]);
         // The event payload as JSON
-        $table->addColumn('payload', Type::TEXT);
+        $table->addColumn('payload', Types::TEXT);
         // The event metadata as JSON
-        $table->addColumn('metadata', Type::TEXT);
+        $table->addColumn('metadata', Types::TEXT);
         // The unique event id, usually a UUID
-        $table->addColumn('id', Type::STRING, ['length' => 255]);
+        $table->addColumn('id', Types::STRING, ['length' => 255]);
         // An optional correlation id, usually a UUID
-        $table->addColumn('correlationidentifier', Type::STRING, ['length' => 255, 'notnull' => false]);
+        $table->addColumn('correlationidentifier', Types::STRING, ['length' => 255, 'notnull' => false]);
         // An optional causation id, usually a UUID
-        $table->addColumn('causationidentifier', Type::STRING, ['length' => 255, 'notnull' => false]);
+        $table->addColumn('causationidentifier', Types::STRING, ['length' => 255, 'notnull' => false]);
         // Timestamp of the the event publishing
-        $table->addColumn('recordedat', Type::DATETIME);
+        $table->addColumn('recordedat', Types::DATE_IMMUTABLE);
 
         $table->setPrimaryKey(['sequencenumber']);
         $table->addUniqueIndex(['id'], 'id_uniq');
