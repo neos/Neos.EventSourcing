@@ -15,12 +15,11 @@ namespace Neos\EventSourcing\EventStore;
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\Event\DomainEvents;
-use Neos\EventSourcing\Event\EventTypeResolver;
 use Neos\EventSourcing\EventPublisher\EventPublisherInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
-use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Utility\Algorithms;
+use Ramsey\Uuid\Uuid;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerException;
 
 /**
  * Main API to store and fetch events.
@@ -40,30 +39,21 @@ final class EventStore
     private $eventPublisher;
 
     /**
-     * TODO replace
-     *
-     * @Flow\Inject
-     * @var EventTypeResolver
-     */
-    protected $eventTypeResolver;
-
-    /**
-     * TODO replace
-     *
-     * @Flow\Inject
      * @var EventNormalizer
      */
-    protected $eventNormalizer;
+    private $eventNormalizer;
 
     /**
      * @param EventStorageInterface $storage
      * @param EventPublisherInterface $eventPublisher
+     * @param EventNormalizer $eventNormalizer
      * @internal Do not instantiate this class directly but inject an instance (or use the EventStoreFactory)
      */
-    public function __construct(EventStorageInterface $storage, EventPublisherInterface $eventPublisher)
+    public function __construct(EventStorageInterface $storage, EventPublisherInterface $eventPublisher, EventNormalizer $eventNormalizer)
     {
         $this->storage = $storage;
         $this->eventPublisher = $eventPublisher;
+        $this->eventNormalizer = $eventNormalizer;
     }
 
     public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStream
@@ -75,7 +65,7 @@ final class EventStore
      * @param StreamName $streamName
      * @param DomainEvents $events
      * @param int $expectedVersion
-     * @throws ConcurrencyException
+     * @throws ConcurrencyException | SerializerException
      */
     public function commit(StreamName $streamName, DomainEvents $events, int $expectedVersion = ExpectedVersion::ANY): void
     {
@@ -91,12 +81,12 @@ final class EventStore
                 $metadata = $event->getMetadata();
                 $event = $event->getWrappedEvent();
             }
-            $type = $this->eventTypeResolver->getEventType($event);
+            $type = $this->eventNormalizer->getEventType($event);
             $data = $this->eventNormalizer->normalize($event);
 
             if ($eventIdentifier === null) {
                 try {
-                    $eventIdentifier = Algorithms::generateUUID();
+                    $eventIdentifier = (string)Uuid::uuid4();
                 } catch (\Exception $exception) {
                     throw new \RuntimeException('Failed to generate UUID for event', 1576421966, $exception);
                 }

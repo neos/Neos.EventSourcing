@@ -7,14 +7,12 @@
         "neos/flow": "*",
         "flowpack/jobqueue-common": "^3.0 || dev-master",
         "symfony/serializer": "^4.2",
-        "symfony/property-access": "^3.4"
+        "symfony/property-access": "^3.4",
+        "ramsey/uuid": "^4.0"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master",
         "dg/bypass-finals": "^1.1"
-    },
-    "suggest": {
-        "php-uuid": "For fast generation of UUIDs used in the persistence."
     },
     "autoload": {
         "psr-4": {

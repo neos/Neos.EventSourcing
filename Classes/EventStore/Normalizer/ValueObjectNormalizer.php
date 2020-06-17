@@ -74,7 +74,7 @@ final class ValueObjectNormalizer implements DenormalizerInterface
         if ($namedConstructorMethod !== null) {
             $constructorMethod = $namedConstructorMethod;
         } else {
-            $constructorMethod = $reflectionClass->implementsInterface(ProxyInterface::class) ? $reflectionClass->getParentClass()->getConstructor() : $reflectionClass->getConstructor();
+            $constructorMethod = (interface_exists(ProxyInterface::class) && $reflectionClass->implementsInterface('Neos\Flow\ObjectManagement\Proxy\ProxyInterface')) ? $reflectionClass->getParentClass()->getConstructor() : $reflectionClass->getConstructor();
         }
         if ($constructorMethod === null) {
             throw new \InvalidArgumentException(sprintf('Could not resolve constructor for class "%s"', $className), 1545233397);

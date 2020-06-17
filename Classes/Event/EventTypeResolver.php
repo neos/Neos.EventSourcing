@@ -22,7 +22,7 @@ use Neos\Utility\TypeHandling;
  *
  * @Flow\Scope("singleton")
  */
-class EventTypeResolver
+final class EventTypeResolver implements EventTypeResolverInterface
 {
     /**
      * @var ObjectManagerInterface
@@ -77,36 +77,12 @@ class EventTypeResolver
      * @param string $className
      * @return string
      */
-    public function getEventTypeByClassName(string $className): string
+    private function getEventTypeByClassName(string $className): string
     {
         if (!isset($this->mapping[$className])) {
             throw new \InvalidArgumentException(sprintf('Event Type not found for class name "%s"', $className), 1476249954);
         }
         return $this->mapping[$className];
-    }
-
-    /**
-     * Return the event short name for the given Event object
-     *
-     * @param DomainEventInterface $event
-     * @return string
-     */
-    public function getEventShortType(DomainEventInterface $event): string
-    {
-        $type = explode(':', $this->getEventType($event));
-        return end($type);
-    }
-
-    /**
-     * Return the event short name for the given Event classname
-     *
-     * @param string $className
-     * @return string
-     */
-    public function getEventShortTypeByClassName(string $className): string
-    {
-        $type = explode(':', $this->getEventTypeByClassName($className));
-        return end($type);
     }
 
     /**
@@ -132,7 +108,7 @@ class EventTypeResolver
      */
     public static function eventTypeMapping(ObjectManagerInterface $objectManager): array
     {
-        $buildEventType = function ($eventClassName) use ($objectManager) {
+        $buildEventType = static function ($eventClassName) use ($objectManager) {
             $packageKey = $objectManager->getPackageKeyByObjectName($eventClassName);
             if ($packageKey === false) {
                 throw new \RuntimeException(sprintf('Could not determine package key from object name "%s"', $eventClassName), 1478088597);
@@ -145,7 +121,6 @@ class EventTypeResolver
         $reflectionService = $objectManager->get(ReflectionService::class);
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(DomainEventInterface::class) as $eventClassName) {
             if (is_subclass_of($eventClassName, ProvidesEventTypeInterface::class)) {
-                /** @noinspection PhpUndefinedMethodInspection */
                 $eventTypeIdentifier = $eventClassName::getEventType();
             } else {
                 $eventTypeIdentifier = $buildEventType($eventClassName);
