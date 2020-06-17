@@ -2,6 +2,7 @@
     "name": "neos/event-sourcing",
     "type": "neos-package",
     "description": "Lean and opinionated way to integrate Event Sourcing and CQRS pattern in your Flow framework package",
+    "license": "MIT",
     "require": {
         "php": ">=7.2",
         "neos/flow": "^5.3 || ^6.0",
