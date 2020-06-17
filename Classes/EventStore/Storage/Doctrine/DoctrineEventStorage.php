@@ -237,13 +237,17 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @inheritdoc
-     * @throws DBALException
      */
     public function getStatus(): Result
     {
         $result = new Result();
+        $schemaManager = $this->connection->getSchemaManager();
+        if ($schemaManager === null) {
+            $result->addError(new Error('Failed to retrieve Schema Manager', 1592381724, [], 'Connection failed'));
+            return $result;
+        }
         try {
-            $tableExists = $this->connection->getSchemaManager()->tablesExist([$this->eventTableName]);
+            $tableExists = $schemaManager->tablesExist([$this->eventTableName]);
         } catch (ConnectionException $exception) {
             $result->addError(new Error($exception->getMessage(), $exception->getCode(), [], 'Connection failed'));
             return $result;
@@ -256,8 +260,9 @@ class DoctrineEventStorage implements EventStorageInterface
         if ($tableExists) {
             $result->addNotice(new Notice('%s (exists)', null, [$this->eventTableName], 'Table'));
 
-            $fromSchema = $this->connection->getSchemaManager()->createSchema();
+            $fromSchema = $schemaManager->createSchema();
             $schemaDiff = (new Comparator())->compare($fromSchema, $this->createEventStoreSchema());
+            /** @noinspection PhpUnhandledExceptionInspection */
             $statements = $schemaDiff->toSaveSql($this->connection->getDatabasePlatform());
             if ($statements !== []) {
                 $result->addWarning(new Warning('The schema of table %s is not up-to-date', null, [$this->eventTableName], 'Table schema'));
@@ -278,8 +283,13 @@ class DoctrineEventStorage implements EventStorageInterface
     public function setup(): Result
     {
         $result = new Result();
+        $schemaManager = $this->connection->getSchemaManager();
+        if ($schemaManager === null) {
+            $result->addError(new Error('Failed to retrieve Schema Manager', 1592381759, [], 'Connection failed'));
+            return $result;
+        }
         try {
-            $tableExists = $this->connection->getSchemaManager()->tablesExist([$this->eventTableName]);
+            $tableExists = $schemaManager->tablesExist([$this->eventTableName]);
         } catch (ConnectionException $exception) {
             $result->addError(new Error($exception->getMessage(), $exception->getCode(), [], 'Connection failed'));
             return $result;
@@ -290,7 +300,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $result->addNotice(new Notice('Creating database table "%s" in database "%s" on host %s....', null, [$this->eventTableName, $this->connection->getDatabase(), $this->connection->getHost()]));
         }
 
-        $fromSchema = $this->connection->getSchemaManager()->createSchema();
+        $fromSchema = $schemaManager->createSchema();
         $schemaDiff = (new Comparator())->compare($fromSchema, $this->createEventStoreSchema());
 
         $statements = $schemaDiff->toSaveSql($this->connection->getDatabasePlatform());
