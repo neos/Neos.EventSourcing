@@ -19,7 +19,6 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaConfig;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
@@ -40,7 +39,7 @@ use Neos\EventSourcing\EventStore\WritableEvents;
  */
 class DoctrineEventStorage implements EventStorageInterface
 {
-    const DEFAULT_EVENT_TABLE_NAME = 'neos_eventsourcing_eventstore_events';
+    private const DEFAULT_EVENT_TABLE_NAME = 'neos_eventsourcing_eventstore_events';
 
     /**
      * @var EventNormalizer
@@ -180,7 +179,7 @@ class DoctrineEventStorage implements EventStorageInterface
             ],
             [
                 'version' => \PDO::PARAM_INT,
-                'recordedat' => Type::DATETIME_IMMUTABLE,
+                'recordedat' => Types::DATETIME_IMMUTABLE,
             ]
         );
     }
@@ -223,16 +222,12 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     private function renderExpectedVersion(int $expectedVersion): string
     {
-        if ($expectedVersion === ExpectedVersion::ANY) {
-            return 'ANY (-2)';
-        }
-        if ($expectedVersion === ExpectedVersion::NO_STREAM) {
-            return 'NO STREAM (-1)';
-        }
-        if ($expectedVersion === ExpectedVersion::STREAM_EXISTS) {
-            return 'STREAM EXISTS (-4)';
-        }
-        return (string)$expectedVersion;
+        $labels = [
+            ExpectedVersion::ANY => 'ANY (-2)',
+            ExpectedVersion::NO_STREAM => 'NO STREAM (-1)',
+            ExpectedVersion::STREAM_EXISTS => 'STREAM EXISTS (-4)',
+        ];
+        return $labels[$expectedVersion] ?? (string)$expectedVersion;
     }
 
     /**

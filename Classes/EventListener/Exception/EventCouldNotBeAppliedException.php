@@ -16,6 +16,9 @@ use Neos\EventSourcing\EventListener\EventListenerInterface;
 use Neos\EventSourcing\EventStore\EventEnvelope;
 use Throwable;
 
+/**
+ * Exception that is thrown if an event could not be applied to the corresponding listener
+ */
 class EventCouldNotBeAppliedException extends \Exception
 {
     /**

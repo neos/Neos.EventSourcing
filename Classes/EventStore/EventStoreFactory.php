@@ -12,7 +12,6 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
-use Neos\EventSourcing\Event\EventTypeResolverInterface;
 use Neos\EventSourcing\EventPublisher\DefaultEventPublisherFactory;
 use Neos\EventSourcing\EventPublisher\EventPublisherFactoryInterface;
 use Neos\EventSourcing\EventStore\Exception\StorageConfigurationException;

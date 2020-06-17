@@ -55,7 +55,7 @@ final class ValueObjectNormalizer implements DenormalizerInterface
     private function resolveConstructorMethod(string $dataType, string $className): ReflectionMethod
     {
         $cacheIdentifier = md5($dataType . '|' . $className);
-        if (array_key_exists($cacheIdentifier, $this->resolveConstructorMethodCache)) {
+        if (\array_key_exists($cacheIdentifier, $this->resolveConstructorMethodCache)) {
             return $this->resolveConstructorMethodCache[$cacheIdentifier];
         }
 
@@ -74,7 +74,7 @@ final class ValueObjectNormalizer implements DenormalizerInterface
         if ($namedConstructorMethod !== null) {
             $constructorMethod = $namedConstructorMethod;
         } else {
-            $constructorMethod = (interface_exists(ProxyInterface::class) && $reflectionClass->implementsInterface('Neos\Flow\ObjectManagement\Proxy\ProxyInterface')) ? $reflectionClass->getParentClass()->getConstructor() : $reflectionClass->getConstructor();
+            $constructorMethod = (interface_exists(ProxyInterface::class) && $reflectionClass->implementsInterface(ProxyInterface::class)) ? $reflectionClass->getParentClass()->getConstructor() : $reflectionClass->getConstructor();
         }
         if ($constructorMethod === null) {
             throw new \InvalidArgumentException(sprintf('Could not resolve constructor for class "%s"', $className), 1545233397);
@@ -98,7 +98,7 @@ final class ValueObjectNormalizer implements DenormalizerInterface
     private function resolveNamedConstructorMethod(string $dataType, string $className, \ReflectionClass $reflectionClass): ?ReflectionMethod
     {
         $cacheIdentifier = md5($dataType . '|' . $className);
-        if (array_key_exists($cacheIdentifier, $this->resolveNamedConstructorMethodCache)) {
+        if (\array_key_exists($cacheIdentifier, $this->resolveNamedConstructorMethodCache)) {
             return $this->resolveNamedConstructorMethodCache[$cacheIdentifier];
         }
         $staticConstructorName = 'from' . ucfirst($dataType);

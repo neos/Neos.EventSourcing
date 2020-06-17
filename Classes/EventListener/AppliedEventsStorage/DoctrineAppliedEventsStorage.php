@@ -99,9 +99,6 @@ final class DoctrineAppliedEventsStorage implements AppliedEventsStorageInterfac
         return (int)$highestAppliedSequenceNumber;
     }
 
-    /**
-     * @inheritDoc
-     */
     private function setLockTimeout(): void
     {
         try {

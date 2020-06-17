@@ -12,6 +12,9 @@ namespace Neos\EventSourcing\EventListener\Exception;
  * source code.
  */
 
+/**
+ * Exception that is thrown if an event listener contains invalid handler methods (for example if the method and event name don't match)
+ */
 class InvalidEventListenerException extends \Exception
 {
 }

@@ -9,7 +9,6 @@ use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageIn
 use Neos\EventSourcing\EventListener\EventListenerInterface;
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
-use Neos\EventSourcing\EventListener\ProvidesAppliedEventsStorageInterface;
 use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\EventStream;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
@@ -41,11 +40,6 @@ class EventListenerInvokerTest extends UnitTestCase
     private $mockEventStream;
 
     /**
-     * @var EventListenerInterface|ProvidesAppliedEventsStorageInterface|MockObject
-     */
-    private $mockEventListener;
-
-    /**
      * @var AppliedEventsStorageInterface|MockObject
      */
     private $mockAppliedEventsStorage;
@@ -61,9 +55,9 @@ class EventListenerInvokerTest extends UnitTestCase
         $mockPlatform = $this->getMockBuilder(AbstractPlatform::class)->getMock();
         $this->mockConnection->method('getDatabasePlatform')->willReturn($mockPlatform);
 
-        $this->mockEventListener = $this->getMockBuilder(EventListenerInterface::class)->getMock();
-
-        $this->eventListenerInvoker = new EventListenerInvoker($this->mockEventStore, $this->mockEventListener, $this->mockConnection);
+        /** @var EventListenerInterface|MockObject $mockEventListener */
+        $mockEventListener = $this->getMockBuilder(EventListenerInterface::class)->getMock();
+        $this->eventListenerInvoker = new EventListenerInvoker($this->mockEventStore, $mockEventListener, $this->mockConnection);
 
         $this->mockAppliedEventsStorage = $this->getMockBuilder(AppliedEventsStorageInterface::class)->getMock();
 

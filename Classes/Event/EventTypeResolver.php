@@ -18,7 +18,8 @@ use Neos\Flow\Reflection\ReflectionService;
 use Neos\Utility\TypeHandling;
 
 /**
- * Event Type Resolver
+ * Default implementation of the EventTypeResolverInterface that uses reflection (at compile time only)
+ * to determine the mapping from domain event class names to the fully qualified event type identifier (<PackageKey>:<ShortClassName>)
  *
  * @Flow\Scope("singleton")
  */
@@ -30,7 +31,7 @@ final class EventTypeResolver implements EventTypeResolverInterface
     protected $objectManager;
 
     /**
-     * @var array
+     * @var array in the format ['<eventClassName>' => '<eventTypeIdentifier>', ...]
      */
     protected $mapping = [];
 
@@ -63,7 +64,7 @@ final class EventTypeResolver implements EventTypeResolverInterface
      * Return the event type for the given Event object
      *
      * @param DomainEventInterface $event
-     * @return string
+     * @return string for example "Acme.MyApplication:SomethingImportantHasHappened"
      */
     public function getEventType(DomainEventInterface $event): string
     {
@@ -75,7 +76,7 @@ final class EventTypeResolver implements EventTypeResolverInterface
      * Return the event type for the given Event classname
      *
      * @param string $className
-     * @return string
+     * @return string for example "Acme.MyApplication:SomethingImportantHasHappened"
      */
     private function getEventTypeByClassName(string $className): string
     {
@@ -89,7 +90,7 @@ final class EventTypeResolver implements EventTypeResolverInterface
      * Return the event classname for the given event type
      *
      * @param string $eventType
-     * @return string
+     * @return string for example "Acme\MyApplication\Some\Namespace\SomethingImportantHasHappened"
      */
     public function getEventClassNameByType(string $eventType): string
     {
@@ -119,13 +120,15 @@ final class EventTypeResolver implements EventTypeResolverInterface
         $mapping = [];
         /** @var ReflectionService $reflectionService */
         $reflectionService = $objectManager->get(ReflectionService::class);
+        /** @var string $eventClassName */
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(DomainEventInterface::class) as $eventClassName) {
             if (is_subclass_of($eventClassName, ProvidesEventTypeInterface::class)) {
+                /** @noinspection PhpUndefinedMethodInspection */
                 $eventTypeIdentifier = $eventClassName::getEventType();
             } else {
                 $eventTypeIdentifier = $buildEventType($eventClassName);
             }
-            if (in_array($eventTypeIdentifier, $mapping, true)) {
+            if (\in_array($eventTypeIdentifier, $mapping, true)) {
                 throw new \RuntimeException(sprintf('Duplicate event type "%s" mapped from "%s".', $eventTypeIdentifier, $eventClassName), 1474710799);
             }
             $mapping[$eventClassName] = $eventTypeIdentifier;

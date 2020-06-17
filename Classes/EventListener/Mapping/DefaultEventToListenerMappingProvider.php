@@ -112,7 +112,7 @@ class DefaultEventToListenerMappingProvider
             }
             foreach ($presetsForThisStore as $pattern => $presetOptions) {
                 $presetId = $eventStoreIdentifier . '.' . $pattern;
-                $presets[$presetId] = is_array($presetOptions) ? $presetOptions : [];
+                $presets[$presetId] = \is_array($presetOptions) ? $presetOptions : [];
                 $presetMatchesAnyListeners = false;
                 foreach ($listeners as $listenerClassName => $events) {
                     if (preg_match('/^' . str_replace('\\', '\\\\', $pattern) . '$/', $listenerClassName) !== 1) {
@@ -139,7 +139,7 @@ class DefaultEventToListenerMappingProvider
         }
         $unmatchedListeners = array_diff_key($listeners, $matchedListeners);
         if ($unmatchedListeners !== []) {
-            if (count($unmatchedListeners) === 1) {
+            if (\count($unmatchedListeners) === 1) {
                 $errorMessage = 'The Event Listener "%s" is not registered to any of the configured Event Stores. Please add a new listener pattern at Neos.EventSourcing.EventStore.stores.*.listeners or remove the unused listener class';
             } else {
                 $errorMessage = 'The following Event Listeners are not registered to any of the configured Event Stores: "%s". Please add new listener patterns at Neos.EventSourcing.EventStore.stores.*.listeners or remove the unused listener classes';
@@ -211,8 +211,7 @@ class DefaultEventToListenerMappingProvider
                 $listenersFoundInClass = true;
             }
             if (!$listenersFoundInClass) {
-                throw new InvalidEventListenerException(sprintf('No listener methods have been detected in listener class %s. A listener has the signature "public function when<EventClass>(<EventClass> $event) {}" and every EventListener class has to implement at least one listener!',
-                    $listenerClassName), 1498123537);
+                throw new InvalidEventListenerException(sprintf('No listener methods have been detected in listener class %s. A listener has the signature "public function when<EventClass>(<EventClass> $event) {}" and every EventListener class has to implement at least one listener!', $listenerClassName), 1498123537);
             }
         }
 

@@ -137,8 +137,8 @@ class ProjectionManager
         if ($matchingIdentifiers === []) {
             throw new \InvalidArgumentException(sprintf('No projection could be found that matches the projection identifier "%s"', $projectionIdentifier), 1476368605);
         }
-        if (count($matchingIdentifiers) !== 1) {
-            throw new \InvalidArgumentException(sprintf('More than one projection matches the projection identifier "%s":%s%s', $projectionIdentifier, chr(10), implode(', ', $matchingIdentifiers)), 1476368615);
+        if (\count($matchingIdentifiers) !== 1) {
+            throw new \InvalidArgumentException(sprintf('More than one projection matches the projection identifier "%s":%s%s', $projectionIdentifier, \chr(10), implode(', ', $matchingIdentifiers)), 1476368615);
         }
         return $matchingIdentifiers[0];
     }
@@ -161,7 +161,7 @@ class ProjectionManager
         $shortIdentifierParts = explode(':', $shortIdentifier);
         $fullIdentifierParts = explode(':', $fullIdentifier);
 
-        $shortIdentifierPartsCount = count($shortIdentifierParts);
+        $shortIdentifierPartsCount = \count($shortIdentifierParts);
         if ($shortIdentifierPartsCount === 1) {
             return $shortIdentifier === $fullIdentifierParts[1];
         }
@@ -170,7 +170,7 @@ class ProjectionManager
         }
         return
             $shortIdentifierParts[1] === $fullIdentifierParts[1]
-            && substr($fullIdentifierParts[0], -(strlen($shortIdentifierParts[0]) + 1)) === '.' . $shortIdentifierParts[0];
+            && substr($fullIdentifierParts[0], -(\strlen($shortIdentifierParts[0]) + 1)) === '.' . $shortIdentifierParts[0];
     }
 
     /**

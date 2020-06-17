@@ -25,7 +25,7 @@ class Version20161116120502 extends AbstractMigration
      */
     public function up(Schema $schema)
     {
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() != 'mysql', 'Migration can only be executed safely on "mysql".');
+        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on "mysql".');
         $this->addSql('CREATE TABLE neos_cqrs_processmanager_state_state (identifier VARCHAR(40) NOT NULL, processmanagerclassname VARCHAR(255) NOT NULL, properties LONGTEXT NOT NULL COMMENT \'(DC2Type:array)\', checklist LONGTEXT NOT NULL COMMENT \'(DC2Type:array)\', PRIMARY KEY(identifier, processmanagerclassname)) DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE = InnoDB');
     }
 
@@ -35,7 +35,7 @@ class Version20161116120502 extends AbstractMigration
      */
     public function down(Schema $schema)
     {
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() != 'mysql', 'Migration can only be executed safely on "mysql".');
+        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on "mysql".');
         $this->addSql('DROP TABLE neos_cqrs_processmanager_state_state');
     }
 }

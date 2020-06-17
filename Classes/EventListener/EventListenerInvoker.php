@@ -21,6 +21,23 @@ use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 
+/**
+ * Helper class to apply events to respective listeners.
+ *
+ * This class can be used in order to create custom catchup/replay implementations:
+ *
+ * $eventListenerInvoker = (new EventListenerInvoker($eventStore, $someListener, $dbalConnection));
+ * // increase transaction batch size for better performance (losing at-most-once semantics if event application fails)
+ * $eventListenerInvoker = $eventListenerInvoker->withTransactionBatchSize(500);
+ * // output sequence number of processed events
+ * $eventListenerInvoker->onProgress(static function(EventEnvelope $envelope) {
+ *   echo $envelope->getRawEvent()->getSequenceNumber();
+ * });
+ * // apply all new events
+ * $eventListenerInvoker->catchup();
+ * // OR replay all events
+ * $eventListenerInvoker->replay();
+ */
 final class EventListenerInvoker
 {
 
@@ -151,7 +168,7 @@ final class EventListenerInvoker
         try {
             $listenerMethodName = 'when' . (new \ReflectionClass($event))->getShortName();
         } catch (\ReflectionException $exception) {
-            throw new \RuntimeException(sprintf('Could not extract listener method name for listener %s and event %s', get_class($this->eventListener), get_class($event)), 1541003718, $exception);
+            throw new \RuntimeException(sprintf('Could not extract listener method name for listener %s and event %s', \get_class($this->eventListener), \get_class($event)), 1541003718, $exception);
         }
         if (!method_exists($this->eventListener, $listenerMethodName)) {
             return;
@@ -162,7 +179,7 @@ final class EventListenerInvoker
         try {
             $this->eventListener->$listenerMethodName($event, $rawEvent);
         } catch (\Throwable $exception) {
-            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($this->eventListener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $this->eventListener);
+            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), \get_class($this->eventListener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $this->eventListener);
         }
         if ($this->eventListener instanceof AfterInvokeInterface) {
             $this->eventListener->afterInvoke($eventEnvelope);

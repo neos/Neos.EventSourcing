@@ -56,7 +56,7 @@ class ConnectionFactory
 
         $connection = DriverManager::getConnection($connectionParams, $config);
 
-        if (isset($options['mappingTypes']) && is_array($options['mappingTypes'])) {
+        if (isset($options['mappingTypes']) && \is_array($options['mappingTypes'])) {
             foreach ($options['mappingTypes'] as $typeName => $typeConfiguration) {
                 if (!Type::hasType($typeName)) {
                     Type::addType($typeName, $typeConfiguration['className']);
