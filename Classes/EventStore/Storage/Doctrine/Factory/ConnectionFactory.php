@@ -48,7 +48,7 @@ class ConnectionFactory
      * @return Connection
      * @throws DBALException
      */
-    public function create(array $options): Connection
+    public function create(array $options = null): Connection
     {
         $config = new Configuration();
         $connectionParams = $options['backendOptions'] ?? [];
@@ -56,7 +56,7 @@ class ConnectionFactory
 
         $connection = DriverManager::getConnection($connectionParams, $config);
 
-        if (isset($options['mappingTypes']) && is_array($options['mappingTypes'])) {
+        if (isset($options['mappingTypes']) && \is_array($options['mappingTypes'])) {
             foreach ($options['mappingTypes'] as $typeName => $typeConfiguration) {
                 if (!Type::hasType($typeName)) {
                     Type::addType($typeName, $typeConfiguration['className']);

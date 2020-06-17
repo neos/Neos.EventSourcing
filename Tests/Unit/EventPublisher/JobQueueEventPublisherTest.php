@@ -94,7 +94,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
     {
         $someEventStoreId = 'some-event-store';
         $mappings = EventToListenerMappings::createEmpty()
-            ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName', []));
+            ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent1), 'SomeListenerClassName', []));
         $jobQueueEventPublisher = $this->buildPublisher($someEventStoreId, $mappings);
 
         $this->mockJobManager->method('queue')->willReturnCallback(static function(string $_, CatchUpEventListenerJob $job) use ($someEventStoreId) {
@@ -110,7 +110,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
     public function publishQueuesTheJobInTheDefaultQueueByDefault(): void
     {
         $mappings = EventToListenerMappings::createEmpty()
-            ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName', []));
+            ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent1), 'SomeListenerClassName', []));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
 
         $this->mockJobManager->method('queue')->willReturnCallback(static function($queueName) {
@@ -127,7 +127,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
     {
         $queueName = 'Some-Queue';
         $mappings = EventToListenerMappings::createEmpty()
-            ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName', ['queueName' => $queueName]));
+            ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent1), 'SomeListenerClassName', ['queueName' => $queueName]));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
 
         $this->mockJobManager->method('queue')->willReturnCallback(static function(string $actualQueueName) use ($queueName) {
@@ -144,7 +144,7 @@ class JobQueueEventPublisherTest extends UnitTestCase
     {
         $queueOptions = ['foo' => ['bar' => 'Baz']];
         $mappings = EventToListenerMappings::createEmpty()
-            ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName', ['queueOptions' => $queueOptions]));
+            ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent1), 'SomeListenerClassName', ['queueOptions' => $queueOptions]));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
 
         $this->mockJobManager->method('queue')->willReturnCallback(static function(string $_, CatchUpEventListenerJob $__, array $actualOptions) use ($queueOptions) {
@@ -161,8 +161,8 @@ class JobQueueEventPublisherTest extends UnitTestCase
     {
         $eventListenerClassName = 'SomeListenerClassName';
         $mappings = EventToListenerMappings::createEmpty()
-            ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), $eventListenerClassName, []))
-            ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent2), $eventListenerClassName, []));
+            ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent1), $eventListenerClassName, []))
+            ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent2), $eventListenerClassName, []));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
 
         $this->mockJobManager->expects($this->once())->method('queue')->willReturnCallback(static function(string $_, CatchUpEventListenerJob $job) use ($eventListenerClassName) {
@@ -178,9 +178,9 @@ class JobQueueEventPublisherTest extends UnitTestCase
     public function publishQueuesAJobForEachListener(): void
     {
         $mappings = EventToListenerMappings::createEmpty()
-            ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName1', []))
-            ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent1), 'SomeListenerClassName2', []))
-            ->withMapping(EventToListenerMapping::create(get_class($this->mockEvent2), 'SomeListenerClassName1', []));
+            ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent1), 'SomeListenerClassName1', []))
+            ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent1), 'SomeListenerClassName2', []))
+            ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent2), 'SomeListenerClassName1', []));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
 
         $this->mockJobManager->expects($this->at(0))->method('queue')->willReturnCallback(static function(string $_, CatchUpEventListenerJob $job) {

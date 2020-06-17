@@ -17,7 +17,7 @@ use Neos\EventSourcing\Projection\Projection;
 use Neos\EventSourcing\Projection\ProjectionManager;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
-use Neos\Flow\Mvc\Exception\StopActionException;
+use Neos\Flow\Cli\Exception\StopCommandException;
 
 /**
  * CLI Command Controller for projection related commands
@@ -70,7 +70,7 @@ class ProjectionCommandController extends CommandController
      * @param string $projection The projection identifier; see projection:list for possible options
      * @return void
      * @see neos.eventsourcing:projection:list
-     * @throws StopActionException
+     * @throws StopCommandException
      */
     public function describeCommand(string $projection): void
     {
@@ -95,7 +95,7 @@ class ProjectionCommandController extends CommandController
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
      * @throws EventCouldNotBeAppliedException
-     * @throws StopActionException
+     * @throws StopCommandException
      * @see neos.eventsourcing:projection:list
      * @see neos.eventsourcing:projection:replayall
      */
@@ -179,7 +179,7 @@ class ProjectionCommandController extends CommandController
             $this->shortProjectionIdentifiers = [];
             foreach ($projectionIdentifiers as $projectionIdentifier) {
                 [$packageKey, $projectionName] = explode(':', $projectionIdentifier);
-                if (count($projectionsByName[$projectionName]) === 1) {
+                if (\count($projectionsByName[$projectionName]) === 1) {
                     $this->shortProjectionIdentifiers[$projectionIdentifier] = $projectionName;
                     continue;
                 }
@@ -187,9 +187,9 @@ class ProjectionCommandController extends CommandController
                 foreach (array_reverse(explode('.', $packageKey)) as $packageKeyPart) {
                     $prefix = $prefix === null ? $packageKeyPart : $packageKeyPart . '.' . $prefix;
                     $matchingPackageKeys = array_filter($projectionsByName[$projectionName], function ($searchedPackageKey) use ($packageKey) {
-                        return $searchedPackageKey === $packageKey || substr($packageKey, -(strlen($searchedPackageKey) + 1)) === '.' . $searchedPackageKey;
+                        return $searchedPackageKey === $packageKey || substr($packageKey, -(\strlen($searchedPackageKey) + 1)) === '.' . $searchedPackageKey;
                     });
-                    if (count($matchingPackageKeys) === 1) {
+                    if (\count($matchingPackageKeys) === 1) {
                         $this->shortProjectionIdentifiers[$projectionIdentifier] = $prefix . ':' . $projectionName;
                         break;
                     }
@@ -205,7 +205,7 @@ class ProjectionCommandController extends CommandController
      *
      * @param string $projectionIdentifier
      * @return Projection
-     * @throws StopActionException
+     * @throws StopCommandException
      */
     private function resolveProjectionOrQuit($projectionIdentifier): Projection
     {
@@ -214,7 +214,6 @@ class ProjectionCommandController extends CommandController
         } catch (\InvalidArgumentException $exception) {
             $this->outputLine('<error>%s</error>', [$exception->getMessage()]);
             $this->quit(1);
-            return null;
         }
     }
 
@@ -227,7 +226,7 @@ class ProjectionCommandController extends CommandController
      */
     private function shortenText($text, $maximumCharacters = 36): string
     {
-        $length = strlen($text);
+        $length = \strlen($text);
         if ($length <= $maximumCharacters) {
             return $text;
         }

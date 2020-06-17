@@ -12,7 +12,7 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
-use Neos\Flow\Annotations as Flow;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerException;
 
 /**
  * EventStream
@@ -54,6 +54,7 @@ final class EventStream implements \Iterator
 
     /**
      * @return EventEnvelope
+     * @throws SerializerException
      */
     public function current(): EventEnvelope
     {

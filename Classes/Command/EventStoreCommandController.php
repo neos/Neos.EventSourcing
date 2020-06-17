@@ -20,7 +20,7 @@ use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\EventStoreFactory;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
-use Neos\Flow\Mvc\Exception\StopActionException;
+use Neos\Flow\Cli\Exception\StopCommandException;
 
 /**
  * CLI Command Controller for storage related commands of the Neos Event Store
@@ -49,7 +49,7 @@ class EventStoreCommandController extends CommandController
      *
      * @param string $eventStore The identifier of the Event Store to set up
      * @return void
-     * @throws StopActionException
+     * @throws StopCommandException
      */
     public function setupCommand($eventStore): void
     {
@@ -74,7 +74,7 @@ class EventStoreCommandController extends CommandController
     public function setupAllCommand(): void
     {
         $eventStores = $this->getAllEventStores();
-        $this->outputLine('Setting up <b>%d</b> Event Store backend(s):', [count($eventStores)]);
+        $this->outputLine('Setting up <b>%d</b> Event Store backend(s):', [\count($eventStores)]);
         foreach ($eventStores as $eventStoreIdentifier => $eventStore) {
             $this->outputLine();
             $this->outputLine('<b>Event Store "%s":</b>', [$eventStoreIdentifier]);
@@ -94,7 +94,7 @@ class EventStoreCommandController extends CommandController
     public function statusCommand(): void
     {
         $eventStores = $this->getAllEventStores();
-        $this->outputLine('Displaying status information for <b>%d</b> Event Store backend(s):', [count($eventStores)]);
+        $this->outputLine('Displaying status information for <b>%d</b> Event Store backend(s):', [\count($eventStores)]);
 
         foreach ($eventStores as $eventStoreIdentifier => $eventStore) {
             $this->outputLine();

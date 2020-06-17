@@ -69,7 +69,7 @@ abstract class AbstractEventSourcedAggregateRoot implements EventRecordingInterf
         try {
             $methodName = sprintf('when%s', (new \ReflectionClass($event))->getShortName());
         } catch (\ReflectionException $exception) {
-            throw new \RuntimeException(sprintf('Could not determine event handler method name for event %s in class %s', get_class($event), get_class($this)), 1540745153, $exception);
+            throw new \RuntimeException(sprintf('Could not determine event handler method name for event %s in class %s', \get_class($event), \get_class($this)), 1540745153, $exception);
         }
         if (method_exists($this, $methodName)) {
             $this->$methodName($event);

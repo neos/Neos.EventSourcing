@@ -16,6 +16,9 @@ final class StreamName
      */
     private $value;
 
+    /**
+     * @var self[]
+     */
     private static $instances = [];
 
     private function __construct(string $value)

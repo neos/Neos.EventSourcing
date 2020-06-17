@@ -28,7 +28,7 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
      *
      * @var int
      */
-    const BATCH_SIZE = 100;
+    private const BATCH_SIZE = 100;
 
     /**
      * @var QueryBuilder

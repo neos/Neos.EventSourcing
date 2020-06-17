@@ -19,7 +19,7 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaConfig;
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
 use Neos\Error\Messages\Result;
@@ -39,12 +39,7 @@ use Neos\EventSourcing\EventStore\WritableEvents;
  */
 class DoctrineEventStorage implements EventStorageInterface
 {
-    const DEFAULT_EVENT_TABLE_NAME = 'neos_eventsourcing_eventstore_events';
-
-    /**
-     * @var ConnectionFactory
-     */
-    private $connectionFactory;
+    private const DEFAULT_EVENT_TABLE_NAME = 'neos_eventsourcing_eventstore_events';
 
     /**
      * @var EventNormalizer
@@ -62,30 +57,24 @@ class DoctrineEventStorage implements EventStorageInterface
     private $eventTableName;
 
     /**
-     * @var array
-     */
-    private $options;
-
-    /**
      * @param array $options
      * @param EventNormalizer $eventNormalizer
-     * @param ConnectionFactory $connectionFactory
+     * @param Connection $connection
      */
-    public function __construct(array $options, EventNormalizer $eventNormalizer, ConnectionFactory $connectionFactory)
+    public function __construct(array $options, EventNormalizer $eventNormalizer, Connection $connection)
     {
-        $this->options = $options;
         $this->eventTableName = $options['eventTableName'] ?? self::DEFAULT_EVENT_TABLE_NAME;
         $this->eventNormalizer = $eventNormalizer;
-        $this->connectionFactory = $connectionFactory;
-    }
-
-    /**
-     * @return void
-     * @throws DBALException
-     */
-    public function initializeObject(): void
-    {
-        $this->connection = $this->connectionFactory->create($this->options);
+        if (isset($options['backendOptions'])) {
+            $factory = new ConnectionFactory();
+            try {
+                $this->connection = $factory->create($options);
+            } catch (DBALException $e) {
+                throw new \InvalidArgumentException('Failed to create DBAL connection for the given options', 1592381267, $e);
+            }
+        } else {
+            $this->connection = $connection;
+        }
     }
 
     /**
@@ -190,7 +179,7 @@ class DoctrineEventStorage implements EventStorageInterface
             ],
             [
                 'version' => \PDO::PARAM_INT,
-                'recordedat' => Type::DATETIME_IMMUTABLE,
+                'recordedat' => Types::DATETIME_IMMUTABLE,
             ]
         );
     }
@@ -233,27 +222,27 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     private function renderExpectedVersion(int $expectedVersion): string
     {
-        if ($expectedVersion === ExpectedVersion::ANY) {
-            return 'ANY (-2)';
-        }
-        if ($expectedVersion === ExpectedVersion::NO_STREAM) {
-            return 'NO STREAM (-1)';
-        }
-        if ($expectedVersion === ExpectedVersion::STREAM_EXISTS) {
-            return 'STREAM EXISTS (-4)';
-        }
-        return (string)$expectedVersion;
+        $labels = [
+            ExpectedVersion::ANY => 'ANY (-2)',
+            ExpectedVersion::NO_STREAM => 'NO STREAM (-1)',
+            ExpectedVersion::STREAM_EXISTS => 'STREAM EXISTS (-4)',
+        ];
+        return $labels[$expectedVersion] ?? (string)$expectedVersion;
     }
 
     /**
      * @inheritdoc
-     * @throws DBALException
      */
     public function getStatus(): Result
     {
         $result = new Result();
+        $schemaManager = $this->connection->getSchemaManager();
+        if ($schemaManager === null) {
+            $result->addError(new Error('Failed to retrieve Schema Manager', 1592381724, [], 'Connection failed'));
+            return $result;
+        }
         try {
-            $tableExists = $this->connection->getSchemaManager()->tablesExist([$this->eventTableName]);
+            $tableExists = $schemaManager->tablesExist([$this->eventTableName]);
         } catch (ConnectionException $exception) {
             $result->addError(new Error($exception->getMessage(), $exception->getCode(), [], 'Connection failed'));
             return $result;
@@ -266,8 +255,9 @@ class DoctrineEventStorage implements EventStorageInterface
         if ($tableExists) {
             $result->addNotice(new Notice('%s (exists)', null, [$this->eventTableName], 'Table'));
 
-            $fromSchema = $this->connection->getSchemaManager()->createSchema();
+            $fromSchema = $schemaManager->createSchema();
             $schemaDiff = (new Comparator())->compare($fromSchema, $this->createEventStoreSchema());
+            /** @noinspection PhpUnhandledExceptionInspection */
             $statements = $schemaDiff->toSaveSql($this->connection->getDatabasePlatform());
             if ($statements !== []) {
                 $result->addWarning(new Warning('The schema of table %s is not up-to-date', null, [$this->eventTableName], 'Table schema'));
@@ -288,8 +278,13 @@ class DoctrineEventStorage implements EventStorageInterface
     public function setup(): Result
     {
         $result = new Result();
+        $schemaManager = $this->connection->getSchemaManager();
+        if ($schemaManager === null) {
+            $result->addError(new Error('Failed to retrieve Schema Manager', 1592381759, [], 'Connection failed'));
+            return $result;
+        }
         try {
-            $tableExists = $this->connection->getSchemaManager()->tablesExist([$this->eventTableName]);
+            $tableExists = $schemaManager->tablesExist([$this->eventTableName]);
         } catch (ConnectionException $exception) {
             $result->addError(new Error($exception->getMessage(), $exception->getCode(), [], 'Connection failed'));
             return $result;
@@ -300,7 +295,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $result->addNotice(new Notice('Creating database table "%s" in database "%s" on host %s....', null, [$this->eventTableName, $this->connection->getDatabase(), $this->connection->getHost()]));
         }
 
-        $fromSchema = $this->connection->getSchemaManager()->createSchema();
+        $fromSchema = $schemaManager->createSchema();
         $schemaDiff = (new Comparator())->compare($fromSchema, $this->createEventStoreSchema());
 
         $statements = $schemaDiff->toSaveSql($this->connection->getDatabasePlatform());
@@ -338,25 +333,25 @@ class DoctrineEventStorage implements EventStorageInterface
         $table = $schema->createTable($this->eventTableName);
 
         // The monotonic sequence number
-        $table->addColumn('sequencenumber', Type::INTEGER, ['autoincrement' => true]);
+        $table->addColumn('sequencenumber', Types::INTEGER, ['autoincrement' => true]);
         // The stream name, usually in the format "<BoundedContext>:<StreamName>"
-        $table->addColumn('stream', Type::STRING, ['length' => 255]);
+        $table->addColumn('stream', Types::STRING, ['length' => 255]);
         // Version of the event in the respective stream
-        $table->addColumn('version', Type::BIGINT, ['unsigned' => true]);
+        $table->addColumn('version', Types::BIGINT, ['unsigned' => true]);
         // The event type in the format "<BoundedContext>:<EventType>"
-        $table->addColumn('type', Type::STRING, ['length' => 255]);
+        $table->addColumn('type', Types::STRING, ['length' => 255]);
         // The event payload as JSON
-        $table->addColumn('payload', Type::TEXT);
+        $table->addColumn('payload', Types::TEXT);
         // The event metadata as JSON
-        $table->addColumn('metadata', Type::TEXT);
+        $table->addColumn('metadata', Types::TEXT);
         // The unique event id, usually a UUID
-        $table->addColumn('id', Type::STRING, ['length' => 255]);
+        $table->addColumn('id', Types::STRING, ['length' => 255]);
         // An optional correlation id, usually a UUID
-        $table->addColumn('correlationidentifier', Type::STRING, ['length' => 255, 'notnull' => false]);
+        $table->addColumn('correlationidentifier', Types::STRING, ['length' => 255, 'notnull' => false]);
         // An optional causation id, usually a UUID
-        $table->addColumn('causationidentifier', Type::STRING, ['length' => 255, 'notnull' => false]);
+        $table->addColumn('causationidentifier', Types::STRING, ['length' => 255, 'notnull' => false]);
         // Timestamp of the the event publishing
-        $table->addColumn('recordedat', Type::DATETIME);
+        $table->addColumn('recordedat', Types::DATE_IMMUTABLE);
 
         $table->setPrimaryKey(['sequencenumber']);
         $table->addUniqueIndex(['id'], 'id_uniq');

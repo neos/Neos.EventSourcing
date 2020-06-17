@@ -34,7 +34,7 @@ final class WritableEvents implements \IteratorAggregate, \Countable
     {
         foreach ($events as $event) {
             if (!$event instanceof WritableEvent) {
-                throw new \InvalidArgumentException(sprintf('Only instances of WritableEvent are allowed, given: %s', is_object($event) ? get_class($event) : gettype($event)), 1540316594);
+                throw new \InvalidArgumentException(sprintf('Only instances of WritableEvent are allowed, given: %s', \is_object($event) ? \get_class($event) : \gettype($event)), 1540316594);
             }
         }
         return new static(array_values($events));
@@ -57,6 +57,6 @@ final class WritableEvents implements \IteratorAggregate, \Countable
 
     public function count(): int
     {
-        return count($this->events);
+        return \count($this->events);
     }
 }

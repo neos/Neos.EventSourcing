@@ -12,6 +12,9 @@ namespace Neos\EventSourcing\EventListener\Exception;
  * source code.
  */
 
+/**
+ * Exception that is thrown if the event store / listener configuration is not valid (e.g. if a listener for a non-existing event exists)
+ */
 class InvalidConfigurationException extends \Exception
 {
 }

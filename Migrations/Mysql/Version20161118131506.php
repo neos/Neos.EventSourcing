@@ -25,7 +25,7 @@ class Version20161118131506 extends AbstractMigration
      */
     public function up(Schema $schema)
     {
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() != 'mysql', 'Migration can only be executed safely on "mysql".');
+        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on "mysql".');
         $this->addSql('RENAME TABLE neos_cqrs_processmanager_state_state TO neos_cqrs_processmanager_state_processstate');
     }
 
@@ -35,7 +35,7 @@ class Version20161118131506 extends AbstractMigration
      */
     public function down(Schema $schema)
     {
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() != 'mysql', 'Migration can only be executed safely on "mysql".');
+        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on "mysql".');
         $this->addSql('RENAME TABLE neos_cqrs_processmanager_state_processstate TO neos_cqrs_processmanager_state_state');
     }
 }

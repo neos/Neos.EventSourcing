@@ -58,7 +58,11 @@ final class EventStore
 
     public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStream
     {
-        return $this->storage->load($streamName, $minimumSequenceNumber);
+        try {
+            return $this->storage->load($streamName, $minimumSequenceNumber);
+        } catch (\Throwable $exception) {
+            throw new \RuntimeException(sprintf('Failed to read Events from stream "%s". Did you run the ./flow eventstore:setup command?', $streamName), 1592394137, $exception);
+        }
     }
 
     /**
@@ -95,7 +99,11 @@ final class EventStore
         }
 
         $committedEvents = WritableEvents::fromArray($convertedEvents);
-        $this->storage->commit($streamName, $committedEvents, $expectedVersion);
+        try {
+            $this->storage->commit($streamName, $committedEvents, $expectedVersion);
+        } catch (\Throwable $exception) {
+            throw new \RuntimeException(sprintf('Failed to commit Events to stream "%s". Did you run the ./flow eventstore:setup command?', $streamName), 1592393752, $exception);
+        }
         $this->eventPublisher->publish($events);
     }
 

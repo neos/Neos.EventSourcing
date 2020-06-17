@@ -15,6 +15,8 @@ namespace Neos\EventSourcing\Event;
 use Neos\Flow\Annotations as Flow;
 
 /**
+ * A set of Domain Events
+ *
  * @Flow\Proxy(false)
  */
 final class DomainEvents implements \IteratorAggregate, \Countable
@@ -39,7 +41,7 @@ final class DomainEvents implements \IteratorAggregate, \Countable
     {
         foreach ($events as $event) {
             if (!$event instanceof DomainEventInterface) {
-                throw new \InvalidArgumentException(sprintf('Only instances of EventInterface are allowed, given: %s', is_object($event) ? get_class($event) : gettype($event)), 1540311882);
+                throw new \InvalidArgumentException(sprintf('Only instances of EventInterface are allowed, given: %s', \is_object($event) ? \get_class($event) : \gettype($event)), 1540311882);
             }
         }
         return new static(array_values($events));
@@ -98,6 +100,6 @@ final class DomainEvents implements \IteratorAggregate, \Countable
 
     public function count(): int
     {
-        return count($this->events);
+        return \count($this->events);
     }
 }

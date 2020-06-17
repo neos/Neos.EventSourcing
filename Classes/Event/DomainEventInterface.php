@@ -12,6 +12,11 @@ namespace Neos\EventSourcing\Event;
  * source code.
  */
 
+/**
+ * Marker interface for all domain events
+ *
+ * A domain event describes something interesting that happened in the domain it's (usually) not a technical event such as mouse events
+ */
 interface DomainEventInterface
 {
 }

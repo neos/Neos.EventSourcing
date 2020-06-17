@@ -55,7 +55,7 @@ class EventToListenerMappings implements \IteratorAggregate, \JsonSerializable
     {
         foreach ($mappings as $mapping) {
             if (!$mapping instanceof EventToListenerMapping) {
-                throw new \InvalidArgumentException(sprintf('Expected array of %s instances, got: %s', EventToListenerMapping::class, is_object($mapping) ? get_class($mapping) : gettype($mapping)), 1578319100);
+                throw new \InvalidArgumentException(sprintf('Expected array of %s instances, got: %s', EventToListenerMapping::class, \is_object($mapping) ? \get_class($mapping) : \gettype($mapping)), 1578319100);
             }
         }
         return new static(array_values($mappings));

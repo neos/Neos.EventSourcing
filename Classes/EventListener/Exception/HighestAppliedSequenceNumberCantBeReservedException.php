@@ -12,6 +12,9 @@ namespace Neos\EventSourcing\EventListener\Exception;
  * source code.
  */
 
+/**
+ * Exception that is thrown if the highest applied sequence number could not be reserved for an event listener
+ */
 class HighestAppliedSequenceNumberCantBeReservedException extends \RuntimeException
 {
 }

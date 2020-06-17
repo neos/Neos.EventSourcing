@@ -13,7 +13,7 @@ namespace Neos\EventSourcing\EventListener;
  */
 
 /**
- * EventListenerInterface
+ * Marker interface for all Event Listeners
  */
 interface EventListenerInterface
 {
