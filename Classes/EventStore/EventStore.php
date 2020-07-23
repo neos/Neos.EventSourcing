@@ -101,6 +101,9 @@ final class EventStore
         $committedEvents = WritableEvents::fromArray($convertedEvents);
         try {
             $this->storage->commit($streamName, $committedEvents, $expectedVersion);
+        } catch (ConcurrencyException $exception) {
+            // a concurrency exception can happen if the event stream has been modified in the meantime
+            throw $exception;
         } catch (\Throwable $exception) {
             throw new \RuntimeException(sprintf('Failed to commit Events to stream "%s". Did you run the ./flow eventstore:setup command?', $streamName), 1592393752, $exception);
         }

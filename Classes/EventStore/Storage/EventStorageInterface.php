@@ -36,7 +36,7 @@ interface EventStorageInterface
      * @param WritableEvents $events
      * @param int $expectedVersion
      * @return void
-     * @throws ConcurrencyException
+     * @throws ConcurrencyException in case the $expectedVersion is not the highest version in the stream
      */
     public function commit(StreamName $streamName, WritableEvents $events, int $expectedVersion = ExpectedVersion::ANY): void;
 
