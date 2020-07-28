@@ -344,6 +344,7 @@ final class ProductRepository
         $aggregate = SomeAggregate::create($id);
         $streamName = $this->getStreamName($id);
         $this->eventStore->commit($streamName, $aggregate->pullUncommittedEvents(), ExpectedVersion::NO_STREAM);
+        return $aggregate;
     }
 
     public function load(SomeAggregateId $id): SomeAggregate
