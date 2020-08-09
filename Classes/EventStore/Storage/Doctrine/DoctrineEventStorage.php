@@ -351,7 +351,7 @@ class DoctrineEventStorage implements EventStorageInterface
         // An optional causation id, usually a UUID
         $table->addColumn('causationidentifier', Types::STRING, ['length' => 255, 'notnull' => false]);
         // Timestamp of the the event publishing
-        $table->addColumn('recordedat', Types::DATE_IMMUTABLE);
+        $table->addColumn('recordedat', Types::DATETIME_IMMUTABLE);
 
         $table->setPrimaryKey(['sequencenumber']);
         $table->addUniqueIndex(['id'], 'id_uniq');
