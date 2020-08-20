@@ -48,7 +48,8 @@ final class DoctrineAppliedEventsStorage implements AppliedEventsStorageInterfac
         }
 
         try {
-            $this->dbal->executeUpdate('INSERT INTO ' . AppliedEventsLog::TABLE_NAME . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, -1)',
+            $this->dbal->executeUpdate(
+                'INSERT INTO ' . AppliedEventsLog::TABLE_NAME . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, -1)',
                 ['eventListenerIdentifier' => $this->eventListenerIdentifier]
             );
         } catch (DBALException $exception) {
@@ -72,7 +73,8 @@ final class DoctrineAppliedEventsStorage implements AppliedEventsStorageInterfac
         $this->dbal->beginTransaction();
         $this->setLockTimeout();
         try {
-            $highestAppliedSequenceNumber = $this->dbal->fetchColumn('
+            $highestAppliedSequenceNumber = $this->dbal->fetchColumn(
+                '
                 SELECT highestAppliedSequenceNumber
                 FROM ' . $this->dbal->quoteIdentifier(AppliedEventsLog::TABLE_NAME) . '
                 WHERE eventlisteneridentifier = :eventListenerIdentifier '
