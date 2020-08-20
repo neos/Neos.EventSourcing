@@ -12,6 +12,7 @@ namespace Neos\EventSourcing\EventListener;
  * source code.
  */
 
+use Closure;
 use Doctrine\DBAL\Connection;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
@@ -59,7 +60,7 @@ final class EventListenerInvoker
     private $connection;
 
     /**
-     * @var \Closure[]
+     * @var Closure[]
      */
     private $progressCallbacks = [];
 
@@ -72,6 +73,20 @@ final class EventListenerInvoker
      */
     private $transactionBatchSize = 1;
 
+    /**
+     * Until which sequence number should events be caught up?
+     * By default, events are caught up (for example during replay) until the latest
+     * available event.
+     *
+     * @var int
+     */
+    private $maximumSequenceNumber;
+
+    /**
+     * @param EventStore $eventStore
+     * @param EventListenerInterface $eventListener
+     * @param Connection $connection
+     */
     public function __construct(EventStore $eventStore, EventListenerInterface $eventListener, Connection $connection)
     {
         $this->eventStore = $eventStore;
@@ -82,9 +97,9 @@ final class EventListenerInvoker
     /**
      * Register a callback that is invoked for every event that is applied during replay/catchup
      *
-     * @param \Closure $callback
+     * @param Closure $callback
      */
-    public function onProgress(\Closure $callback): void
+    public function onProgress(Closure $callback): void
     {
         $this->progressCallbacks[] = $callback;
     }
@@ -94,10 +109,10 @@ final class EventListenerInvoker
      * This allows for faster replays/catchups at the cost of an "at least once delivery" if an error occurs.
      *
      * Usage:
-     * $eventListenerInvoker = (new EventListenerInvoker($eventStore, $listener, $connection))->withTransactionBatchSize(100)->catchUp($listener);
+     * $eventListenerInvoker = (new EventListenerInvoker($eventStore, $listener, $connection))->withTransactionBatchSize(100)->catchUp();
      *
      * @param int $batchSize
-     * @return $this
+     * @return self
      */
     public function withTransactionBatchSize(int $batchSize): self
     {
@@ -107,6 +122,26 @@ final class EventListenerInvoker
         $instance = new static($this->eventStore, $this->eventListener, $this->connection);
         $instance->progressCallbacks = $this->progressCallbacks;
         $instance->transactionBatchSize = $batchSize;
+        return $instance;
+    }
+
+    /**
+     * Configures the maximum sequence number for catch up / replay and returns this instance
+     * This allows for catching up or replaying events only until a certain point.
+     *
+     * Usage:
+     * $eventListenerInvoker = (new EventListenerInvoker($eventStore, $listener, $connection))->withMaximumSequenceNumber(268)->replay();
+     *
+     * @param int $maximumSequenceNumber
+     * @return self
+     */
+    public function withMaximumSequenceNumber(int $maximumSequenceNumber): self
+    {
+        if ($maximumSequenceNumber < 1) {
+            throw new \InvalidArgumentException('The maximum sequence number must be greater than 0', 1597821711);
+        }
+        $instance = clone $this;
+        $instance->maximumSequenceNumber = $maximumSequenceNumber;
         return $instance;
     }
 
@@ -131,10 +166,14 @@ final class EventListenerInvoker
         $streamName = $this->eventListener instanceof StreamAwareEventListenerInterface ? $this->eventListener::listensToStream() : StreamName::all();
         $eventStream = $this->eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
         $appliedEventsCounter = 0;
+
         foreach ($eventStream as $eventEnvelope) {
             $sequenceNumber = $eventEnvelope->getRawEvent()->getSequenceNumber();
             if ($sequenceNumber <= $highestAppliedSequenceNumber) {
                 continue;
+            }
+            if ($this->maximumSequenceNumber !== null && $sequenceNumber > $this->maximumSequenceNumber) {
+                break;
             }
             try {
                 $this->applyEvent($eventEnvelope);
@@ -186,6 +225,9 @@ final class EventListenerInvoker
         }
     }
 
+    /**
+     * @return AppliedEventsStorageInterface
+     */
     private function getAppliedEventsStorage(): AppliedEventsStorageInterface
     {
         if ($this->eventListener instanceof ProvidesAppliedEventsStorageInterface) {
