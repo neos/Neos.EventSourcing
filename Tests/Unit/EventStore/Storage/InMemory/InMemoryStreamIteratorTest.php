@@ -13,10 +13,7 @@ class InMemoryStreamIteratorTest extends UnitTestCase
      */
     private $iterator;
 
-    /**
-     * @throws
-     */
-    public function setUp()
+    public function setUp(): void
     {
         $this->iterator = new InMemoryStreamIterator([
             [
@@ -44,7 +41,6 @@ class InMemoryStreamIteratorTest extends UnitTestCase
 
     /**
      * @test
-     * @throws
      */
     public function setEventRecordsRejectsInvalidDate(): void
     {
@@ -67,7 +63,6 @@ class InMemoryStreamIteratorTest extends UnitTestCase
 
     /**
      * @test
-     * @throws
      */
     public function canSetEventRecordsAndGetRawEvents(): void
     {
@@ -80,7 +75,6 @@ class InMemoryStreamIteratorTest extends UnitTestCase
 
     /**
      * @test
-     * @throws
      */
     public function providesIteratorFunctions(): void
     {

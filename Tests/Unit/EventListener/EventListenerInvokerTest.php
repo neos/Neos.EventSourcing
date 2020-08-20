@@ -12,8 +12,6 @@ use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventStore\EventNormalizer;
 use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\EventStream;
-use Neos\EventSourcing\EventStore\EventStreamIteratorInterface;
-use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\Storage\InMemory\InMemoryStreamIterator;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
@@ -162,7 +160,7 @@ class EventListenerInvokerTest extends UnitTestCase
      */
     public function replaySetsHighestAppliedSequenceNumberToMinusOneAndCallsCatchup(): void
     {
-        $this->mockAppliedEventsStorage->expects($this->once())->method('saveHighestAppliedSequenceNumber')->with(...-1);
+        $this->mockAppliedEventsStorage->expects($this->once())->method('saveHighestAppliedSequenceNumber')->with(-1);
 
         $eventListenerInvokerPartialMock = $this->createPartialMock(EventListenerInvoker::class, ['catchUp']);
         $eventListenerInvokerPartialMock->__construct($this->mockEventStore, $this->mockEventListener, $this->mockConnection);
