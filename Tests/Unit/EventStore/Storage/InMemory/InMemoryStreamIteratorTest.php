@@ -15,8 +15,7 @@ class InMemoryStreamIteratorTest extends UnitTestCase
 
     public function setUp(): void
     {
-        $this->iterator = new InMemoryStreamIterator();
-        $this->iterator->setEventRecords([
+        $this->iterator = new InMemoryStreamIterator([
             [
                 'sequencenumber' => 1,
                 'type' => 'FooEventType',
@@ -45,8 +44,7 @@ class InMemoryStreamIteratorTest extends UnitTestCase
      */
     public function setEventRecordsRejectsInvalidDate(): void
     {
-        $iterator = new InMemoryStreamIterator();
-        $iterator->setEventRecords([
+        $iterator = new InMemoryStreamIterator([
             [
                 'sequencenumber' => 1,
                 'type' => 'FooEventType',
