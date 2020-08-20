@@ -63,7 +63,7 @@ class ProjectionManager
      * Register event listeners based on annotations
      * @throws ClassLoadingForReflectionFailedException
      */
-    protected function initializeObject(): void
+    public function initializeObject(): void
     {
         $this->projections = static::detectProjectors($this->objectManager);
     }
@@ -129,10 +129,43 @@ class ProjectionManager
     }
 
     /**
+     * Catch up on events for the specified projection
+     *
+     * @param string $projectionIdentifier unambiguous identifier of the projection to catch up for
+     * @param Closure|null $progressCallback If set, this callback is invoked for every applied event during catch-up with the arguments $sequenceNumber and $eventStreamVersion
+     * @throws EventCouldNotBeAppliedException
+     */
+    public function catchUp(string $projectionIdentifier, Closure $progressCallback = null): void
+    {
+        $eventListenerInvoker = $this->createEventListenerInvokerForProjection($projectionIdentifier);
+        if ($progressCallback !== null) {
+            $eventListenerInvoker->onProgress($progressCallback);
+        }
+        $eventListenerInvoker->catchUp();
+    }
+
+    /**
+     * Catch up on events for the specified projection up to the specified event
+     *
+     * @param string $projectionIdentifier unambiguous identifier of the projection to catch up for
+     * @param int $maximumSequenceNumber The sequence number of the event until which events should be applied. The specified event will be included in the replay.
+      * @param Closure|null $progressCallback If set, this callback is invoked for every applied event during catch-up with the arguments $sequenceNumber and $eventStreamVersion
+     * @throws EventCouldNotBeAppliedException
+     */
+    public function catchUpUntilSequenceNumber(string $projectionIdentifier, int $maximumSequenceNumber, Closure $progressCallback = null): void
+    {
+        $eventListenerInvoker = $this->createEventListenerInvokerForProjection($projectionIdentifier)->withMaximumSequenceNumber($maximumSequenceNumber);
+        if ($progressCallback !== null) {
+            $eventListenerInvoker->onProgress($progressCallback);
+        }
+        $eventListenerInvoker->catchUp();
+    }
+
+    /**
      * @param string $projectionIdentifier
      * @return EventListenerInvoker
      */
-    private function createEventListenerInvokerForProjection(string $projectionIdentifier): EventListenerInvoker
+    protected function createEventListenerInvokerForProjection(string $projectionIdentifier): EventListenerInvoker
     {
         $projection = $this->getProjection($projectionIdentifier);
 
