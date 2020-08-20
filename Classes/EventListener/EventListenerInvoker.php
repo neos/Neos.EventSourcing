@@ -119,8 +119,7 @@ final class EventListenerInvoker
         if ($batchSize < 1) {
             throw new \InvalidArgumentException('The batch size must not be smaller than 1', 1584276378);
         }
-        $instance = new static($this->eventStore, $this->eventListener, $this->connection);
-        $instance->progressCallbacks = $this->progressCallbacks;
+        $instance = clone $this;
         $instance->transactionBatchSize = $batchSize;
         return $instance;
     }
@@ -169,6 +168,8 @@ final class EventListenerInvoker
 
         foreach ($eventStream as $eventEnvelope) {
             $sequenceNumber = $eventEnvelope->getRawEvent()->getSequenceNumber();
+
+            // this check is required because $highestAppliedSequenceNumber could skip sequence numbers if there are multiple parallel workers
             if ($sequenceNumber <= $highestAppliedSequenceNumber) {
                 continue;
             }
