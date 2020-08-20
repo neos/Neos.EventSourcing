@@ -63,7 +63,7 @@ class ProjectionManager
      * Register event listeners based on annotations
      * @throws ClassLoadingForReflectionFailedException
      */
-    protected function initializeObject(): void
+    public function initializeObject(): void
     {
         $this->projections = static::detectProjectors($this->objectManager);
     }
