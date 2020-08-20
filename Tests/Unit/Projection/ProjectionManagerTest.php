@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Neos\EventSourcing\Tests\Unit\Projection;
 
 use DG\BypassFinals;
+use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventListener\Mapping\DefaultEventToListenerMappingProvider;
 use Neos\EventSourcing\EventStore\EventStoreFactory;
 use Neos\EventSourcing\Projection\ProjectionManager;
@@ -42,6 +43,10 @@ class ProjectionManagerTest extends UnitTestCase
     /**
      * @var array
      */
+    private $projectorIdentifiers;
+    /**
+     * @var array
+     */
     private $projectorClassNames;
 
     /**
@@ -54,18 +59,24 @@ class ProjectionManagerTest extends UnitTestCase
         BypassFinals::enable();
 
         $this->mockReflectionService = $this->createMock(ReflectionService::class);
-        $this->projectorClassNames = [
-            'acme.somepackage:projection1' => $this->getMockClass(ProjectorInterface::class, [], [], 'TestAcme' . md5((string)time()) . '1Projector'),
-            'acme.somepackage:projection2' => $this->getMockClass(ProjectorInterface::class, [], [], 'TestAcme' . md5((string)time()) . '2Projector'),
+        $md5 = md5((string)time());
+        $this->projectorIdentifiers = [
+            'acme.somepackage:acmesomepackagetest' . $md5 . '0',
+            'acme.somepackage:acmesomepackagetest' . $md5 . '1'
         ];
 
-        $this->mockReflectionService->method('getAllImplementationClassNamesForInterface')->with(...ProjectorInterface::class)->willReturn([
-            $this->projectorClassNames['acme.somepackage:projection1'],
-            $this->projectorClassNames['acme.somepackage:projection2']
+        $this->projectorClassNames = [
+            $this->projectorIdentifiers[0] => $this->getMockClass(ProjectorInterface::class, [], [], 'AcmeSomePackageTest' . $md5 . '0Projector'),
+            $this->projectorIdentifiers[1] => $this->getMockClass(ProjectorInterface::class, [], [], 'AcmeSomePackageTest' . $md5 . '1Projector'),
+        ];
+
+        $this->mockReflectionService->method('getAllImplementationClassNamesForInterface')->with(ProjectorInterface::class)->willReturn([
+            $this->projectorClassNames[$this->projectorIdentifiers[0]],
+            $this->projectorClassNames[$this->projectorIdentifiers[1]]
         ]);
 
         $this->mockObjectManager = $this->createMock(ObjectManagerInterface::class);
-        $this->mockObjectManager->method('get')->with(...ReflectionService::class)->willReturn($this->mockReflectionService);
+        $this->mockObjectManager->method('get')->with(ReflectionService::class)->willReturn($this->mockReflectionService);
         $this->mockObjectManager->method('getPackageKeyByObjectName')->willReturn('Acme.SomePackage');
 
         $this->mockEventStoreFactory = $this->createMock(EventStoreFactory::class);
@@ -83,7 +94,73 @@ class ProjectionManagerTest extends UnitTestCase
         $this->projectionManager->initializeObject();
 
         $projections = $this->projectionManager->getProjections();
-        $this->assertSame($this->projectorClassNames['acme.somepackage:projection1'], $projections[0]->getProjectorClassName());
-        $this->assertSame($this->projectorClassNames['acme.somepackage:projection2'], $projections[1]->getProjectorClassName());
+        $this->assertSame($this->projectorClassNames[$this->projectorIdentifiers[0]], $projections[0]->getProjectorClassName());
+        $this->assertSame($this->projectorClassNames[$this->projectorIdentifiers[1]], $projections[1]->getProjectorClassName());
+    }
+
+    /**
+     * @test
+     * @noinspection ClassMockingCorrectnessInspection
+     */
+    public function catchUpCallsEventListenerInvokerForCatchingUp(): void
+    {
+        $mockEventListenerInvoker = $this->createMock(EventListenerInvoker::class);
+
+        $projectionManager = $this->createPartialMock(ProjectionManager::class, ['createEventListenerInvokerForProjection']);
+        $projectionManager->method('createEventListenerInvokerForProjection')->with($this->projectorIdentifiers[0])->willReturn($mockEventListenerInvoker);
+
+        $mockEventListenerInvoker->expects($this->once())->method('catchUp');
+        $projectionManager->catchUp($this->projectorIdentifiers[0]);
+    }
+
+    /**
+     * @test
+     * @noinspection ClassMockingCorrectnessInspection
+     */
+    public function catchUpSetsCallbackOnEventListenerInvoker(): void
+    {
+        $mockEventListenerInvoker = $this->createMock(EventListenerInvoker::class);
+
+        $projectionManager = $this->createPartialMock(ProjectionManager::class, ['createEventListenerInvokerForProjection']);
+        $projectionManager->method('createEventListenerInvokerForProjection')->with($this->projectorIdentifiers[0])->willReturn($mockEventListenerInvoker);
+
+        $callback = static function() { echo 'hello'; };
+
+        $mockEventListenerInvoker->expects($this->once())->method('onProgress')->with($callback);
+        $projectionManager->catchUp($this->projectorIdentifiers[0], $callback);
+    }
+
+    /**
+     * @test
+     * @noinspection ClassMockingCorrectnessInspection
+     */
+    public function catchUpUntilSequenceNumberCallsEventListenerInvokerForCatchingUp(): void
+    {
+        $mockEventListenerInvoker = $this->createMock(EventListenerInvoker::class);
+
+        $projectionManager = $this->createPartialMock(ProjectionManager::class, ['createEventListenerInvokerForProjection']);
+        $projectionManager->method('createEventListenerInvokerForProjection')->with($this->projectorIdentifiers[0])->willReturn($mockEventListenerInvoker);
+
+        $mockEventListenerInvoker->expects($this->once())->method('withMaximumSequenceNumber')->with(42)->willReturn($mockEventListenerInvoker);
+        $mockEventListenerInvoker->expects($this->once())->method('catchUp');
+        $projectionManager->catchUpUntilSequenceNumber($this->projectorIdentifiers[0], 42);
+    }
+
+    /**
+     * @test
+     * @noinspection ClassMockingCorrectnessInspection
+     */
+    public function catchUpUntilSequenceNumberSetCallbackOnEventListenerInvoker(): void
+    {
+        $mockEventListenerInvoker = $this->createMock(EventListenerInvoker::class);
+
+        $projectionManager = $this->createPartialMock(ProjectionManager::class, ['createEventListenerInvokerForProjection']);
+        $projectionManager->method('createEventListenerInvokerForProjection')->with($this->projectorIdentifiers[0])->willReturn($mockEventListenerInvoker);
+
+        $callback = static function() { echo 'hello'; };
+
+        $mockEventListenerInvoker->method('withMaximumSequenceNumber')->willReturn($mockEventListenerInvoker);
+        $mockEventListenerInvoker->expects($this->once())->method('onProgress')->with($callback);
+        $projectionManager->catchUpUntilSequenceNumber($this->projectorIdentifiers[0], 100, $callback);
     }
 }

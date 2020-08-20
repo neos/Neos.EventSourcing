@@ -173,6 +173,104 @@ class ProjectionCommandController extends CommandController
     }
 
     /**
+     * Catch up a projection
+     *
+     * This command allows you to catch up on all relevant events for one specific projection.
+     *
+     * Usually these events are applied through jobs in a job queue (see the class CatchUpEventListenerJob
+     * for more details). However, for debugging and some other purposes it may be useful to catch up on
+     * events manually.
+     *
+     * Note that this command only catches up on events for a specific projection.
+     *
+     * By passing a maximum sequence number you can limit catching up up to the specified event.
+     *
+     * @param string $projection The projection identifier; see projection:list for possible options
+     * @param int|null $maximumSequenceNumber If specified, only replay events until this event sequence number
+     * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
+     * @return void
+     * @throws EventCouldNotBeAppliedException
+     * @throws StopCommandException
+     * @see neos.eventsourcing:projection:list
+     * @see neos.eventsourcing:projection:replay
+     */
+    public function catchUpCommand(string $projection, int $maximumSequenceNumber = null, $quiet = false): void
+    {
+        $projectionDto = $this->resolveProjectionOrQuit($projection);
+
+        if (!$quiet) {
+            $this->outputLine('Catching up on events for projection "%s"%s ...', [$projectionDto->getIdentifier(), ($maximumSequenceNumber ? ' until sequence number ' . $maximumSequenceNumber : '')]);
+            $this->output->progressStart();
+        }
+        $eventsCount = 0;
+        $progressCallback = function () use (&$eventsCount, $quiet) {
+            $eventsCount++;
+            if (!$quiet) {
+                $this->output->progressAdvance();
+            }
+        };
+        if ($maximumSequenceNumber !== null) {
+            $this->projectionManager->catchUpUntilSequenceNumber($projectionDto->getIdentifier(), $maximumSequenceNumber, $progressCallback);
+        } else {
+            $this->projectionManager->catchUp($projectionDto->getIdentifier(), $progressCallback);
+        }
+
+        if (!$quiet) {
+            $this->output->progressFinish();
+            $this->outputLine('Applied %s events.', [$eventsCount]);
+        }
+    }
+
+    /**
+     * Catch up all projections
+     *
+     * This command allows you to catch up on all relevant events for all known projections.
+     *
+     * Usually these events are applied through jobs in a job queue (see the class CatchUpEventListenerJob
+     * for more details). However, for debugging and some other purposes it may be useful to catch up on
+     * events manually.
+     *
+     * By passing a maximum sequence number you can limit catching up up to the specified event.
+     *
+     * @param int|null $maximumSequenceNumber If specified, only replay events until this event sequence number
+     * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
+     * @return void
+     * @throws EventCouldNotBeAppliedException
+     * @see neos.eventsourcing:projection:list
+     * @see neos.eventsourcing:projection:replay
+     * @noinspection DisconnectedForeachInstructionInspection
+     */
+    public function catchUpAllCommand(int $maximumSequenceNumber = null, $quiet = false): void
+    {
+        if (!$quiet) {
+            $this->outputLine('Catching up on events for all projections%s', [$maximumSequenceNumber ? ' until sequence number ' . $maximumSequenceNumber : '']);
+        }
+        $eventsCount = 0;
+        $progressCallback = function () use (&$eventsCount, $quiet) {
+            $eventsCount++;
+            $quiet || $this->output->progressAdvance();
+        };
+        foreach ($this->projectionManager->getProjections() as $projection) {
+            if (!$quiet) {
+                $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
+                $this->output->progressStart();
+            }
+            if ($maximumSequenceNumber !== null) {
+                $this->projectionManager->catchUpUntilSequenceNumber($projection->getIdentifier(), $maximumSequenceNumber, $progressCallback);
+            } else {
+                $this->projectionManager->catchUp($projection->getIdentifier(), $progressCallback);
+            }
+            if (!$quiet) {
+                $this->output->progressFinish();
+                $this->outputLine();
+            }
+        }
+        if (!$quiet) {
+            $this->outputLine('Applied %d events.', [$eventsCount]);
+        }
+    }
+
+    /**
      * Returns the shortest unambiguous projection identifier for a given $fullProjectionIdentifier
      *
      * @param string $fullProjectionIdentifier
