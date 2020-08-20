@@ -12,8 +12,6 @@ use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventStore\EventNormalizer;
 use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\EventStream;
-use Neos\EventSourcing\EventStore\EventStreamIteratorInterface;
-use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\Storage\InMemory\InMemoryStreamIterator;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
@@ -112,23 +110,22 @@ class EventListenerInvokerTest extends UnitTestCase
             ];
         }
 
-        $streamIterator = new InMemoryStreamIterator();
-        $streamIterator->setEventRecords($eventRecords);
+        $streamIterator = new InMemoryStreamIterator($eventRecords);
         $eventStream = new EventStream(StreamName::fromString('FooStreamName'), $streamIterator, $this->mockEventNormalizer);
 
         // Simulate that the first 10 events have already been applied:
         $this->mockAppliedEventsStorage->expects($this->atLeastOnce())->method('reserveHighestAppliedEventSequenceNumber')->willReturn(10);
         $this->mockEventStore->expects($this->once())->method('load')->with(StreamName::all(), 11)->willReturn($eventStream);
 
-        $this->eventListenerInvoker = new EventListenerInvoker($this->mockEventStore, $this->mockEventListener, $this->mockConnection);
+        $eventListenerInvoker = new EventListenerInvoker($this->mockEventStore, $this->mockEventListener, $this->mockConnection);
 
         $appliedEventsCounter = 0;
-        $this->eventListenerInvoker->onProgress(static function() use(&$appliedEventsCounter){
+        $eventListenerInvoker->onProgress(static function() use(&$appliedEventsCounter){
             $appliedEventsCounter ++;
         });
 
-        $this->eventListenerInvoker = $this->eventListenerInvoker->withMaximumSequenceNumber(50);
-        $this->eventListenerInvoker->catchUp();
+        $eventListenerInvoker = $eventListenerInvoker->withMaximumSequenceNumber(50);
+        $eventListenerInvoker->catchUp();
 
         $this->assertSame(40, $appliedEventsCounter);
     }
@@ -163,7 +160,7 @@ class EventListenerInvokerTest extends UnitTestCase
      */
     public function replaySetsHighestAppliedSequenceNumberToMinusOneAndCallsCatchup(): void
     {
-        $this->mockAppliedEventsStorage->expects($this->once())->method('saveHighestAppliedSequenceNumber')->with(...-1);
+        $this->mockAppliedEventsStorage->expects($this->once())->method('saveHighestAppliedSequenceNumber')->with(-1);
 
         $eventListenerInvokerPartialMock = $this->createPartialMock(EventListenerInvoker::class, ['catchUp']);
         $eventListenerInvokerPartialMock->__construct($this->mockEventStore, $this->mockEventListener, $this->mockConnection);
