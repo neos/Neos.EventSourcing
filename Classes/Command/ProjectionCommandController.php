@@ -89,9 +89,11 @@ class ProjectionCommandController extends CommandController
     /**
      * Replay a projection
      *
-     * This command allows you to replay all relevant events for one specific projection.
+     * This command allows you to replay all relevant events for one specific projection. By passing a maximum
+     * sequence number you can limit replay up to the specified event.
      *
      * @param string $projection The projection identifier; see projection:list for possible options
+     * @param int|null $maximumSequenceNumber If specified, only replay events until this event sequence number
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
      * @throws EventCouldNotBeAppliedException
@@ -99,21 +101,27 @@ class ProjectionCommandController extends CommandController
      * @see neos.eventsourcing:projection:list
      * @see neos.eventsourcing:projection:replayall
      */
-    public function replayCommand(string $projection, $quiet = false): void
+    public function replayCommand(string $projection, int $maximumSequenceNumber = null, $quiet = false): void
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
         if (!$quiet) {
-            $this->outputLine('Replaying events for projection "%s" ...', [$projectionDto->getIdentifier()]);
+            $this->outputLine('Replaying events for projection "%s"%s ...', [$projectionDto->getIdentifier(), ($maximumSequenceNumber ? ' until sequence number ' . $maximumSequenceNumber : '')]);
             $this->output->progressStart();
         }
         $eventsCount = 0;
-        $this->projectionManager->replay($projectionDto->getIdentifier(), function () use (&$eventsCount, $quiet) {
-            $eventsCount ++;
+        $progressCallback = function () use (&$eventsCount, $quiet) {
+            $eventsCount++;
             if (!$quiet) {
                 $this->output->progressAdvance();
             }
-        });
+        };
+        if ($maximumSequenceNumber !== null) {
+            $this->projectionManager->replayUntilSequenceNumber($projectionDto->getIdentifier(), $maximumSequenceNumber, $progressCallback);
+        } else {
+            $this->projectionManager->replay($projectionDto->getIdentifier(), $progressCallback);
+        }
+
         if (!$quiet) {
             $this->output->progressFinish();
             $this->outputLine('Replayed %s events.', [$eventsCount]);
@@ -123,31 +131,37 @@ class ProjectionCommandController extends CommandController
     /**
      * Replay all projections
      *
-     * This command allows you to replay all relevant events for all known projections.
+     * This command allows you to replay all relevant events for all known projections. By passing a maximum
+     * sequence number you can limit replay up to the specified event.
      *
+     * @param int|null $maximumSequenceNumber If specified, only replay events until this event sequence number
      * @param bool $quiet If specified, this command won't produce any output apart from errors (useful for automation)
      * @return void
-     * @see neos.eventsourcing:projection:replay
-     * @see neos.eventsourcing:projection:list
      * @throws EventCouldNotBeAppliedException
+     * @see neos.eventsourcing:projection:list
+     * @see neos.eventsourcing:projection:replay
+     * @noinspection DisconnectedForeachInstructionInspection
      */
-    public function replayAllCommand($quiet = false): void
+    public function replayAllCommand(int $maximumSequenceNumber = null, $quiet = false): void
     {
         if (!$quiet) {
-            $this->outputLine('Replaying all projections');
+            $this->outputLine('Replaying all projections%s', [$maximumSequenceNumber ? ' until sequence number ' . $maximumSequenceNumber : '']);
         }
         $eventsCount = 0;
+        $progressCallback = function () use (&$eventsCount, $quiet) {
+            $eventsCount++;
+            $quiet || $this->output->progressAdvance();
+        };
         foreach ($this->projectionManager->getProjections() as $projection) {
             if (!$quiet) {
                 $this->outputLine('Replaying events for projection "%s" ...', [$projection->getIdentifier()]);
                 $this->output->progressStart();
             }
-            $this->projectionManager->replay($projection->getIdentifier(), function () use (&$eventsCount, $quiet) {
-                $eventsCount++;
-                if (!$quiet) {
-                    $this->output->progressAdvance();
-                }
-            });
+            if ($maximumSequenceNumber !== null) {
+                $this->projectionManager->replayUntilSequenceNumber($projection->getIdentifier(), $maximumSequenceNumber, $progressCallback);
+            } else {
+                $this->projectionManager->replay($projection->getIdentifier(), $progressCallback);
+            }
             if (!$quiet) {
                 $this->output->progressFinish();
                 $this->outputLine();

@@ -12,6 +12,7 @@ namespace Neos\EventSourcing\Projection;
  * source code.
  */
 
+use Closure;
 use Doctrine\ORM\EntityManagerInterface;
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
@@ -96,12 +97,42 @@ class ProjectionManager
      * Replay events of the specified projection
      *
      * @param string $projectionIdentifier unambiguous identifier of the projection to replay
-     * @param \Closure $progressCallback If set, this callback is invoked for every applied event during replay with the arguments $sequenceNumber and $eventStreamVersion
+     * @param Closure|null $progressCallback If set, this callback is invoked for every applied event during replay with the arguments $sequenceNumber and $eventStreamVersion
      * @return void
+     * @throws EventCouldNotBeAppliedException
      * @api
+     */
+    public function replay(string $projectionIdentifier, Closure $progressCallback = null): void
+    {
+        $eventListenerInvoker = $this->createEventListenerInvokerForProjection($projectionIdentifier);
+        if ($progressCallback !== null) {
+            $eventListenerInvoker->onProgress($progressCallback);
+        }
+        $eventListenerInvoker->replay();
+    }
+
+    /**
+     * Replay events of the specified projection until the specified event sequence number
+     *
+     * @param string $projectionIdentifier unambiguous identifier of the projection to replay
+     * @param int $maximumSequenceNumber The sequence number of the event until which events should be replayed. The specified event will be included in the replay.
+     * @param Closure|null $progressCallback If set, this callback is invoked for every applied event during replay with the arguments $sequenceNumber and $eventStreamVersion
      * @throws EventCouldNotBeAppliedException
      */
-    public function replay(string $projectionIdentifier, \Closure $progressCallback = null): void
+    public function replayUntilSequenceNumber(string $projectionIdentifier, int $maximumSequenceNumber, Closure $progressCallback = null): void
+    {
+        $eventListenerInvoker = $this->createEventListenerInvokerForProjection($projectionIdentifier)->withMaximumSequenceNumber($maximumSequenceNumber);
+        if ($progressCallback !== null) {
+            $eventListenerInvoker->onProgress($progressCallback);
+        }
+        $eventListenerInvoker->replay();
+    }
+
+    /**
+     * @param string $projectionIdentifier
+     * @return EventListenerInvoker
+     */
+    private function createEventListenerInvokerForProjection(string $projectionIdentifier): EventListenerInvoker
     {
         $projection = $this->getProjection($projectionIdentifier);
 
@@ -113,11 +144,7 @@ class ProjectionManager
         $projector->reset();
 
         $connection = $this->objectManager->get(EntityManagerInterface::class)->getConnection();
-        $eventListenerInvoker = new EventListenerInvoker($eventStore, $projector, $connection);
-        if ($progressCallback !== null) {
-            $eventListenerInvoker->onProgress($progressCallback);
-        }
-        $eventListenerInvoker->replay();
+        return new EventListenerInvoker($eventStore, $projector, $connection);
     }
 
     /**
