@@ -83,6 +83,17 @@ class EventListenerInvokerTest extends UnitTestCase
 
     /**
      * @test
+     */
+    public function withMaximumSequenceNumberRejectsSequenceNumbersSmallerThanZero(): void
+    {
+        $this->eventListenerInvoker = new EventListenerInvoker($this->mockEventStore, $this->mockEventListener, $this->mockConnection);
+
+        $this->expectExceptionCode(1597821711);
+        $this->eventListenerInvoker->withMaximumSequenceNumber(-1);
+    }
+
+    /**
+     * @test
      * @throws
      */
     public function catchUpAppliesEventsUpToTheDefinedMaximumSequenceNumber(): void
@@ -144,6 +155,21 @@ class EventListenerInvokerTest extends UnitTestCase
         $this->eventListenerInvoker = new EventListenerInvoker($this->mockEventStore, $mockEventListener, $this->mockConnection);
         $this->mockEventStore->expects($this->once())->method('load')->with($streamName, 1)->willReturn($this->mockEventStream);
         $this->eventListenerInvoker->catchUp();
+    }
+
+    /**
+     * @test
+     * @throws
+     */
+    public function replaySetsHighestAppliedSequenceNumberToMinusOneAndCallsCatchup(): void
+    {
+        $this->mockAppliedEventsStorage->expects($this->once())->method('saveHighestAppliedSequenceNumber')->with(...-1);
+
+        $eventListenerInvokerPartialMock = $this->createPartialMock(EventListenerInvoker::class, ['catchUp']);
+        $eventListenerInvokerPartialMock->__construct($this->mockEventStore, $this->mockEventListener, $this->mockConnection);
+        $eventListenerInvokerPartialMock->expects($this->once())->method('catchUp');
+
+        $eventListenerInvokerPartialMock->replay();
     }
 
     /**
