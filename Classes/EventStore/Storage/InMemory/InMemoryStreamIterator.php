@@ -33,17 +33,11 @@ final class InMemoryStreamIterator implements EventStreamIteratorInterface
     private $innerIterator;
 
     /**
-     * @var array
-     */
-    private $eventRecords = [];
-
-    /**
      * @param array $eventRecords
      */
-    public function setEventRecords(array $eventRecords): void
+    public function __construct(array $eventRecords)
     {
-        $this->eventRecords = $eventRecords;
-        $this->innerIterator = new ArrayIterator($this->eventRecords);
+        $this->innerIterator = new ArrayIterator($eventRecords);
     }
 
     /**
