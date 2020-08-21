@@ -108,6 +108,11 @@ class ProjectionManager
         if ($progressCallback !== null) {
             $eventListenerInvoker->onProgress($progressCallback);
         }
+
+        $projection = $this->getProjection($projectionIdentifier);
+        $projector = $this->objectManager->get($projection->getProjectorClassName());
+        $projector->reset();
+
         $eventListenerInvoker->replay();
     }
 
@@ -125,6 +130,11 @@ class ProjectionManager
         if ($progressCallback !== null) {
             $eventListenerInvoker->onProgress($progressCallback);
         }
+
+        $projection = $this->getProjection($projectionIdentifier);
+        $projector = $this->objectManager->get($projection->getProjectorClassName());
+        $projector->reset();
+
         $eventListenerInvoker->replay();
     }
 
@@ -168,13 +178,11 @@ class ProjectionManager
     protected function createEventListenerInvokerForProjection(string $projectionIdentifier): EventListenerInvoker
     {
         $projection = $this->getProjection($projectionIdentifier);
+        $projector = $this->objectManager->get($projection->getProjectorClassName());
+        assert($projector instanceof ProjectorInterface);
 
         $eventStoreIdentifier = $this->mappingProvider->getEventStoreIdentifierForListenerClassName($projection->getProjectorClassName());
         $eventStore = $this->eventStoreFactory->create($eventStoreIdentifier);
-
-        /** @var ProjectorInterface $projector */
-        $projector = $this->objectManager->get($projection->getProjectorClassName());
-        $projector->reset();
 
         $connection = $this->objectManager->get(EntityManagerInterface::class)->getConnection();
         return new EventListenerInvoker($eventStore, $projector, $connection);
