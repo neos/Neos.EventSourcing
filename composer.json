@@ -5,8 +5,6 @@
     "license": "MIT",
     "require": {
         "php": ">=7.2",
-        "neos/flow": "^5.3 || ^6.0",
-        "flowpack/jobqueue-common": "^3.0 || dev-master",
         "symfony/serializer": "^5.1",
         "symfony/property-access": "^5.1",
         "ramsey/uuid": "^3.9"
@@ -14,6 +12,9 @@
     "require-dev": {
         "roave/security-advisories": "dev-master",
         "dg/bypass-finals": "^1.2"
+    },
+    "suggest": {
+        "flowpack/jobqueue-common": "Needed for Neos/Flow only"
     },
     "autoload": {
         "psr-4": {
