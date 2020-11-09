@@ -24,15 +24,19 @@ class SymfonyEventPublisher implements EventPublisherInterface
      */
     private $eventDispatcher;
 
-    public function __construct(EventDispatcherInterface $eventDispatcher)
+    private $eventStoreContainerId;
+
+    public function __construct(EventDispatcherInterface $eventDispatcher, string $eventStoreContainerId)
     {
-        // TODO - later: "event store name"
         $this->eventDispatcher = $eventDispatcher;
+        $this->eventStoreContainerId = $eventStoreContainerId;
     }
 
 
     public function publish(DomainEvents $events): void
     {
+        // TODO: listener filter
+
         $queuedEventListenerClassNames = [];
         $processedEventClassNames = [];
         foreach ($events as $event) {
@@ -86,7 +90,7 @@ class SymfonyEventPublisher implements EventPublisherInterface
 
     private function triggerAsyncBackgroundJob($listenerClassName)
     {
-        $process = new Process(['php', 'bin/console', InternalCatchUpEventListenerCommand::getDefaultName(), $listenerClassName]);
+        $process = new Process(['php', 'bin/console', InternalCatchUpEventListenerCommand::getDefaultName(), $listenerClassName, $this->eventStoreContainerId]);
         $process->run(); // !! WE DO NOT WAIT FOR THE RESULT - start !! - TODO: adjust
         $errOut = $process->getOutput() . $process->getErrorOutput();
         dump($errOut);

@@ -23,12 +23,6 @@ class InternalCatchUpEventListenerCommand extends Command
     // the name of the command (the part after "bin/console")
     protected static $defaultName = 'eventsourcing:internal:catchup-event-listener';
 
-
-    /**
-     * @var EventStore
-     */
-    protected $eventStore;
-
     /**
      * @var ContainerInterface
      */
@@ -43,9 +37,8 @@ class InternalCatchUpEventListenerCommand extends Command
      * SayHelloCommand constructor.
      * @param EventStore $eventStore
      */
-    public function __construct(EventStore $eventStore, ContainerInterface $container, Connection $connection)
+    public function __construct(ContainerInterface $container, Connection $connection)
     {
-        $this->eventStore = $eventStore; // TODO multiple event stores
         $this->container = $container;
         $this->connection = $connection;
         parent::__construct();
@@ -55,19 +48,23 @@ class InternalCatchUpEventListenerCommand extends Command
     protected function configure()
     {
         $this->addArgument('eventListenerClassName', InputArgument::REQUIRED);
+        $this->addArgument('eventStoreContainerId', InputArgument::REQUIRED);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         dump("HALLO");
         $eventListenerClassName = $input->getArgument('eventListenerClassName');
+        $eventStoreContainerId = $input->getArgument('eventStoreContainerId');
 
         dump($eventListenerClassName);
         $listener = $this->container->get($eventListenerClassName);
 
         dump("HI");
         dump($listener);
-        $eventListenerInvoker = new EventListenerInvoker($this->eventStore, $listener, $this->connection);
+        $eventStore = $this->container->get($eventStoreContainerId);
+        dump($eventStore, "ES");
+        $eventListenerInvoker = new EventListenerInvoker($eventStore, $listener, $this->connection);
         $eventListenerInvoker->catchUp();
 
         die();
