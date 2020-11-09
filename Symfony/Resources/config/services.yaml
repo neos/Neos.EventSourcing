@@ -26,8 +26,6 @@ services:
   neos_eventsourcing_event_eventTypeResolver:
     class: Neos\EventSourcing\Event\Resolver\FullyQualifiedClassNameResolver
 
-
-
   neos_eventsourcing_eventStore_eventNormalizer:
     class: Neos\EventSourcing\EventStore\EventNormalizer
     arguments:
