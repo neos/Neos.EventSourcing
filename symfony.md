@@ -13,3 +13,7 @@ doctrine:
                 default_table_options:
                     charset: utf8mb4
                     collate: utf8mb4_unicode_ci
+
+
+
+... make projectors public (could be later done with compiler pass)

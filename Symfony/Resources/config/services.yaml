@@ -1,3 +1,6 @@
+parameters:
+  neos_foo:
+
 services:
 
   # TODO: this should be configured "PER BOUNDED CONTEXT" (analogous to how Doctrine DBAL connections are handled)
@@ -21,7 +24,7 @@ services:
       $options: []
       #  eventTableName:
       $eventNormalizer: "@neos_eventsourcing_eventStore_eventNormalizer"
-      $connection: "@Doctrine\\DBAL\\Driver\\Connection"
+      $connection: "@Doctrine\\DBAL\\Connection"
 
   neos_eventsourcing_event_eventTypeResolver:
     class: Neos\EventSourcing\Event\Resolver\FullyQualifiedClassNameResolver
@@ -32,10 +35,27 @@ services:
       $eventTypeResolver: "@neos_eventsourcing_event_eventTypeResolver"
 
   neos_eventsourcing_eventPublisher:
-    class: Neos\EventSourcing\EventPublisher\NoopEventPublisher
+    class: Neos\EventSourcing\Symfony\EventPublisher\SymfonyEventPublisher
+    arguments:
+      $eventDispatcher: "@Symfony\\Component\\EventDispatcher\\EventDispatcherInterface"
 
   neos_eventsourcing_symfony_command_setupCommand:
     class: Neos\EventSourcing\Symfony\Command\SetupCommand
     tags: ["console.command"]
     arguments:
       $eventStore: "@neos_eventsourcing_eventstore"
+      $doctrineAppliedEventsStorageSetup: "@neos_eventsourcing_symfony_eventlistener_appliedeventsstorage_doctrineAppliedEventsStorageSetup"
+
+  neos_eventsourcing_symfony_eventlistener_appliedeventsstorage_doctrineAppliedEventsStorageSetup:
+    class: Neos\EventSourcing\Symfony\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorageSetup
+    arguments:
+      $connection: "@Doctrine\\DBAL\\Connection"
+
+
+  neos_eventsourcing_symfony_command_internalFooCommand:
+    class: Neos\EventSourcing\Symfony\Command\InternalCatchUpEventListenerCommand
+    tags: [ "console.command" ]
+    arguments:
+      $eventStore: "@neos_eventsourcing_eventstore"
+      $container: "@Psr\\Container\\ContainerInterface"
+      $connection: "@Doctrine\\DBAL\\Connection"

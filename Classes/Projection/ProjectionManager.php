@@ -30,7 +30,7 @@ use Neos\Flow\Reflection\ReflectionService;
  * @api
  * @Flow\Scope("singleton")
  */
-class ProjectionManager
+class ProjectionManager implements ProjectionManagerInterface
 {
     /**
      * @var ObjectManagerInterface

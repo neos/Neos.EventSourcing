@@ -10,6 +10,7 @@ use Neos\Error\Messages\Notice;
 use Neos\Error\Messages\Result;
 use Neos\Error\Messages\Warning;
 use Neos\EventSourcing\EventStore\EventStore;
+use Neos\EventSourcing\Symfony\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorageSetup;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -25,12 +26,18 @@ class SetupCommand extends Command
     private $eventStore;
 
     /**
+     * @var DoctrineAppliedEventsStorageSetup
+     */
+    private $doctrineAppliedEventsStorageSetup;
+
+    /**
      * SayHelloCommand constructor.
      * @param EventStore $eventStore
      */
-    public function __construct(EventStore $eventStore)
+    public function __construct(EventStore $eventStore, DoctrineAppliedEventsStorageSetup $doctrineAppliedEventsStorageSetup)
     {
         $this->eventStore = $eventStore;
+        $this->doctrineAppliedEventsStorageSetup = $doctrineAppliedEventsStorageSetup;
         parent::__construct();
     }
 
@@ -43,6 +50,7 @@ class SetupCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $result = $this->eventStore->setup();
+        $result->merge($this->doctrineAppliedEventsStorageSetup->setup());
         self::renderResult($result, $output);
 
         if ($result->hasErrors()) {
