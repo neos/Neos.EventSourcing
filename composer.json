@@ -7,6 +7,7 @@
         "php": ">=7.2",
         "symfony/serializer": "^5.1",
         "symfony/property-access": "^5.1",
+        "neos/error-messages": "^6.3",
         "ramsey/uuid": "^3.9"
     },
     "require-dev": {
