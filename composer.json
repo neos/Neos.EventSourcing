@@ -18,7 +18,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Neos\\EventSourcing\\": "Classes"
+            "Neos\\EventSourcing\\": "Classes",
+            "Neos\\EventSourcing\\Symfony\\": "Symfony"
         }
     },
     "autoload-dev": {
