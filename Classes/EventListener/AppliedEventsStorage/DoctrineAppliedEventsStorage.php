@@ -21,6 +21,8 @@ use Neos\EventSourcing\EventListener\Exception\HighestAppliedSequenceNumberCantB
 
 /**
  * Doctrine DBAL adapter for the AppliedEventsStorageInterface
+ *
+ * TODO: we should have one doctrine applied events storage table PER BOUNDED CONTEXT, i.e. per storage.
  */
 final class DoctrineAppliedEventsStorage implements AppliedEventsStorageInterface
 {

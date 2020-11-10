@@ -14,7 +14,7 @@ namespace Neos\EventSourcing\Command;
 
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\Projection\Projection;
-use Neos\EventSourcing\Projection\ProjectionManager;
+use Neos\EventSourcing\Projection\ProjectionManagerInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 use Neos\Flow\Cli\Exception\StopCommandException;
@@ -28,7 +28,7 @@ class ProjectionCommandController extends CommandController
 {
     /**
      * @Flow\Inject
-     * @var ProjectionManager
+     * @var ProjectionManagerInterface
      */
     protected $projectionManager;
 

@@ -5,19 +5,24 @@
     "license": "MIT",
     "require": {
         "php": ">=7.2",
-        "neos/flow": "^5.3 || ^6.0",
-        "flowpack/jobqueue-common": "^3.0 || dev-master",
         "symfony/serializer": "^5.1",
         "symfony/property-access": "^5.1",
+        "neos/error-messages": "*",
+        "neos/utility-objecthandling": "*",
         "ramsey/uuid": "^3.9"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master",
         "dg/bypass-finals": "^1.2"
     },
+    "suggest": {
+        "flowpack/jobqueue-common": "Needed for Neos/Flow usage only",
+        "symfony/process": "Needed for standalone usage"
+    },
     "autoload": {
         "psr-4": {
-            "Neos\\EventSourcing\\": "Classes"
+            "Neos\\EventSourcing\\": "Classes",
+            "Neos\\EventSourcing\\Symfony\\": "Symfony"
         }
     },
     "autoload-dev": {
