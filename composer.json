@@ -5,7 +5,7 @@
     "license": "MIT",
     "require": {
         "php": ">=7.2",
-        "neos/flow": "^5.3 || ^6.0",
+        "neos/flow": "^5.3 || ^6.0 || dev-master",
         "flowpack/jobqueue-common": "^3.0 || dev-master",
         "symfony/serializer": "^5.1",
         "symfony/property-access": "^5.1",
