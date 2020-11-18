@@ -12,7 +12,7 @@ class Version20190830130314 extends AbstractMigration
     /**
      * @return string
      */
-    public function getDescription()
+    public function getDescription(): string 
     {
         return 'Drop obsolete "processstate" table';
     }
@@ -22,7 +22,7 @@ class Version20190830130314 extends AbstractMigration
      * @return void
      * @throws DBALException | AbortMigrationException
      */
-    public function up(Schema $schema)
+    public function up(Schema $schema): void 
     {
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on "mysql".');
 
@@ -34,7 +34,7 @@ class Version20190830130314 extends AbstractMigration
      * @return void
      * @throws DBALException | AbortMigrationException
      */
-    public function down(Schema $schema)
+    public function down(Schema $schema): void 
     {
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on "mysql".');
 
