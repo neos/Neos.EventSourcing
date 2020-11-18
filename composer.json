@@ -9,7 +9,7 @@
         "flowpack/jobqueue-common": "^3.0 || dev-master",
         "symfony/serializer": "^5.1",
         "symfony/property-access": "^5.1",
-        "ramsey/uuid": "^3.9"
+        "ramsey/uuid": "^3.9 || ^4.0"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master",
