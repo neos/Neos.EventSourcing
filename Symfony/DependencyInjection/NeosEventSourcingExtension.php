@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Neos\EventSourcing\Symfony\DependencyInjection;
-
 
 use Doctrine\DBAL\Connection;
 use Neos\EventSourcing\EventStore\EventStore;
@@ -49,7 +47,6 @@ class NeosEventSourcingExtension extends Extension
                 ->setClass(SymfonyEventPublisher::class)
                 ->setArgument('$eventDispatcher', new Reference(EventDispatcherInterface::class))
                 ->setArgument('$eventStoreContainerId', 'neos_eventsourcing.eventstore.' . $name);
-
         }
     }
 

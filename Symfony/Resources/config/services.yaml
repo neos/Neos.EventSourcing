@@ -42,7 +42,7 @@ services:
     tags: ["console.command"]
     arguments:
       # TODO
-      $eventStore: "@neos_eventsourcing.eventstore.example" # TODO needs adjustment
+      $eventStore: "@neos_eventsourcing.eventstore.blog" # TODO needs adjustment
       $doctrineAppliedEventsStorageSetup: "@neos_eventsourcing_symfony_eventlistener_appliedeventsstorage_doctrineAppliedEventsStorageSetup"
 
   neos_eventsourcing_symfony_eventlistener_appliedeventsstorage_doctrineAppliedEventsStorageSetup:

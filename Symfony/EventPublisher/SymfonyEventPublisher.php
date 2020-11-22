@@ -1,18 +1,13 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Neos\EventSourcing\Symfony\EventPublisher;
-
 
 use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\EventPublisher\EventPublisherInterface;
-use Neos\EventSourcing\EventPublisher\JobQueue\CatchUpEventListenerJob;
 use Neos\EventSourcing\Symfony\Command\InternalCatchUpEventListenerCommand;
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Extension\Extension;
-use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Process\Process;
 
@@ -53,7 +48,7 @@ class SymfonyEventPublisher implements EventPublisherInterface
             // you are NEVER allowed to call $this->eventDispatcher->dispatch($event, $eventClassName);
             // because otherwise, the appliedEventsLog is not updated properly.
             $listeners = $this->eventDispatcher->getListeners($eventClassName);
-            dump($listeners);
+            //dump($listeners);
 
             foreach ($listeners as $listenerClassNameAndMethodName) {
                 $listenerClassName = get_class($listenerClassNameAndMethodName[0]);
@@ -90,7 +85,16 @@ class SymfonyEventPublisher implements EventPublisherInterface
 
     private function triggerAsyncBackgroundJob($listenerClassName)
     {
-        $process = new Process(['php', 'bin/console', InternalCatchUpEventListenerCommand::getDefaultName(), $listenerClassName, $this->eventStoreContainerId]);
+
+        $process = new Process(
+            [
+                'php',
+                '/var/www/eventsourcing.app/bin/console',
+                InternalCatchUpEventListenerCommand::getDefaultName(),
+                $listenerClassName,
+                $this->eventStoreContainerId
+            ]
+        );
         $process->run(); // !! WE DO NOT WAIT FOR THE RESULT - start !! - TODO: adjust
         $errOut = $process->getOutput() . $process->getErrorOutput();
         dump($errOut);

@@ -4,12 +4,7 @@ declare(strict_types=1);
 
 namespace Neos\EventSourcing\Symfony\Command;
 
-use App\Domain\Command\SayHello;
 use Doctrine\DBAL\Connection;
-use Neos\Error\Messages\Error;
-use Neos\Error\Messages\Notice;
-use Neos\Error\Messages\Result;
-use Neos\Error\Messages\Warning;
 use Neos\EventSourcing\EventListener\EventListenerInvoker;
 use Neos\EventSourcing\EventStore\EventStore;
 use Psr\Container\ContainerInterface;
@@ -53,22 +48,15 @@ class InternalCatchUpEventListenerCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        dump("HALLO");
         $eventListenerClassName = $input->getArgument('eventListenerClassName');
         $eventStoreContainerId = $input->getArgument('eventStoreContainerId');
 
-        dump($eventListenerClassName);
         $listener = $this->container->get($eventListenerClassName);
-
-        dump("HI");
-        dump($listener);
         $eventStore = $this->container->get($eventStoreContainerId);
-        dump($eventStore, "ES");
+
         $eventListenerInvoker = new EventListenerInvoker($eventStore, $listener, $this->connection);
         $eventListenerInvoker->catchUp();
 
-        die();
         return Command::SUCCESS;
     }
-
 }

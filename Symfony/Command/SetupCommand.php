@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Neos\EventSourcing\Symfony\Command;
 
-use App\Domain\Command\SayHello;
 use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
 use Neos\Error\Messages\Result;
@@ -96,5 +95,4 @@ class SetupCommand extends Command
             $output->writeln('<info>SUCCESS</info>');
         }
     }
-
 }
