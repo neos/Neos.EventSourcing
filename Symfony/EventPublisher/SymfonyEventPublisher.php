@@ -7,9 +7,8 @@ namespace Neos\EventSourcing\Symfony\EventPublisher;
 use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\EventPublisher\EventPublisherInterface;
-use Neos\EventSourcing\Symfony\Command\InternalCatchUpEventListenerCommand;
+use Neos\EventSourcing\Symfony\Transport\AsyncTransportInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Process\Process;
 
 class SymfonyEventPublisher implements EventPublisherInterface
 {
@@ -19,10 +18,17 @@ class SymfonyEventPublisher implements EventPublisherInterface
      */
     private $eventDispatcher;
 
+    private $asyncTransport;
+
     private $eventStoreContainerId;
 
-    public function __construct(EventDispatcherInterface $eventDispatcher, string $eventStoreContainerId)
+    public function __construct(
+        AsyncTransportInterface $asyncTransport,
+        EventDispatcherInterface $eventDispatcher,
+        string $eventStoreContainerId
+    )
     {
+        $this->asyncTransport = $asyncTransport;
         $this->eventDispatcher = $eventDispatcher;
         $this->eventStoreContainerId = $eventStoreContainerId;
     }
@@ -58,7 +64,6 @@ class SymfonyEventPublisher implements EventPublisherInterface
                     continue;
                 }
 
-
                 $this->triggerAsyncBackgroundJob($listenerClassName);
 
                 $queuedEventListenerClassNames[$listenerClassName] = true;
@@ -85,18 +90,9 @@ class SymfonyEventPublisher implements EventPublisherInterface
 
     private function triggerAsyncBackgroundJob($listenerClassName)
     {
-
-        $process = new Process(
-            [
-                'php',
-                '/var/www/eventsourcing.app/bin/console',
-                InternalCatchUpEventListenerCommand::getDefaultName(),
-                $listenerClassName,
-                $this->eventStoreContainerId
-            ]
+        $this->asyncTransport->send(
+            $listenerClassName,
+            $this->eventStoreContainerId
         );
-        $process->run(); // !! WE DO NOT WAIT FOR THE RESULT - start !! - TODO: adjust
-        $errOut = $process->getOutput() . $process->getErrorOutput();
-        dump($errOut);
     }
 }

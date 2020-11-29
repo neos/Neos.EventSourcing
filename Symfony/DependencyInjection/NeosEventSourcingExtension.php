@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection;
 use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage;
 use Neos\EventSourcing\Symfony\EventPublisher\SymfonyEventPublisher;
+use Neos\EventSourcing\Symfony\Transport\AsyncTransportInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -20,8 +21,7 @@ class NeosEventSourcingExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        dump($config);
-
+        //dump($config);
 
         $loader = new YamlFileLoader(
             $container,
@@ -45,6 +45,7 @@ class NeosEventSourcingExtension extends Extension
 
             $container->register('neos_eventsourcing.eventstore.' . $name . '.publisher')
                 ->setClass(SymfonyEventPublisher::class)
+                ->setArgument('$asyncTransport', new Reference(AsyncTransportInterface::class))
                 ->setArgument('$eventDispatcher', new Reference(EventDispatcherInterface::class))
                 ->setArgument('$eventStoreContainerId', 'neos_eventsourcing.eventstore.' . $name);
         }
