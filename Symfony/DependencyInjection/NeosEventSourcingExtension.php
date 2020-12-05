@@ -21,7 +21,7 @@ class NeosEventSourcingExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        //dump($config);
+        $container->setParameter('neos_eventsourcing', $config);
 
         $loader = new YamlFileLoader(
             $container,

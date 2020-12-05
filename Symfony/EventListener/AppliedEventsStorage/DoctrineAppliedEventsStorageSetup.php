@@ -37,7 +37,6 @@ class DoctrineAppliedEventsStorageSetup
         $this->connection = $connection;
     }
 
-
     /**
      * @inheritdoc
      * @throws DBALException | \Throwable
