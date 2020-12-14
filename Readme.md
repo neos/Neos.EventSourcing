@@ -338,15 +338,6 @@ final class ProductRepository
         $this->eventStore = $eventStore;
     }
 
-    // this method is only required if the creation of the aggregate should be explicit (i.e. lead to a domain event being published)
-    public function create(SomeAggregateId $id): SomeAggregate
-    {
-        $aggregate = SomeAggregate::create($id);
-        $streamName = $this->getStreamName($id);
-        $this->eventStore->commit($streamName, $aggregate->pullUncommittedEvents(), ExpectedVersion::NO_STREAM);
-        return $aggregate;
-    }
-
     public function load(SomeAggregateId $id): SomeAggregate
     {
         $streamName = $this->getStreamName($id);
