@@ -16,13 +16,11 @@
         "dg/bypass-finals": "^1.2"
     },
     "suggest": {
-        "flowpack/jobqueue-common": "Needed for Neos/Flow usage only",
-        "symfony/process": "Needed for standalone usage"
+        "flowpack/jobqueue-common": "Needed for Neos/Flow usage only"
     },
     "autoload": {
         "psr-4": {
-            "Neos\\EventSourcing\\": "Classes",
-            "Neos\\EventSourcing\\Symfony\\": "Symfony"
+            "Neos\\EventSourcing\\": "Classes"
         }
     },
     "autoload-dev": {
