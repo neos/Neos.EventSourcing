@@ -77,7 +77,7 @@ class DefaultEventToListenerMappingProvider
                 return $eventStoreIdentifier;
             }
         }
-        throw new \InvalidArgumentException('No mappings found for Event Listener "%s"', 1579187905);
+        throw new \InvalidArgumentException(sprintf('No mappings found for Event Listener "%s"', $listenerClassName), 1579187905);
     }
 
     /**
