@@ -64,6 +64,7 @@ final class DeferEventPublisher implements EventPublisherInterface
     {
         if (!$this->pendingEvents->isEmpty()) {
             $this->wrappedEventPublisher->publish($this->pendingEvents);
+            $this->pendingEvents = DomainEvents::createEmpty();
         }
     }
 
