@@ -15,6 +15,7 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\DeadlockException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
@@ -33,6 +34,7 @@ use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\EventSourcing\EventStore\WritableEvent;
 use Neos\EventSourcing\EventStore\WritableEvents;
+use Throwable;
 
 /**
  * Database event storage adapter
@@ -123,6 +125,18 @@ class DoctrineEventStorage implements EventStorageInterface
         $retryWaitInterval = 0.005;
         $maxRetryAttempts = 8;
         $retryAttempt = 0;
+
+        $rollback = function (Throwable $previous) use (&$retryAttempt, $maxRetryAttempts, &$retryWaitInterval) {
+            if ($retryAttempt >= $maxRetryAttempts) {
+                $this->connection->rollBack();
+                throw new ConcurrencyException(sprintf('Failed after %d retry attempts', $retryAttempt), 1573817175, $previous);
+            }
+            usleep((int)($retryWaitInterval * 1E6));
+            $retryAttempt ++;
+            $retryWaitInterval *= 2;
+            $this->connection->rollBack();
+        };
+
         while (true) {
             $this->reconnectDatabaseConnection();
             if ($this->connection->getTransactionNestingLevel() > 0) {
@@ -137,14 +151,10 @@ class DoctrineEventStorage implements EventStorageInterface
                     $this->commitEvent($streamName, $event, $actualVersion);
                 }
             } catch (UniqueConstraintViolationException $exception) {
-                if ($retryAttempt >= $maxRetryAttempts) {
-                    $this->connection->rollBack();
-                    throw new ConcurrencyException(sprintf('Failed after %d retry attempts', $retryAttempt), 1573817175, $exception);
-                }
-                usleep((int)($retryWaitInterval * 1E6));
-                $retryAttempt++;
-                $retryWaitInterval *= 2;
-                $this->connection->rollBack();
+                $rollback($exception);
+                continue;
+            } catch (DeadlockException $exception) {
+                $rollback($exception);
                 continue;
             } catch (DBALException | ConcurrencyException $exception) {
                 $this->connection->rollBack();
@@ -159,7 +169,7 @@ class DoctrineEventStorage implements EventStorageInterface
      * @param StreamName $streamName
      * @param WritableEvent $event
      * @param int $version
-     * @throws DBALException | UniqueConstraintViolationException
+     * @throws DBALException | UniqueConstraintViolationException | DeadlockException
      */
     private function commitEvent(StreamName $streamName, WritableEvent $event, int $version): void
     {
