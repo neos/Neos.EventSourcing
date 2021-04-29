@@ -85,7 +85,8 @@ class DoctrineEventStorage implements EventStorageInterface
         $this->reconnectDatabaseConnection();
         $query = $this->connection->createQueryBuilder()
             ->select('*')
-            ->from($this->eventTableName);
+            ->from($this->eventTableName)
+            ->orderBy('sequencenumber', 'ASC');
 
         if (!$streamName->isVirtualStream()) {
             $query->andWhere('stream = :streamName');
