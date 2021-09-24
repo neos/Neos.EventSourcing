@@ -39,7 +39,7 @@ use Neos\Flow\Annotations as Flow;
  *         'Some.Package:SomeStore':
  *           // ...
  *           listeners:
- *             'Some.Package\.*': true
+ *             'Some.Package\.*':
  *               queueName: 'custom-queue'
  *               queueOptions:
  *                 priority: 2048
