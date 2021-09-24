@@ -35,10 +35,11 @@ Neos:
 #          # Each key is a class name (supports regular expressions to match multiple).
 #          # If the value is an array this will be passed as options to the Event Publisher when a corresponding event is being published
 #          listeners:
-#            'Some\Specific\EventListener' => true
-#            'Some\Package\.*' => true
+#            'Some\Specific\EventListener': true
+#            'Some\Package\.*': true
 #            'Some\Other\.*':
-#              someOption: someValue
+#              # Example: use a custom job queue name (other than "neos-eventsourcing") for these listeners
+#              queueName: 'custom-queue'
 
 
   # Ignore the default Event Store table ("neos_eventsourcing_eventstore_events") when creating Doctrine migrations
