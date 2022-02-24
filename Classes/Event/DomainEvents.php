@@ -18,25 +18,37 @@ use Neos\Flow\Annotations as Flow;
  * A set of Domain Events
  *
  * @Flow\Proxy(false)
+ * @implements \IteratorAggregate<int,DomainEventInterface>
  */
 final class DomainEvents implements \IteratorAggregate, \Countable
 {
+    /**
+     * @var array<int,DomainEventInterface>
+     */
+    private array $events;
 
     /**
-     * @var DomainEventInterface[]
+     * @var \ArrayIterator<int,DomainEventInterface>
      */
-    private $events;
+    private \ArrayIterator $iterator;
 
+    /**
+     * @param array<int,DomainEventInterface> $events
+     */
     private function __construct(array $events)
     {
         $this->events = $events;
+        $this->iterator = new \ArrayIterator($events);
     }
 
     public static function createEmpty(): self
     {
-        return new static([]);
+        return new self([]);
     }
 
+    /**
+     * @param array<string|int,DomainEventInterface> $events
+     */
     public static function fromArray(array $events): self
     {
         foreach ($events as $event) {
@@ -44,25 +56,27 @@ final class DomainEvents implements \IteratorAggregate, \Countable
                 throw new \InvalidArgumentException(sprintf('Only instances of EventInterface are allowed, given: %s', \is_object($event) ? \get_class($event) : \gettype($event)), 1540311882);
             }
         }
-        return new static(array_values($events));
+        return new self(array_values($events));
     }
 
     public static function withSingleEvent(DomainEventInterface $event): self
     {
-        return new static([$event]);
+        return new self([$event]);
     }
 
     public function appendEvent(DomainEventInterface $event): self
     {
         $events = $this->events;
         $events[] = $event;
-        return new static($events);
+
+        return new self($events);
     }
 
-    public function appendEvents(DomainEvents $other): self
+    public function appendEvents(self $other): self
     {
         $events = array_merge($this->events, $other->events);
-        return new static($events);
+
+        return new self($events);
     }
 
     public function getFirst(): DomainEventInterface
@@ -70,15 +84,16 @@ final class DomainEvents implements \IteratorAggregate, \Countable
         if ($this->isEmpty()) {
             throw new \RuntimeException('Cant\'t return first event of an empty DomainEvents', 1540909869);
         }
+
         return $this->events[0];
     }
 
     /**
-     * @return DomainEventInterface[]|\ArrayIterator<DomainEventInterface>
+     * @return DomainEventInterface[]|\ArrayIterator<int,DomainEventInterface>
      */
     public function getIterator(): \ArrayIterator
     {
-        return new \ArrayIterator($this->events);
+        return $this->iterator;
     }
 
     public function map(\Closure $processor): self
