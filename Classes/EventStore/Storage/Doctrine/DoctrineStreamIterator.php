@@ -94,10 +94,7 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
         $this->fetchBatch();
     }
 
-    /**
-     * @return bool|int
-     */
-    public function key()
+    public function key(): ?int
     {
         return $this->innerIterator->valid() ? $this->innerIterator->current()['sequencenumber'] : null;
     }
