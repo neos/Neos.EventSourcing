@@ -301,7 +301,7 @@ updated after the events are stored.
 
 **How can we force a projection (or another event listener) to run synchronously?**
 
-You can call the `Neos\EventSourcing\EventListener\EventListenerInvoker::catchup()` method directly - this calls then
+You can call the `Neos\EventSourcing\EventListener\EventListenerInvoker::catchup()` method directly - this then calls
 the projectors (and other event listeners as needed).
 
 Best is if you create a service which contains the following snippet for each projector you want to update synchronously:
