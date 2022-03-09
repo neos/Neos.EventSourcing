@@ -60,4 +60,7 @@ Flowpack:
         'neos-eventsourcing':
           className: 'Flowpack\JobQueue\Common\Queue\FakeQueue'
           options:
+            # NOTE: Setting async to FALSE does NOT lead to synchronous projections by default,
+            # because (by default), the JobQueueEventPublisher is wrapped with DeferEventPublisher.
+            # See DefaultEventPublisherFactory.
             async: true
