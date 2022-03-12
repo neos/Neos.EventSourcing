@@ -183,14 +183,10 @@ class JobQueueEventPublisherTest extends UnitTestCase
             ->withMapping(EventToListenerMapping::create(\get_class($this->mockEvent2), 'SomeListenerClassName1', []));
         $jobQueueEventPublisher = $this->buildPublisher('event-store-id', $mappings);
 
-        $this->mockJobManager->expects($this->at(0))->method('queue')->willReturnCallback(static function(string $_, CatchUpEventListenerJob $job) {
-            self::assertSame('SomeListenerClassName1', $job->getListenerClassName());
-        });
-
-        $this->mockJobManager->expects($this->at(1))->method('queue')->willReturnCallback(static function(string $_, CatchUpEventListenerJob $job) {
-            self::assertSame('SomeListenerClassName2', $job->getListenerClassName());
-        });
-
+        $this->mockJobManager->expects(self::exactly(2))->method('queue')->withConsecutive(
+            ['neos-eventsourcing',  self::callback(static function(CatchUpEventListenerJob $job) { return $job->getListenerClassName() === 'SomeListenerClassName1'; })],
+            ['neos-eventsourcing',  self::callback(static function(CatchUpEventListenerJob $job) { return $job->getListenerClassName() === 'SomeListenerClassName2'; })],
+        );
         $jobQueueEventPublisher->publish($this->mockEvents);
     }
 
