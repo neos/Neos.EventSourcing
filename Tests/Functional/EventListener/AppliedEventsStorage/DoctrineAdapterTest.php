@@ -26,15 +26,15 @@ class DoctrineAdapterTest extends FunctionalTestCase
 
     public function setUp(): void
     {
-        parent::setUp();
         /** @var EntityManagerInterface $entityManager */
-        $entityManager = $this->objectManager->get(EntityManagerInterface::class);
+        $entityManager = self::$bootstrap->getObjectManager()->get(EntityManagerInterface::class);
         $dbal1 = $entityManager->getConnection();
 
         $platform = $dbal1->getDatabasePlatform()->getName();
         if ($platform !== 'mysql' && $platform !== 'postgresql') {
             self::markTestSkipped(sprintf('DB platform "%s" is not supported', $platform));
         }
+        parent::setUp();
 
         $this->adapter1 = new DoctrineAppliedEventsStorage($dbal1, 'someEventListenerIdentifier');
 
