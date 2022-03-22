@@ -15,7 +15,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
  * * they are public
  * * they are static
  * * they expect a single parameter of the given type
- * * they have a "self" or "<TargetClassName>" return type annotation
+ * * they have a "self", "static" or "<TargetClassName>" return type annotation
  *
  * Note: For type "array" a named constructor fromArray() is required!
  */
@@ -116,7 +116,7 @@ final class ValueObjectNormalizer implements DenormalizerInterface
             return null;
         }
         $constructorMethodReturnTypeName = $constructorMethodReturnType->getName();
-        if ($constructorMethodReturnTypeName !== $className && $constructorMethodReturnTypeName !== 'self') {
+        if ($constructorMethodReturnTypeName !== $className && $constructorMethodReturnTypeName !== 'self' && $constructorMethodReturnTypeName !== 'static') {
             return null;
         }
         $this->resolveNamedConstructorMethodCache[$cacheIdentifier] = $constructorMethod;
