@@ -342,6 +342,6 @@ class ProjectionCommandController extends CommandController
         if ($length <= $maximumCharacters) {
             return $text;
         }
-        return substr_replace($text, '...', ($maximumCharacters - 3) / 2, $length - $maximumCharacters + 3);
+        return substr_replace($text, '...', (int)(($maximumCharacters - 3) / 2), $length - $maximumCharacters + 3);
     }
 }
