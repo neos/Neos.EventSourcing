@@ -282,6 +282,44 @@ Neos:
  
 Keep in mind though that a listener can only ever by registered with a single Event Store (otherwise you'll get an exception at "compile time").
 
+## Reacting to Events Synchronously (i.e. Projection Update Synchronously)
+
+When embracing asynchronicity, you establish a scaling point where the application can be "torn apart":
+- Application can be more easily scaled on this point (projections can update asynchronously)
+- different projections can update in parallel
+- For long running actions, the system behaves non-blocking: You do not need to wait until you can respond to the client.
+
+On the other hand, asynchronicity introduces complexity, that will leak to many other application parts. Usually,
+the frontend then needs to implement optimistic updates and failure handling.
+
+> WARNING: You will give up one of the main performance advantages of Event Sourcing. Think twice before doing this,
+> and think through your assumptions of the system, because we all have a tendency to prefer the "simple, synchronous world".
+
+For smaller amounts of moving data, where you won't run into performance problems due to synchronous execution,
+it is sometimes useful to move back to a "synchronous" mode, where the projections are DIRECTLY
+updated after the events are stored.
+
+**How can we force a projection (or another event listener) to run synchronously?**
+
+You can call the `Neos\EventSourcing\EventListener\EventListenerInvoker::catchup()` method directly - this then calls
+the projectors (and other event listeners as needed).
+
+Best is if you create a service which contains the following snippet for each projector you want to update synchronously:
+
+```php
+// $eventStore is created by EventStoreFactory::create()
+// $someListener is the instanciated projector (a class implementing EventListenerInterface or ProjectorInterface)
+//     usually $someListener can be injeced using @Flow\Inject(
+// $dbalConnection is the database connection being used to read and update the "reading point" of the projector,
+//     i.e. how many events it has already seen. (interally implemented by DoctrineAppliedEventsStorage, and by default
+//     stored in the database table neos_eventsourcing_eventlistener_appliedeventslog).
+//     In a Flow Application, you can retrieve this $dbalConnection most simply by using $this->entityManager->getConnection() - where
+//     $this->entityManager is an injected instance of Doctrine\ORM\EntityManagerInterface. 
+$eventListenerInvoker = new EventListenerInvoker($eventStore, $someListener, $dbalConnection);
+
+$eventListenerInvoker->catchup();
+```
+
 ## Event Sourced Aggregate
 
 The `neos/event-sourcing` package comes with a base class that can be used to implement [Event-Sourced Aggregates](Glossary.md#aggregate).

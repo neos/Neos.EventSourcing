@@ -65,6 +65,11 @@ final class CatchUpEventListenerJob implements JobInterface
     }
 
     /**
+     * This is the Asynchronicity Boundary of the EventSourcing package. This means:
+     *
+     * - This object is created in the main process (usually a web request calling $eventStore->commit($events)
+     * - The execute method (this method) is called ASYNCHRONOUSLY in an extra PHP process (via the Flowpack.JobQueue abstraction)
+     *
      * @param QueueInterface $queue
      * @param Message $message
      * @return bool

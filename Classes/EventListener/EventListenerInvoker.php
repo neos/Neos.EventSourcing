@@ -17,17 +17,21 @@ use Doctrine\DBAL\Connection;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
+use Neos\EventSourcing\EventPublisher\JobQueue\CatchUpEventListenerJob;
 use Neos\EventSourcing\EventStore\EventEnvelope;
 use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 
 /**
- * Helper class to apply events to respective listeners.
+ * This is the most important class which updates Projectors (and other Event Listeners).
+ *
+ * It is usually called asynchronously (through {@see CatchUpEventListenerJob}), but you can also MANUALLY
+ * call it if you want to enforce a projection update (f.e. synchronously).
  *
  * This class can be used in order to create custom catchup/replay implementations:
  *
- * $eventListenerInvoker = (new EventListenerInvoker($eventStore, $someListener, $dbalConnection));
+ * $eventListenerInvoker = new EventListenerInvoker($eventStore, $someListener, $dbalConnection);
  * // increase transaction batch size for better performance (losing at-most-once semantics if event application fails)
  * $eventListenerInvoker = $eventListenerInvoker->withTransactionBatchSize(500);
  * // output sequence number of processed events
