@@ -76,9 +76,9 @@ final class InMemoryStreamIterator implements EventStreamIteratorInterface
     }
 
     /**
-     * @return bool|int|null
+     * @return bool|int
      */
-    public function key(): bool|int|null
+    public function key()
     {
         return $this->innerIterator->valid() ? $this->innerIterator->current()['sequencenumber'] : null;
     }

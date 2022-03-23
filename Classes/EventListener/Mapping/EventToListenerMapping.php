@@ -71,7 +71,7 @@ final class EventToListenerMapping implements \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize(): array
+    public function jsonSerialize()
     {
         return [
             'eventClassName' => $this->eventClassName,

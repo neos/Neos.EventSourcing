@@ -84,7 +84,7 @@ class EventToListenerMappings implements \IteratorAggregate, \JsonSerializable
         return new \ArrayIterator($this->mappings);
     }
 
-    public function jsonSerialize(): array
+    public function jsonSerialize()
     {
         return $this->mappings;
     }
