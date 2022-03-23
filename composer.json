@@ -4,8 +4,8 @@
     "description": "Lean and opinionated way to integrate Event Sourcing and CQRS pattern in your Flow framework package",
     "license": "MIT",
     "require": {
-        "php": ">=7.2",
-        "neos/flow": "^5.3 || ^6.0 || ^7.0 || dev-master",
+        "php": ">=8.0",
+        "neos/flow": "^7.0 || ^8.0 || dev-master",
         "flowpack/jobqueue-common": "^3.0 || dev-master",
         "symfony/serializer": "^5.1",
         "symfony/property-access": "^5.1",
