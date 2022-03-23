@@ -71,7 +71,7 @@ final class EventStream implements \Iterator
         $this->streamIterator->next();
     }
 
-    public function key()
+    public function key(): float|bool|int|string|null
     {
         return $this->streamIterator->key();
     }
