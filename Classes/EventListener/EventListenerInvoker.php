@@ -16,9 +16,10 @@ use Closure;
 use Doctrine\DBAL\Connection;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
 use Neos\EventSourcing\EventListener\AppliedEventsStorage\DoctrineAppliedEventsStorage;
+use Neos\EventSourcing\EventListener\EventApplier\EventApplierInterface;
+use Neos\EventSourcing\EventListener\EventApplier\DefaultEventEventApplier;
 use Neos\EventSourcing\EventListener\Exception\EventCouldNotBeAppliedException;
 use Neos\EventSourcing\EventPublisher\JobQueue\CatchUpEventListenerJob;
-use Neos\EventSourcing\EventStore\EventEnvelope;
 use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\StreamAwareEventListenerInterface;
 use Neos\EventSourcing\EventStore\StreamName;
@@ -169,6 +170,7 @@ final class EventListenerInvoker
         $streamName = $this->eventListener instanceof StreamAwareEventListenerInterface ? $this->eventListener::listensToStream() : StreamName::all();
         $eventStream = $this->eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
         $appliedEventsCounter = 0;
+        $eventApplier = $this->eventListener instanceof EventApplierInterface ? $this->eventListener : DefaultEventEventApplier::forEventListener($this->eventListener);
 
         foreach ($eventStream as $eventEnvelope) {
             $sequenceNumber = $eventEnvelope->getRawEvent()->getSequenceNumber();
@@ -181,7 +183,7 @@ final class EventListenerInvoker
                 break;
             }
             try {
-                $this->applyEvent($eventEnvelope);
+                $eventApplier($eventEnvelope);
             } catch (EventCouldNotBeAppliedException $exception) {
                 $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
                 throw $exception;
@@ -199,35 +201,6 @@ final class EventListenerInvoker
             }
         }
         $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
-    }
-
-    /**
-     * @param EventEnvelope $eventEnvelope
-     * @throws EventCouldNotBeAppliedException
-     */
-    private function applyEvent(EventEnvelope $eventEnvelope): void
-    {
-        $event = $eventEnvelope->getDomainEvent();
-        $rawEvent = $eventEnvelope->getRawEvent();
-        try {
-            $listenerMethodName = 'when' . (new \ReflectionClass($event))->getShortName();
-        } catch (\ReflectionException $exception) {
-            throw new \RuntimeException(sprintf('Could not extract listener method name for listener %s and event %s', \get_class($this->eventListener), \get_class($event)), 1541003718, $exception);
-        }
-        if (!method_exists($this->eventListener, $listenerMethodName)) {
-            return;
-        }
-        if ($this->eventListener instanceof BeforeInvokeInterface) {
-            $this->eventListener->beforeInvoke($eventEnvelope);
-        }
-        try {
-            $this->eventListener->$listenerMethodName($event, $rawEvent);
-        } catch (\Throwable $exception) {
-            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), \get_class($this->eventListener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $this->eventListener);
-        }
-        if ($this->eventListener instanceof AfterInvokeInterface) {
-            $this->eventListener->afterInvoke($eventEnvelope);
-        }
     }
 
     /**

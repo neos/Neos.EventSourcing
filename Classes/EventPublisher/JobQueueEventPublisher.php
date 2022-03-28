@@ -91,7 +91,7 @@ final class JobQueueEventPublisher implements EventPublisherInterface
             }
             $processedEventClassNames[$eventClassName] = true;
             foreach ($this->mappings as $mapping) {
-                if ($mapping->getEventClassName() !== $eventClassName) {
+                if (!$mapping->matchesEventClassName($eventClassName)) {
                     continue;
                 }
                 // only process every Event Listener once

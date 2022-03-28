@@ -13,6 +13,8 @@ namespace Neos\EventSourcing\EventListener\Mapping;
  */
 
 use Neos\EventSourcing\Event\DomainEventInterface;
+use Neos\EventSourcing\EventListener\AppliedEventsStorage\AppliedEventsStorageInterface;
+use Neos\EventSourcing\EventListener\EventApplier\EventApplierInterface;
 use Neos\EventSourcing\EventListener\EventListenerInterface;
 use Neos\EventSourcing\EventListener\Exception\InvalidConfigurationException;
 use Neos\EventSourcing\EventListener\Exception\InvalidEventListenerException;
@@ -175,6 +177,10 @@ class DefaultEventToListenerMappingProvider
         $listeners = [];
         foreach ($reflectionService->getAllImplementationClassNamesForInterface(EventListenerInterface::class) as $listenerClassName) {
             $listenersFoundInClass = false;
+            if (is_subclass_of($listenerClassName, EventApplierInterface::class)) {
+                $listeners[$listenerClassName]['*'] = '__invoke';
+                continue;
+            }
             foreach (get_class_methods($listenerClassName) as $listenerMethodName) {
                 preg_match('/^when[A-Z].*$/', $listenerMethodName, $matches);
                 if (!isset($matches[0])) {

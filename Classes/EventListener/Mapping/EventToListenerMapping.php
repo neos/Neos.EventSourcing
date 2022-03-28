@@ -53,6 +53,11 @@ final class EventToListenerMapping implements \JsonSerializable
         return $this->eventClassName;
     }
 
+    public function matchesEventClassName(string $eventClassName): bool
+    {
+        return $this->eventClassName === '*' || $this->eventClassName === $eventClassName;
+    }
+
     public function getListenerClassName(): string
     {
         return $this->listenerClassName;
