@@ -304,16 +304,12 @@ class DoctrineEventStorage implements EventStorageInterface
             $result->addNotice(new Notice('Table schema is up to date, no migration required'));
             return $result;
         }
-        $this->connection->beginTransaction();
-        try {
-            foreach ($statements as $statement) {
-                $result->addNotice(new Notice('<info>++</info> %s', null, [$statement]));
-                $this->connection->exec($statement);
-            }
-            $this->connection->commit();
-        } catch (\Throwable $exception) {
-            $this->connection->rollBack();
-            throw $exception;
+
+        // NOTE: we are not allowed to wrap this in a transaction, as newer PHP versions will throw Exceptions (at least on MariaDB)
+        // when the statement is not executable in a transaction.
+        foreach ($statements as $statement) {
+            $result->addNotice(new Notice('<info>++</info> %s', null, [$statement]));
+            $this->connection->exec($statement);
         }
         return $result;
     }
