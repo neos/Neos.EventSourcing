@@ -16,7 +16,8 @@ final class DefaultEventEventApplier implements EventApplierInterface
 {
     private function __construct(
         private EventListenerInterface $eventListener,
-    ) {}
+    ) {
+    }
 
     public static function forEventListener(EventListenerInterface $eventListener): self
     {
