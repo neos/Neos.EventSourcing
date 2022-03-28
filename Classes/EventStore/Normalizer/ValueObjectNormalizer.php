@@ -31,7 +31,7 @@ final class ValueObjectNormalizer implements DenormalizerInterface
      */
     private $resolveNamedConstructorMethodCache = [];
 
-    public function denormalize($data, $className, $format = null, array $context = [])
+    public function denormalize($data, $className, $format = null, array $context = []): mixed
     {
         $constructorMethod = $this->resolveConstructorMethod(TypeHandling::normalizeType(TypeHandling::getTypeForValue($data)), $className);
         return $constructorMethod->isConstructor() ? new $className($data) : $constructorMethod->invoke(null, $data);

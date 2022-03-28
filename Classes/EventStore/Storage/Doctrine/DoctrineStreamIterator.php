@@ -97,7 +97,7 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
     /**
      * @return bool|int
      */
-    public function key()
+    public function key(): mixed
     {
         return $this->innerIterator->valid() ? $this->innerIterator->current()['sequencenumber'] : null;
     }
