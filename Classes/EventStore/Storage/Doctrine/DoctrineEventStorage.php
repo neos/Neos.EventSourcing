@@ -248,11 +248,11 @@ class DoctrineEventStorage implements EventStorageInterface
             $result->addError(new Error($exception->getMessage(), $exception->getCode(), [], 'Connection failed'));
             return $result;
         }
-        $result->addNotice(new Notice((string)$this->connection->getHost(), null, [], 'Host'));
-        $result->addNotice(new Notice((string)$this->connection->getPort(), null, [], 'Port'));
+        $result->addNotice(new Notice((string)$this->connection->getParams()['host'], null, [], 'Host'));
+        $result->addNotice(new Notice((string)$this->connection->getParams()['port'], null, [], 'Port'));
         $result->addNotice(new Notice((string)$this->connection->getDatabase(), null, [], 'Database'));
         $result->addNotice(new Notice((string)$this->connection->getDriver()->getName(), null, [], 'Driver'));
-        $result->addNotice(new Notice((string)$this->connection->getUsername(), null, [], 'Username'));
+        $result->addNotice(new Notice((string)$this->connection->getParams()['user'], null, [], 'Username'));
         if ($tableExists) {
             $result->addNotice(new Notice('%s (exists)', null, [$this->eventTableName], 'Table'));
 
@@ -293,7 +293,7 @@ class DoctrineEventStorage implements EventStorageInterface
         if ($tableExists) {
             $result->addNotice(new Notice('Table "%s" (already exists)', null, [$this->eventTableName]));
         } else {
-            $result->addNotice(new Notice('Creating database table "%s" in database "%s" on host %s....', null, [$this->eventTableName, $this->connection->getDatabase(), $this->connection->getHost()]));
+            $result->addNotice(new Notice('Creating database table "%s" in database "%s" on host %s....', null, [$this->eventTableName, $this->connection->getDatabase(), $this->connection->getParams()['host']]));
         }
 
         $fromSchema = $schemaManager->createSchema();
