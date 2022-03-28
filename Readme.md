@@ -226,7 +226,10 @@ foreach ($eventStream as $eventEnvelope) {
 }
 ```
 
-### Reacting to events
+### Reacting to events with Event Listeners / Projectors
+
+A Projector is a special Event Listener which does not have side-effects (besides updating the projection),
+and can thus be reset and replayed.
 
 In order to react upon new events you'll need an [Event Listener](Glossary.md#event-listener):
 
@@ -281,6 +284,34 @@ Neos:
 ```
  
 Keep in mind though that a listener can only ever by registered with a single Event Store (otherwise you'll get an exception at "compile time").
+
+In case you implement a projector, you should implement `ProjectorInterface`.
+
+### Triggering Side-Effects after Projections have been updated
+
+Sometimes, it is necessary to refresh dependent data after a certain projection has been updated.
+
+WARNING: If possible, first try hard to build a second, independent projection. Refreshing state after a projection
+has updated is something like a "dependent projection" which only makes sense if the same data of the projection
+is stored in another representation (e.g. a data warehouse, or a search index).
+
+This can be implemented in two ways:
+
+**Variant 1: implement `AfterInvokeInterface` in your Projector, and directly trigger an external action.**
+
+The `afterInvoke` method is triggered for **every** event, thus there is no batching or anything like that. This is
+fine in simpler scenarios, but not if you have loads of events which always lead to similar refresh actions.
+
+**Variant 2: implement `AfterCatchUpInterface`**
+
+The `afterCatchUp` method is triggered at the end of a projector update run, and can be used to fire off a batch update
+to an external system.
+
+In case you want to implement chunking (i.e. trigger an update of the external system every e.g. 100 events),
+you can do that by implementing both `AfterInvokeInterface` and `AfterCatchUpInterface`: In `afterInvoke`, you would
+see if the chunk size was reached (and if yes, trigger the external call and reset your tracking state).
+In `afterCatchUp` you would trigger the remaining calls for the unfinished batch at the end.
+
 
 ## Reacting to Events Synchronously (i.e. Projection Update Synchronously)
 
