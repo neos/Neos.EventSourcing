@@ -197,7 +197,7 @@ class DoctrineEventStorage implements EventStorageInterface
             ->where('stream = :streamName')
             ->setParameter('streamName', (string)$streamName)
             ->execute()
-            ->fetchColumn();
+            ->fetchOne();
         return $version !== null ? (int)$version : -1;
     }
 
@@ -366,7 +366,9 @@ class DoctrineEventStorage implements EventStorageInterface
      */
     private function reconnectDatabaseConnection(): void
     {
-        if ($this->connection->ping() === false) {
+        try {
+            $this->connection->fetchOne('SELECT 1');
+        } catch (\Exception $e) {
             $this->connection->close();
             $this->connection->connect();
         }
