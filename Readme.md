@@ -1,6 +1,10 @@
-# Event Sourcing and CQRS for Flow Framework
+# Event Sourcing and CQRS for Flow Framework and Symfony
 
 Library providing interfaces and implementations for event-sourced applications. 
+
+- **For Symfony, use [Neos.EventSourcingSymfonyBridge](https://github.com/neos/Neos.EventSourcingSymfonyBridge) which adapts this
+  package to the Symfony World.**
+- **For Neos/Flow, use this package directly.**
 
 ## Getting started
 
