@@ -15,7 +15,17 @@ namespace Neos\EventSourcing\EventListener\AppliedEventsStorage;
 use Neos\EventSourcing\EventListener\Exception\HighestAppliedSequenceNumberCantBeReservedException;
 
 /**
- * Contract for an authority that tracks the "applied events" state of an Event Listener
+ * Contract for an authority that tracks the "applied events" state of an Event Listener. It is used by
+ * {@see EventListenerInvoker::catchUp()} to track an event listener's progress, and at the same time ensure that a given
+ * event listener does not run concurrently.
+ *
+ * The contract is to IMPLEMENT A LOCK; so after {@see AppliedEventsStorageInterface::reserveHighestAppliedEventSequenceNumber()}
+ * is called by one process, NO OTHER PROCESS (in the same or in a different PHP process) is allowed to enter the following code path,
+ * until releaseHighestAppliedSequenceNumber is triggered (in case of an error) or saveHighestAppliedSequenceNumber is triggered (if
+ * everything went well).
+ *
+ * The main use case of this interface is to make the Event Listener / Projector **itself** responsible for storing
+ * the currently applied progress, f.e. in another database than the default database or another storage system.
  */
 interface AppliedEventsStorageInterface
 {
