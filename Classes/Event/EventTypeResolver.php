@@ -56,7 +56,7 @@ final class EventTypeResolver implements EventTypeResolverInterface
      */
     public function initializeObject(): void
     {
-        $this->mapping = static::eventTypeMapping($this->objectManager);
+        $this->mapping = self::eventTypeMapping($this->objectManager);
         $this->reversedMapping = array_flip($this->mapping);
     }
 
