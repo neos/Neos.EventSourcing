@@ -49,7 +49,7 @@ abstract class AbstractEventSourcedAggregateRoot implements EventRecordingInterf
         return $this->reconstitutionVersion;
     }
 
-    final public static function reconstituteFromEventStream(EventStream $stream): self
+    final public static function reconstituteFromEventStream(EventStream $stream): static
     {
         $instance = new static();
         $lastAppliedEventVersion = -1;
