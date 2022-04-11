@@ -37,9 +37,13 @@ final class DeferEventPublisher implements EventPublisherInterface
         $this->pendingEvents = DomainEvents::createEmpty();
     }
 
+    /**
+     * @param EventPublisherInterface $eventPublisher
+     * @return self
+     */
     public static function forPublisher(EventPublisherInterface $eventPublisher): self
     {
-        return new static($eventPublisher);
+        return new self($eventPublisher);
     }
 
     /**
@@ -50,6 +54,9 @@ final class DeferEventPublisher implements EventPublisherInterface
         $this->pendingEvents = $this->pendingEvents->appendEvents($events);
     }
 
+    /**
+     * @return EventPublisherInterface
+     */
     public function getWrappedEventPublisher(): EventPublisherInterface
     {
         return $this->wrappedEventPublisher;

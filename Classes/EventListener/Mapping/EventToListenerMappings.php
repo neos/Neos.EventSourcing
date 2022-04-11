@@ -35,12 +35,12 @@ class EventToListenerMappings implements \IteratorAggregate, \JsonSerializable
     /**
      * @return static
      */
-    public static function createEmpty(): self
+    public static function createEmpty(): static
     {
         return new static([]);
     }
 
-    public function withMapping(EventToListenerMapping $mapping): self
+    public function withMapping(EventToListenerMapping $mapping): static
     {
         $mappings = $this->mappings;
         $mappings[] = $mapping;
@@ -51,7 +51,7 @@ class EventToListenerMappings implements \IteratorAggregate, \JsonSerializable
      * @param EventToListenerMapping[] $mappings
      * @return static
      */
-    public static function fromArray(array $mappings): self
+    public static function fromArray(array $mappings): static
     {
         foreach ($mappings as $mapping) {
             if (!$mapping instanceof EventToListenerMapping) {
@@ -61,7 +61,7 @@ class EventToListenerMappings implements \IteratorAggregate, \JsonSerializable
         return new static(array_values($mappings));
     }
 
-    public function filter(\closure $callback): EventToListenerMappings
+    public function filter(\closure $callback): static
     {
         return new static(array_filter($this->mappings, $callback));
     }

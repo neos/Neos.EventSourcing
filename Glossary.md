@@ -60,7 +60,7 @@ final class InvoiceNumbering extends AbstractEventSourcedAggregateRoot
      */
     private $highestAssignedInvoiceNumber = 0;
 
-    public static function create(): self
+    public static function create(): static
     {
         return new static();
     }

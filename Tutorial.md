@@ -514,7 +514,7 @@ final class Inbox
      * @param string $userId
      * @return static
      */
-    public static function forUser(string $userId): self
+    public static function forUser(string $userId): static
     {
         return new static($userId);
     }
