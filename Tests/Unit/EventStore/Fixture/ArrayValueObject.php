@@ -12,12 +12,12 @@ final class ArrayValueObject implements \JsonSerializable
         $this->value = $value;
     }
 
-    public static function fromArray(array $value): self
+    public static function fromArray(array $value): ArrayValueObject
     {
-        return new self($value);
+        return new ArrayValueObject($value);
     }
 
-    public function equals(self $other): bool
+    public function equals(ArrayValueObject $other): bool
     {
         return $other->value === $this->value;
     }

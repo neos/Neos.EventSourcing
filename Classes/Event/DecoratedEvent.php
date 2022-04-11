@@ -44,38 +44,38 @@ final class DecoratedEvent implements DomainEventInterface
         $this->identifier = $identifier;
     }
 
-    public static function addMetadata(DomainEventInterface $event, array $metadata): self
+    public static function addMetadata(DomainEventInterface $event, array $metadata): DecoratedEvent
     {
         $identifier = null;
-        if ($event instanceof self) {
+        if ($event instanceof DecoratedEvent) {
             $metadata = Arrays::arrayMergeRecursiveOverrule($event->metadata, $metadata);
             $identifier = $event->identifier;
             $event = $event->getWrappedEvent();
         }
-        return new self($event, $metadata, $identifier);
+        return new DecoratedEvent($event, $metadata, $identifier);
     }
 
-    public static function addCausationIdentifier(DomainEventInterface $event, string $causationIdentifier): self
+    public static function addCausationIdentifier(DomainEventInterface $event, string $causationIdentifier): DecoratedEvent
     {
-        self::validateIdentifier($causationIdentifier);
-        return self::addMetadata($event, ['causationIdentifier' => $causationIdentifier]);
+        DecoratedEvent::validateIdentifier($causationIdentifier);
+        return DecoratedEvent::addMetadata($event, ['causationIdentifier' => $causationIdentifier]);
     }
 
-    public static function addCorrelationIdentifier(DomainEventInterface $event, string $correlationIdentifier): self
+    public static function addCorrelationIdentifier(DomainEventInterface $event, string $correlationIdentifier): DecoratedEvent
     {
-        self::validateIdentifier($correlationIdentifier);
-        return self::addMetadata($event, ['correlationIdentifier' => $correlationIdentifier]);
+        DecoratedEvent::validateIdentifier($correlationIdentifier);
+        return DecoratedEvent::addMetadata($event, ['correlationIdentifier' => $correlationIdentifier]);
     }
 
-    public static function addIdentifier(DomainEventInterface $event, string $identifier): self
+    public static function addIdentifier(DomainEventInterface $event, string $identifier): DecoratedEvent
     {
-        self::validateIdentifier($identifier);
+        DecoratedEvent::validateIdentifier($identifier);
         $metadata = [];
-        if ($event instanceof self) {
+        if ($event instanceof DecoratedEvent) {
             $metadata = $event->metadata;
             $event = $event->getWrappedEvent();
         }
-        return new self($event, $metadata, $identifier);
+        return new DecoratedEvent($event, $metadata, $identifier);
     }
 
     public function getWrappedEvent(): DomainEventInterface

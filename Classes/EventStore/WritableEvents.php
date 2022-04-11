@@ -30,21 +30,21 @@ final class WritableEvents implements \IteratorAggregate, \Countable
         $this->events = $events;
     }
 
-    public static function fromArray(array $events): self
+    public static function fromArray(array $events): WritableEvents
     {
         foreach ($events as $event) {
             if (!$event instanceof WritableEvent) {
                 throw new \InvalidArgumentException(sprintf('Only instances of WritableEvent are allowed, given: %s', \is_object($event) ? \get_class($event) : \gettype($event)), 1540316594);
             }
         }
-        return new self(array_values($events));
+        return new WritableEvents(array_values($events));
     }
 
-    public function append(WritableEvent $event): self
+    public function append(WritableEvent $event): WritableEvents
     {
         $events = $this->events;
         $events[] = $event;
-        return new self($events);
+        return new WritableEvents($events);
     }
 
     /**

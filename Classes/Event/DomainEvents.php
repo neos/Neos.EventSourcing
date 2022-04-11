@@ -41,42 +41,42 @@ final class DomainEvents implements \IteratorAggregate, \Countable
         $this->iterator = new \ArrayIterator($events);
     }
 
-    public static function createEmpty(): self
+    public static function createEmpty(): DomainEvents
     {
-        return new self([]);
+        return new DomainEvents([]);
     }
 
     /**
      * @param array<string|int,DomainEventInterface> $events
      */
-    public static function fromArray(array $events): self
+    public static function fromArray(array $events): DomainEvents
     {
         foreach ($events as $event) {
             if (!$event instanceof DomainEventInterface) {
                 throw new \InvalidArgumentException(sprintf('Only instances of EventInterface are allowed, given: %s', \is_object($event) ? \get_class($event) : \gettype($event)), 1540311882);
             }
         }
-        return new self(array_values($events));
+        return new DomainEvents(array_values($events));
     }
 
-    public static function withSingleEvent(DomainEventInterface $event): self
+    public static function withSingleEvent(DomainEventInterface $event): DomainEvents
     {
-        return new self([$event]);
+        return new DomainEvents([$event]);
     }
 
-    public function appendEvent(DomainEventInterface $event): self
+    public function appendEvent(DomainEventInterface $event): DomainEvents
     {
         $events = $this->events;
         $events[] = $event;
 
-        return new self($events);
+        return new DomainEvents($events);
     }
 
-    public function appendEvents(self $other): self
+    public function appendEvents(DomainEvents $other): DomainEvents
     {
         $events = array_merge($this->events, $other->events);
 
-        return new self($events);
+        return new DomainEvents($events);
     }
 
     public function getFirst(): DomainEventInterface
@@ -96,16 +96,16 @@ final class DomainEvents implements \IteratorAggregate, \Countable
         return $this->iterator;
     }
 
-    public function map(\Closure $processor): self
+    public function map(\Closure $processor): DomainEvents
     {
         $convertedEvents = array_map($processor, $this->events);
-        return self::fromArray($convertedEvents);
+        return DomainEvents::fromArray($convertedEvents);
     }
 
-    public function filter(\Closure $expression): self
+    public function filter(\Closure $expression): DomainEvents
     {
         $filteredEvents = array_filter($this->events, $expression);
-        return self::fromArray($filteredEvents);
+        return DomainEvents::fromArray($filteredEvents);
     }
 
     public function isEmpty(): bool

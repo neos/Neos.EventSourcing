@@ -12,12 +12,12 @@ final class BooleanValueObject implements \JsonSerializable
         $this->value = $value;
     }
 
-    public static function fromBoolean(bool $value): self
+    public static function fromBoolean(bool $value): BooleanValueObject
     {
-        return new self($value);
+        return new BooleanValueObject($value);
     }
 
-    public function equals(self $other): bool
+    public function equals(BooleanValueObject $other): bool
     {
         return $other->value === $this->value;
     }

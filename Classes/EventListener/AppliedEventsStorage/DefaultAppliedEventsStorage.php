@@ -51,11 +51,11 @@ final class DefaultAppliedEventsStorage implements AppliedEventsStorageInterface
      * Creates an instance for the given EventListenerInterface
      *
      * @param EventListenerInterface $listener
-     * @return self
+     * @return DefaultAppliedEventsStorage
      */
-    public static function forEventListener(EventListenerInterface $listener): self
+    public static function forEventListener(EventListenerInterface $listener): DefaultAppliedEventsStorage
     {
-        return new self(\get_class($listener));
+        return new DefaultAppliedEventsStorage(\get_class($listener));
     }
 
     /**

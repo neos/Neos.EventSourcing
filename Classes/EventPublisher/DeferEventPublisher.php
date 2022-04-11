@@ -39,11 +39,11 @@ final class DeferEventPublisher implements EventPublisherInterface
 
     /**
      * @param EventPublisherInterface $eventPublisher
-     * @return self
+     * @return DeferEventPublisher
      */
-    public static function forPublisher(EventPublisherInterface $eventPublisher): self
+    public static function forPublisher(EventPublisherInterface $eventPublisher): DeferEventPublisher
     {
-        return new self($eventPublisher);
+        return new DeferEventPublisher($eventPublisher);
     }
 
     /**

@@ -116,9 +116,9 @@ final class EventListenerInvoker
      * $eventListenerInvoker = (new EventListenerInvoker($eventStore, $listener, $connection))->withTransactionBatchSize(100)->catchUp();
      *
      * @param int $batchSize
-     * @return self
+     * @return EventListenerInvoker
      */
-    public function withTransactionBatchSize(int $batchSize): self
+    public function withTransactionBatchSize(int $batchSize): EventListenerInvoker
     {
         if ($batchSize < 1) {
             throw new \InvalidArgumentException('The batch size must not be smaller than 1', 1584276378);
@@ -136,9 +136,9 @@ final class EventListenerInvoker
      * $eventListenerInvoker = (new EventListenerInvoker($eventStore, $listener, $connection))->withMaximumSequenceNumber(268)->replay();
      *
      * @param int $maximumSequenceNumber
-     * @return self
+     * @return EventListenerInvoker
      */
-    public function withMaximumSequenceNumber(int $maximumSequenceNumber): self
+    public function withMaximumSequenceNumber(int $maximumSequenceNumber): EventListenerInvoker
     {
         if ($maximumSequenceNumber < 1) {
             throw new \InvalidArgumentException('The maximum sequence number must be greater than 0', 1597821711);

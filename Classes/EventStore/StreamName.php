@@ -17,7 +17,7 @@ final class StreamName
     private $value;
 
     /**
-     * @var self[]
+     * @var StreamName[]
      */
     private static $instances = [];
 
@@ -26,46 +26,46 @@ final class StreamName
         $this->value = $value;
     }
 
-    private static function constant(string $value): self
+    private static function constant(string $value): StreamName
     {
-        return self::$instances[$value] ?? self::$instances[$value] = new self($value);
+        return StreamName::$instances[$value] ?? StreamName::$instances[$value] = new StreamName($value);
     }
 
-    public static function fromString(string $value): self
+    public static function fromString(string $value): StreamName
     {
-        $value = self::trimAndValidateNotEmpty($value);
-        if (self::stringStartsWith($value, '$')) {
+        $value = StreamName::trimAndValidateNotEmpty($value);
+        if (StreamName::stringStartsWith($value, '$')) {
             throw new \InvalidArgumentException('The stream name must not start with "$"', 1540632865);
         }
-        return self::constant($value);
+        return StreamName::constant($value);
     }
 
-    public static function forCategory(string $categoryName): self
+    public static function forCategory(string $categoryName): StreamName
     {
-        $categoryName = self::trimAndValidateNotEmpty($categoryName);
-        if (self::stringStartsWith($categoryName, '$')) {
+        $categoryName = StreamName::trimAndValidateNotEmpty($categoryName);
+        if (StreamName::stringStartsWith($categoryName, '$')) {
             throw new \InvalidArgumentException('The category name must not start with "$"', 1540632884);
         }
-        return self::constant('$ce-' . $categoryName);
+        return StreamName::constant('$ce-' . $categoryName);
     }
 
-    public static function forCorrelationId(string $correlationId): self
+    public static function forCorrelationId(string $correlationId): StreamName
     {
-        $correlationId = self::trimAndValidateNotEmpty($correlationId);
-        if (self::stringStartsWith($correlationId, '$')) {
+        $correlationId = StreamName::trimAndValidateNotEmpty($correlationId);
+        if (StreamName::stringStartsWith($correlationId, '$')) {
             throw new \InvalidArgumentException('The correlation identifier must not start with "$"', 1540899066);
         }
-        return self::constant('$correlation-' . $correlationId);
+        return StreamName::constant('$correlation-' . $correlationId);
     }
 
-    public static function all(): self
+    public static function all(): StreamName
     {
-        return self::constant('$all');
+        return StreamName::constant('$all');
     }
 
     public function isVirtualStream(): bool
     {
-        return self::stringStartsWith($this->value, '$');
+        return StreamName::stringStartsWith($this->value, '$');
     }
 
     public function isAllStream(): bool
@@ -75,12 +75,12 @@ final class StreamName
 
     public function isCategoryStream(): bool
     {
-        return self::stringStartsWith($this->value, '$ce-');
+        return StreamName::stringStartsWith($this->value, '$ce-');
     }
 
     public function isCorrelationIdStream(): bool
     {
-        return self::stringStartsWith($this->value, '$correlation-');
+        return StreamName::stringStartsWith($this->value, '$correlation-');
     }
 
     public function getCategoryName(): string

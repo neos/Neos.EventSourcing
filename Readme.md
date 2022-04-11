@@ -377,9 +377,9 @@ final class SomeAggregate extends AbstractEventSourcedAggregateRoot
      */
     private $id;
 
-    public static function create(SomeAggregateId $id): self
+    public static function create(SomeAggregateId $id): SomeAggregate
     {
-        $instance = new static();
+        $instance = new SomeAggregate();
         // This method will only be invoked once. Upon reconstitution only the when*() methods are called.
         // So we must never change the instance state directly (i.e. $instance->id = $id) but use events:
         $instance->recordThat(new SomeAggregateWasCreated($id));
