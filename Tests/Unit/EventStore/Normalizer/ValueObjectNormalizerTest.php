@@ -66,4 +66,32 @@ class ValueObjectNormalizerTest extends UnitTestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->valueObjectNormalizer->denormalize(['some' => 'array'], Fixture\InvalidArrayBasedValueObject::class);
     }
+
+    /**
+     * @test
+     * @dataProvider provideNormalizationSourceDataAndValueObject
+     */
+    public function supportsNormalizationTests($data, $object): void
+    {
+        $this->assertTrue(
+            $this->valueObjectNormalizer->supportsNormalization($object, null)
+        );
+    }
+
+    /**
+     * @test
+     * @dataProvider provideNormalizationSourceDataAndValueObject
+     */
+    public function normalizeTests($data, $object): void
+    {
+        $this->assertEquals(
+            $data,
+            $this->valueObjectNormalizer->normalize($object)
+        );
+    }
+
+    public function provideNormalizationSourceDataAndValueObject()
+    {
+        yield 'string' => ['stringObject', Fixture\StringBasedValueObject::fromString('stringObject')];
+    }
 }

@@ -5,7 +5,9 @@ namespace Neos\EventSourcing\EventStore\Normalizer;
 use Neos\Flow\ObjectManagement\Proxy\ProxyInterface;
 use Neos\Utility\TypeHandling;
 use ReflectionMethod;
+use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 /**
  * A normalizer that can convert scalar values (string, integer, double or boolean) to a class
@@ -19,7 +21,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
  *
  * Note: For type "array" a named constructor fromArray() is required!
  */
-final class ValueObjectNormalizer implements DenormalizerInterface
+final class ValueObjectNormalizer extends AbstractNormalizer
 {
     /**
      * @var array
@@ -50,6 +52,25 @@ final class ValueObjectNormalizer implements DenormalizerInterface
         } catch (\InvalidArgumentException $exception) {
             return false;
         }
+    }
+
+    public function normalize($object, string $format = null, array $context = [])
+    {
+        if (!$object instanceof \JsonSerializable && (!$object instanceof \Stringable || !method_exists($object, '__toString'))) {
+            throw new InvalidArgumentException(sprintf('The object must implement "%s" or "%s".', \JsonSerializable::class, \Stringable::class));
+        }
+
+        if ($object instanceof \JsonSerializable) {
+            return $this->serializer->normalize($object->jsonSerialize(), $format, $context);
+        }
+        if ($object instanceof \Stringable || method_exists($object, '__toString')) {
+            return $this->serializer->normalize((string) $object, $format, $context);
+        }
+    }
+
+    public function supportsNormalization($data, string $format = null)
+    {
+        return ($data instanceof \JsonSerializable || $data instanceof \Stringable || method_exists($data, '__toString'));
     }
 
     private function resolveConstructorMethod(string $dataType, string $className): ReflectionMethod
