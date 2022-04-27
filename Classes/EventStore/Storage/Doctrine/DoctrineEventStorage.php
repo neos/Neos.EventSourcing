@@ -24,8 +24,7 @@ use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
 use Neos\Error\Messages\Result;
 use Neos\Error\Messages\Warning;
-use Neos\EventSourcing\EventStore\EventNormalizer;
-use Neos\EventSourcing\EventStore\EventStream;
+use Neos\EventSourcing\EventStore\EventStreamIteratorInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
@@ -41,10 +40,6 @@ class DoctrineEventStorage implements EventStorageInterface
 {
     private const DEFAULT_EVENT_TABLE_NAME = 'neos_eventsourcing_eventstore_events';
 
-    /**
-     * @var EventNormalizer
-     */
-    protected $eventNormalizer;
 
     /**
      * @var Connection
@@ -58,13 +53,11 @@ class DoctrineEventStorage implements EventStorageInterface
 
     /**
      * @param array $options
-     * @param EventNormalizer $eventNormalizer
      * @param Connection $connection
      */
-    public function __construct(array $options, EventNormalizer $eventNormalizer, Connection $connection)
+    public function __construct(array $options, Connection $connection)
     {
         $this->eventTableName = $options['eventTableName'] ?? self::DEFAULT_EVENT_TABLE_NAME;
-        $this->eventNormalizer = $eventNormalizer;
         if (isset($options['backendOptions'])) {
             $factory = new ConnectionFactory();
             try {
@@ -80,7 +73,7 @@ class DoctrineEventStorage implements EventStorageInterface
     /**
      * @inheritdoc
      */
-    public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStream
+    public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStreamIteratorInterface
     {
         $this->reconnectDatabaseConnection();
         $query = $this->connection->createQueryBuilder()
@@ -105,8 +98,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $query->setParameter('minimumSequenceNumber', $minimumSequenceNumber);
         }
 
-        $streamIterator = new DoctrineStreamIterator($query);
-        return new EventStream($streamName, $streamIterator, $this->eventNormalizer);
+        return new DoctrineStreamIterator($query);
     }
 
     /**

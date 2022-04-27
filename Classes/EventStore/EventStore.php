@@ -59,7 +59,8 @@ final class EventStore
     public function load(StreamName $streamName, int $minimumSequenceNumber = 0): EventStream
     {
         try {
-            return $this->storage->load($streamName, $minimumSequenceNumber);
+            $streamIterator = $this->storage->load($streamName, $minimumSequenceNumber);
+            return new EventStream($streamName, $streamIterator, $this->eventNormalizer);
         } catch (\Throwable $exception) {
             throw new \RuntimeException(sprintf('Failed to read Events from stream "%s". Did you run the ./flow eventstore:setup command?', $streamName), 1592394137, $exception);
         }

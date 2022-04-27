@@ -13,7 +13,7 @@ namespace Neos\EventSourcing\EventStore\Storage;
  */
 
 use Neos\Error\Messages\Result;
-use Neos\EventSourcing\EventStore\EventStream;
+use Neos\EventSourcing\EventStore\EventStreamIteratorInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\StreamName;
@@ -27,9 +27,9 @@ interface EventStorageInterface
     /**
      * @param StreamName $filter
      * @param int $minimumSequenceNumber
-     * @return EventStream
+     * @return EventStreamIteratorInterface
      */
-    public function load(StreamName $filter, int $minimumSequenceNumber = 0): EventStream;
+    public function load(StreamName $filter, int $minimumSequenceNumber = 0): EventStreamIteratorInterface;
 
     /**
      * @param StreamName $streamName
