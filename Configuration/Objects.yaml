@@ -8,7 +8,5 @@ Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage:
     1:
       value: []
     2:
-      object: 'Neos\EventSourcing\EventStore\EventNormalizer'
-    3:
       object:
         factoryObjectName: 'Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory'
