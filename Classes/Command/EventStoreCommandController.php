@@ -18,6 +18,7 @@ use Neos\Error\Messages\Result;
 use Neos\Error\Messages\Warning;
 use Neos\EventSourcing\EventStore\EventStore;
 use Neos\EventSourcing\EventStore\EventStoreFactory;
+use Neos\EventSourcing\EventStore\Storage\EncryptionSupportInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 use Neos\Flow\Cli\Exception\StopCommandException;
@@ -51,7 +52,7 @@ class EventStoreCommandController extends CommandController
      * @return void
      * @throws StopCommandException
      */
-    public function setupCommand($eventStore): void
+    public function setupCommand(string $eventStore): void
     {
         $eventStores = $this->getAllEventStores();
         if (!isset($eventStores[$eventStore])) {
@@ -102,6 +103,57 @@ class EventStoreCommandController extends CommandController
             $this->outputLine(str_repeat('-', $this->output->getMaximumLineLength()));
 
             $this->renderResult($eventStore->getStatus());
+        }
+    }
+
+    /**
+     * Encrypt events
+     *
+     * This commands goes through all existing events stored in the specified event store and encrypts
+     * their payload using the configured encryption key. Make sure to set this encryption key using
+     * the event storage options in your Settings.yaml.
+     *
+     * @param string $eventStoreIdentifier
+     * @param bool $quiet
+     * @return void
+     * @throws
+     */
+    public function encryptCommand(string $eventStoreIdentifier, bool $quiet = false): void
+    {
+        $eventStores = $this->getAllEventStores();
+        if (!isset($eventStores[$eventStoreIdentifier])) {
+            $this->outputLine('<error>There is no Event Store "%s" configured</error>', [$eventStoreIdentifier]);
+            exit(1);
+        }
+
+        $eventStore = $eventStores[$eventStoreIdentifier];
+        if (!$eventStore->supportsEncryption()) {
+            $this->outputLine('<error>The event store "%s" does not support encryption</error>', [$eventStoreIdentifier]);
+            exit(1);
+        }
+        if ($eventStore->isEncryptionEnabled() === false) {
+            $this->outputLine('<error>Encryption is disabled for event store "%s"</error>', [$eventStoreIdentifier]);
+            exit(1);
+        }
+
+        if (!$quiet) {
+            $this->outputLine('Encrypting events in event store "%s"...', [$eventStoreIdentifier]);
+            $this->output->progressStart();
+        }
+        $eventsCount = 0;
+        $progressCallback = function () use (&$eventsCount, $quiet) {
+            $eventsCount++;
+            if (!$quiet) {
+                $this->output->progressAdvance();
+            }
+        };
+
+        $eventStore->encrypt($progressCallback);
+
+        if (!$quiet) {
+            $this->output->progressFinish();
+            $this->outputLine();
+            $this->outputLine('Encrypted %s events.', [$eventsCount]);
         }
     }
 

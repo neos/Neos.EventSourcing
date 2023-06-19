@@ -15,6 +15,7 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
@@ -24,11 +25,14 @@ use Neos\Error\Messages\Error;
 use Neos\Error\Messages\Notice;
 use Neos\Error\Messages\Result;
 use Neos\Error\Messages\Warning;
+use Neos\EventSourcing\EventStore\Encryption\EncryptionService;
 use Neos\EventSourcing\EventStore\EventNormalizer;
 use Neos\EventSourcing\EventStore\EventStream;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
+use Neos\EventSourcing\EventStore\Exception\UnsupportedOperationException;
 use Neos\EventSourcing\EventStore\ExpectedVersion;
 use Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory;
+use Neos\EventSourcing\EventStore\Storage\EncryptionSupportInterface;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Neos\EventSourcing\EventStore\StreamName;
 use Neos\EventSourcing\EventStore\WritableEvent;
@@ -37,34 +41,27 @@ use Neos\EventSourcing\EventStore\WritableEvents;
 /**
  * Database event storage adapter
  */
-class DoctrineEventStorage implements EventStorageInterface
+class DoctrineEventStorage implements EventStorageInterface, EncryptionSupportInterface
 {
     private const DEFAULT_EVENT_TABLE_NAME = 'neos_eventsourcing_eventstore_events';
 
-    /**
-     * @var EventNormalizer
-     */
-    protected $eventNormalizer;
+    protected EventNormalizer $eventNormalizer;
 
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private EncryptionService $encryptionService;
+    private Connection $connection;
+    private string $eventTableName;
+    private string $encryptionKey;
 
-    /**
-     * @var string
-     */
-    private $eventTableName;
-
-    /**
-     * @param array $options
-     * @param EventNormalizer $eventNormalizer
-     * @param Connection $connection
-     */
-    public function __construct(array $options, EventNormalizer $eventNormalizer, Connection $connection)
+    public function __construct(array $options, EventNormalizer $eventNormalizer, Connection $connection, EncryptionService $encryptionService)
     {
         $this->eventTableName = $options['eventTableName'] ?? self::DEFAULT_EVENT_TABLE_NAME;
+        $this->encryptionService = $encryptionService;
         $this->eventNormalizer = $eventNormalizer;
+
+        if (isset($options['encryption']['encryptionKey'])) {
+            $this->encryptionKey = (string)(base64_decode($options['encryption']['encryptionKey']) ?? $options['encryption']['encryptionKey']);
+        }
+
         if (isset($options['backendOptions'])) {
             $factory = new ConnectionFactory();
             try {
@@ -74,6 +71,42 @@ class DoctrineEventStorage implements EventStorageInterface
             }
         } else {
             $this->connection = $connection;
+        }
+    }
+
+    public function isEncryptionEnabled(): bool
+    {
+        return $this->encryptionKey !== '';
+    }
+
+    /**
+     * @param \Closure|null $progressCallback If set, this callback is invoked for every applied event during encryption with the argument $wasAlreadyEncrypted
+     * @return void
+     * @throws Exception
+     * @throws \JsonException
+     */
+    public function encrypt(\Closure $progressCallback = null): void
+    {
+        $this->reconnectDatabaseConnection();
+        $queryBuilder = $this->connection->createQueryBuilder();
+        $query = $queryBuilder
+            ->select('*')
+            ->from($this->eventTableName)
+            ->orderBy('sequencenumber', 'ASC');
+
+        foreach ($query->execute()->iterateAssociative() as $eventRow) {
+            if ($progressCallback) {
+                $progressCallback(false);
+            }
+            $payload = json_decode($eventRow['payload'], true, 512, JSON_THROW_ON_ERROR);
+            if (isset($payload['encryptedPayload'])) {
+                $progressCallback(true);
+                continue;
+            }
+            $payload = json_encode(['encryptedPayload' => $this->encryptionService->encryptAndEncode($eventRow['payload'], $this->encryptionKey)], JSON_THROW_ON_ERROR);
+            $updateQuery = $queryBuilder->update($this->eventTableName)->set('payload', $queryBuilder->createPositionalParameter($payload));
+            $updateQuery->execute();
+            $progressCallback(false);
         }
     }
 
@@ -105,7 +138,7 @@ class DoctrineEventStorage implements EventStorageInterface
             $query->setParameter('minimumSequenceNumber', $minimumSequenceNumber);
         }
 
-        $streamIterator = new DoctrineStreamIterator($query);
+        $streamIterator = new DoctrineStreamIterator($query, $this->encryptionService, $this->encryptionKey);
         return new EventStream($streamName, $streamIterator, $this->eventNormalizer);
     }
 
@@ -160,11 +193,17 @@ class DoctrineEventStorage implements EventStorageInterface
      * @param StreamName $streamName
      * @param WritableEvent $event
      * @param int $version
-     * @throws DBALException | UniqueConstraintViolationException
+     * @throws DBALException | UniqueConstraintViolationException | \JsonException | \Exception
      */
     private function commitEvent(StreamName $streamName, WritableEvent $event, int $version): void
     {
         $metadata = $event->getMetadata();
+
+        $payloadJson = json_encode($event->getData(), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
+        if ($this->encryptionKey !== '') {
+            $payloadJson = json_encode(['encryptedPayload' => $this->encryptionService->encryptAndEncode($payloadJson, $this->encryptionKey)], JSON_THROW_ON_ERROR);
+        }
+
         $this->connection->insert(
             $this->eventTableName,
             [
@@ -172,8 +211,8 @@ class DoctrineEventStorage implements EventStorageInterface
                 'stream' => (string)$streamName,
                 'version' => $version,
                 'type' => $event->getType(),
-                'payload' => json_encode($event->getData(), JSON_PRETTY_PRINT),
-                'metadata' => json_encode($metadata, JSON_PRETTY_PRINT),
+                'payload' => $payloadJson,
+                'metadata' => json_encode($metadata, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
                 'correlationidentifier' => $metadata['correlationIdentifier'] ?? null,
                 'causationidentifier' => $metadata['causationIdentifier'] ?? null,
                 'recordedat' => new \DateTimeImmutable('now'),
@@ -347,7 +386,7 @@ class DoctrineEventStorage implements EventStorageInterface
         $table->addColumn('correlationidentifier', Types::STRING, ['length' => 255, 'notnull' => false]);
         // An optional causation id, usually a UUID
         $table->addColumn('causationidentifier', Types::STRING, ['length' => 255, 'notnull' => false]);
-        // Timestamp of the the event publishing
+        // Timestamp of the event publishing
         $table->addColumn('recordedat', Types::DATETIME_IMMUTABLE);
 
         $table->setPrimaryKey(['sequencenumber']);

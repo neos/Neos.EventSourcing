@@ -12,7 +12,9 @@ namespace Neos\EventSourcing\EventStore\Storage\Doctrine;
  * source code.
  */
 
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Neos\EventSourcing\EventStore\Encryption\EncryptionService;
 use Neos\EventSourcing\EventStore\EventStreamIteratorInterface;
 use Neos\EventSourcing\EventStore\RawEvent;
 use Neos\EventSourcing\EventStore\StreamName;
@@ -23,33 +25,23 @@ use Neos\EventSourcing\EventStore\StreamName;
 final class DoctrineStreamIterator implements EventStreamIteratorInterface
 {
 
-    /**
-     * The number of records to fetch per batch
-     *
-     * @var int
-     */
     private const BATCH_SIZE = 100;
 
-    /**
-     * @var QueryBuilder
-     */
-    private $queryBuilder;
+    private QueryBuilder $queryBuilder;
+    private int $currentOffset = 0;
+    private \ArrayIterator $innerIterator;
+    private EncryptionService $encryptionService;
+    private string $encryptionKey;
 
     /**
-     * @var int
+     * @throws \Doctrine\DBAL\Driver\Exception
+     * @throws Exception
      */
-    private $currentOffset = 0;
-
-    /**
-     * @var \ArrayIterator
-     */
-    private $innerIterator;
-
-    /**
-     * @param QueryBuilder $queryBuilder
-     */
-    public function __construct(QueryBuilder $queryBuilder)
+    public function __construct(QueryBuilder $queryBuilder, EncryptionService $encryptionService, string $encryptionKey)
     {
+        $this->encryptionService = $encryptionService;
+        $this->encryptionKey = $encryptionKey;
+
         $this->queryBuilder = clone $queryBuilder;
         $this->queryBuilder->setMaxResults(self::BATCH_SIZE);
         $this->queryBuilder->andWhere('sequencenumber > :sequenceNumberOffset');
@@ -57,18 +49,22 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
     }
 
     /**
-     * @return RawEvent
+     * @throws \JsonException
      */
     public function current(): RawEvent
     {
         $currentEventData = $this->innerIterator->current();
-        $payload = json_decode($currentEventData['payload'], true);
-        $metadata = json_decode($currentEventData['metadata'], true);
+        $payload = json_decode($currentEventData['payload'], true, 512, JSON_THROW_ON_ERROR);
+        $metadata = json_decode($currentEventData['metadata'], true, 512, JSON_THROW_ON_ERROR);
         try {
             $recordedAt = new \DateTimeImmutable($currentEventData['recordedat']);
         } catch (\Exception $exception) {
             throw new \RuntimeException(sprintf('Could not parse recordedat timestamp "%s" as date.', $currentEventData['recordedat']), 1544211618, $exception);
         }
+        if (isset($payload['encryptedPayload'])) {
+            $payload = json_decode($this->encryptionService->decodeAndDecrypt($payload['encryptedPayload'], $this->encryptionKey), true, 512, JSON_THROW_ON_ERROR);
+        }
+
         return new RawEvent(
             (int)$currentEventData['sequencenumber'],
             $currentEventData['type'],
@@ -81,9 +77,6 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
         );
     }
 
-    /**
-     * @return void
-     */
     public function next(): void
     {
         $this->currentOffset = $this->innerIterator->current()['sequencenumber'];
@@ -94,25 +87,16 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
         $this->fetchBatch();
     }
 
-    /**
-     * @return bool|int
-     */
-    public function key(): mixed
+    public function key(): ?int
     {
         return $this->innerIterator->valid() ? $this->innerIterator->current()['sequencenumber'] : null;
     }
 
-    /**
-     * @return bool
-     */
     public function valid(): bool
     {
         return $this->innerIterator->valid();
     }
 
-    /**
-     * @return void
-     */
     public function rewind(): void
     {
         if ($this->currentOffset === 0) {
@@ -123,9 +107,8 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
     }
 
     /**
-     * Fetches a batch of maximum BATCH_SIZE records
-     *
-     * @return void
+     * @throws Exception
+     * @throws \Doctrine\DBAL\Driver\Exception
      */
     private function fetchBatch(): void
     {
@@ -133,7 +116,7 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
         // an OFFSET query, the DB needs to scan the result-set from the beginning (which is slow as hell).
         $this->queryBuilder->setParameter('sequenceNumberOffset', $this->currentOffset);
         $this->reconnectDatabaseConnection();
-        $rawResult = $this->queryBuilder->execute()->fetchAll();
+        $rawResult = $this->queryBuilder->execute()->fetchAllAssociative();
         $this->innerIterator = new \ArrayIterator($rawResult);
     }
 

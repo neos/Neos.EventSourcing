@@ -12,11 +12,14 @@ namespace Neos\EventSourcing\EventStore;
  * source code.
  */
 
+use Doctrine\DBAL\Exception;
 use Neos\Error\Messages\Result;
 use Neos\EventSourcing\Event\DecoratedEvent;
 use Neos\EventSourcing\Event\DomainEvents;
 use Neos\EventSourcing\EventPublisher\EventPublisherInterface;
 use Neos\EventSourcing\EventStore\Exception\ConcurrencyException;
+use Neos\EventSourcing\EventStore\Exception\UnsupportedOperationException;
+use Neos\EventSourcing\EventStore\Storage\EncryptionSupportInterface;
 use Neos\EventSourcing\EventStore\Storage\EventStorageInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerException;
@@ -108,6 +111,42 @@ final class EventStore
             throw new \RuntimeException(sprintf('Failed to commit Events to stream "%s". Did you run the ./flow eventstore:setup command?', $streamName), 1592393752, $exception);
         }
         $this->eventPublisher->publish($events);
+    }
+
+    /**
+     * Returns if the configured storage generally supports encryption
+     *
+     * @return bool
+     */
+    public function supportsEncryption(): bool
+    {
+        return $this->storage instanceof EncryptionSupportInterface;
+    }
+
+    /**
+     * Returns if the configured storage supports encryption and encryption is enabled
+     *
+     * @return bool
+     */
+    public function isEncryptionEnabled(): bool
+    {
+        return $this->storage instanceof EncryptionSupportInterface && $this->storage->isEncryptionEnabled();
+    }
+
+    /**
+     * @param \Closure|null $progressCallback If set, this callback is invoked for every applied event during encryption with the argument $wasAlreadyEncrypted
+     * @return void
+     * @throws Exception
+     */
+    public function encrypt(\Closure $progressCallback = null): void
+    {
+        if (!$this->storage instanceof EncryptionSupportInterface) {
+            throw new UnsupportedOperationException(sprintf('Failed encrypting events because the event store\'s storage (%s) does not support encryption.', get_class($this->storage)), 1687185035);
+        }
+        if (!$this->storage->isEncryptionEnabled()) {
+            throw new UnsupportedOperationException(sprintf('Failed encrypting events because encryption is not enabled for the event store\'s storage (%s).', get_class($this->storage)), 1687185155);
+        }
+        $this->storage->encrypt($progressCallback);
     }
 
     /**

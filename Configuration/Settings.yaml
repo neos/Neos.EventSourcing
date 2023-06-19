@@ -28,6 +28,8 @@ Neos:
 #                dbType: 'json_array'
 #                className: 'Some\Type\Implementation'
 #
+#            encryptionKey: ''
+#
 #          # OPTIONAL: implementation for the EventPublisherFactory (needs to implement EventPublisherFactoryInterface). If not set, the DefaultEventPublisherFactory is used
 #          eventPublisherFactory: 'Some\Class\Implementing\EventPublisherFactoryInterface'
 #

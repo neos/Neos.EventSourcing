@@ -101,7 +101,7 @@ class ProjectionCommandController extends CommandController
      * @see neos.eventsourcing:projection:list
      * @see neos.eventsourcing:projection:replayall
      */
-    public function replayCommand(string $projection, int $maximumSequenceNumber = null, $quiet = false): void
+    public function replayCommand(string $projection, int $maximumSequenceNumber = null, bool $quiet = false): void
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
