@@ -202,7 +202,9 @@ final class EventListenerInvoker
             }
         }
 
-        $appliedEventsStorage->saveHighestAppliedSequenceNumber($sequenceNumber);
+        if ($sequenceNumber > 0) {
+            $appliedEventsStorage->saveHighestAppliedSequenceNumber($sequenceNumber);
+        }
         $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
 
         if ($this->eventListener instanceof AfterCatchUpInterface) {
