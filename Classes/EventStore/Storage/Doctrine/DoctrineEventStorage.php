@@ -251,7 +251,7 @@ class DoctrineEventStorage implements EventStorageInterface
         $result->addNotice(new Notice((string)$this->connection->getParams()['host'], null, [], 'Host'));
         $result->addNotice(new Notice((string)$this->connection->getParams()['port'], null, [], 'Port'));
         $result->addNotice(new Notice((string)$this->connection->getDatabase(), null, [], 'Database'));
-        $result->addNotice(new Notice((string)$this->connection->getDriver()->getName(), null, [], 'Driver'));
+        $result->addNotice(new Notice((string)$this->connection->getDatabasePlatform()?->getName(), null, [], 'Platform'));
         $result->addNotice(new Notice((string)$this->connection->getParams()['user'], null, [], 'Username'));
         if ($tableExists) {
             $result->addNotice(new Notice('%s (exists)', null, [$this->eventTableName], 'Table'));
