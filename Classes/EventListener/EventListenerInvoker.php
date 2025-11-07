@@ -232,7 +232,7 @@ final class EventListenerInvoker
         try {
             $this->eventListener->$listenerMethodName($event, $rawEvent);
         } catch (\Throwable $exception) {
-            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), \get_class($this->eventListener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $this->eventListener);
+            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s because %s was thrown. Sequence number (%d) is not updated. Original exception (%s) thrown in %s line %s: %s', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($this->eventListener), get_class($exception), $rawEvent->getSequenceNumber(), $exception->getCode(), $exception->getFile(), $exception->getLine(), $exception->getMessage()), 1544207001, $exception, $eventEnvelope, $this->eventListener);
         }
         if ($this->eventListener instanceof AfterInvokeInterface) {
             $this->eventListener->afterInvoke($eventEnvelope);
