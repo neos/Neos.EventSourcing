@@ -45,7 +45,7 @@ final class EventToListenerMapping implements \JsonSerializable
 
     public static function create(string $eventClassName, string $listenerClassName, array $options): self
     {
-        return new static($eventClassName, $listenerClassName, $options);
+        return new self($eventClassName, $listenerClassName, $options);
     }
 
     public function getEventClassName(): string

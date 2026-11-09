@@ -37,14 +37,14 @@ final class WritableEvents implements \IteratorAggregate, \Countable
                 throw new \InvalidArgumentException(sprintf('Only instances of WritableEvent are allowed, given: %s', \is_object($event) ? \get_class($event) : \gettype($event)), 1540316594);
             }
         }
-        return new static(array_values($events));
+        return new self(array_values($events));
     }
 
     public function append(WritableEvent $event): self
     {
         $events = $this->events;
         $events[] = $event;
-        return new static($events);
+        return new self($events);
     }
 
     /**

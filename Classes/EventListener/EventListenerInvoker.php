@@ -169,6 +169,7 @@ final class EventListenerInvoker
         $streamName = $this->eventListener instanceof StreamAwareEventListenerInterface ? $this->eventListener::listensToStream() : StreamName::all();
         $eventStream = $this->eventStore->load($streamName, $highestAppliedSequenceNumber + 1);
         $appliedEventsCounter = 0;
+        $sequenceNumber = 0;
 
         foreach ($eventStream as $eventEnvelope) {
             $sequenceNumber = $eventEnvelope->getRawEvent()->getSequenceNumber();
@@ -181,41 +182,49 @@ final class EventListenerInvoker
                 break;
             }
             try {
-                $this->applyEvent($eventEnvelope);
+                $eventWasApplied = $this->applyEvent($eventEnvelope);
             } catch (EventCouldNotBeAppliedException $exception) {
                 $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
                 throw $exception;
             }
-            $appliedEventsCounter ++;
-            $appliedEventsStorage->saveHighestAppliedSequenceNumber($eventEnvelope->getRawEvent()->getSequenceNumber());
-            if ($this->transactionBatchSize === 1 || $appliedEventsCounter % $this->transactionBatchSize === 0) {
-                $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
-                $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
-            } else {
-                $highestAppliedSequenceNumber = $sequenceNumber;
+            if ($eventWasApplied) {
+                $appliedEventsCounter ++;
+                $appliedEventsStorage->saveHighestAppliedSequenceNumber($sequenceNumber);
+                if ($this->transactionBatchSize === 1 || $appliedEventsCounter % $this->transactionBatchSize === 0) {
+                    $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
+                    $highestAppliedSequenceNumber = $appliedEventsStorage->reserveHighestAppliedEventSequenceNumber();
+                } else {
+                    $highestAppliedSequenceNumber = $sequenceNumber;
+                }
             }
             foreach ($this->progressCallbacks as $callback) {
                 $callback($eventEnvelope);
             }
         }
+
+        if ($sequenceNumber > 0) {
+            $appliedEventsStorage->saveHighestAppliedSequenceNumber($sequenceNumber);
+        }
         $appliedEventsStorage->releaseHighestAppliedSequenceNumber();
+
+        if ($this->eventListener instanceof AfterCatchUpInterface) {
+            $this->eventListener->afterCatchUp();
+        }
     }
 
     /**
      * @param EventEnvelope $eventEnvelope
+     * @return bool If the event was applied, false if no matching listener method existed
      * @throws EventCouldNotBeAppliedException
      */
-    private function applyEvent(EventEnvelope $eventEnvelope): void
+    private function applyEvent(EventEnvelope $eventEnvelope): bool
     {
         $event = $eventEnvelope->getDomainEvent();
         $rawEvent = $eventEnvelope->getRawEvent();
-        try {
-            $listenerMethodName = 'when' . (new \ReflectionClass($event))->getShortName();
-        } catch (\ReflectionException $exception) {
-            throw new \RuntimeException(sprintf('Could not extract listener method name for listener %s and event %s', \get_class($this->eventListener), \get_class($event)), 1541003718, $exception);
-        }
+        $eventClassName = get_class($event);
+        $listenerMethodName = 'when' . substr($eventClassName, strrpos($eventClassName, '\\') + 1);
         if (!method_exists($this->eventListener, $listenerMethodName)) {
-            return;
+            return false;
         }
         if ($this->eventListener instanceof BeforeInvokeInterface) {
             $this->eventListener->beforeInvoke($eventEnvelope);
@@ -223,11 +232,12 @@ final class EventListenerInvoker
         try {
             $this->eventListener->$listenerMethodName($event, $rawEvent);
         } catch (\Throwable $exception) {
-            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s. Sequence number (%d) is not updated', $rawEvent->getIdentifier(), $rawEvent->getType(), \get_class($this->eventListener), $rawEvent->getSequenceNumber()), 1544207001, $exception, $eventEnvelope, $this->eventListener);
+            throw new EventCouldNotBeAppliedException(sprintf('Event "%s" (%s) could not be applied to %s because %s was thrown. Sequence number (%d) is not updated. Original exception (%s) thrown in %s line %s: %s', $rawEvent->getIdentifier(), $rawEvent->getType(), get_class($this->eventListener), get_class($exception), $rawEvent->getSequenceNumber(), $exception->getCode(), $exception->getFile(), $exception->getLine(), $exception->getMessage()), 1544207001, $exception, $eventEnvelope, $this->eventListener);
         }
         if ($this->eventListener instanceof AfterInvokeInterface) {
             $this->eventListener->afterInvoke($eventEnvelope);
         }
+        return true;
     }
 
     /**

@@ -52,7 +52,7 @@ final class DoctrineAppliedEventsStorage implements AppliedEventsStorageInterfac
                 'INSERT INTO ' . AppliedEventsLog::TABLE_NAME . ' (eventListenerIdentifier, highestAppliedSequenceNumber) VALUES (:eventListenerIdentifier, -1)',
                 ['eventListenerIdentifier' => $this->eventListenerIdentifier]
             );
-        } catch (DBALException $exception) {
+        } catch (\Exception $exception) {
             // UniqueConstraintViolationException = The sequence number is already registered => ignore
             if ($exception instanceof UniqueConstraintViolationException) {
                 return;
@@ -73,7 +73,7 @@ final class DoctrineAppliedEventsStorage implements AppliedEventsStorageInterfac
         $this->dbal->beginTransaction();
         $this->setLockTimeout();
         try {
-            $highestAppliedSequenceNumber = $this->dbal->fetchColumn(
+            $highestAppliedSequenceNumber = $this->dbal->fetchOne(
                 '
                 SELECT highestAppliedSequenceNumber
                 FROM ' . $this->dbal->quoteIdentifier(AppliedEventsLog::TABLE_NAME) . '

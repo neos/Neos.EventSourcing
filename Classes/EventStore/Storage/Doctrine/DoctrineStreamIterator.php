@@ -97,7 +97,7 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
     /**
      * @return bool|int
      */
-    public function key()
+    public function key(): mixed
     {
         return $this->innerIterator->valid() ? $this->innerIterator->current()['sequencenumber'] : null;
     }
@@ -145,7 +145,9 @@ final class DoctrineStreamIterator implements EventStreamIteratorInterface
      */
     private function reconnectDatabaseConnection(): void
     {
-        if ($this->queryBuilder->getConnection()->ping() === false) {
+        try {
+            $this->queryBuilder->getConnection()->fetchOne('SELECT 1');
+        } catch (\Exception $e) {
             $this->queryBuilder->getConnection()->close();
             $this->queryBuilder->getConnection()->connect();
         }

@@ -101,7 +101,7 @@ class ProjectionCommandController extends CommandController
      * @see neos.eventsourcing:projection:list
      * @see neos.eventsourcing:projection:replayall
      */
-    public function replayCommand(string $projection, int $maximumSequenceNumber = null, $quiet = false): void
+    public function replayCommand(string $projection, ?int $maximumSequenceNumber = null, $quiet = false): void
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
@@ -142,7 +142,7 @@ class ProjectionCommandController extends CommandController
      * @see neos.eventsourcing:projection:replay
      * @noinspection DisconnectedForeachInstructionInspection
      */
-    public function replayAllCommand(int $maximumSequenceNumber = null, $quiet = false): void
+    public function replayAllCommand(?int $maximumSequenceNumber = null, $quiet = false): void
     {
         if (!$quiet) {
             $this->outputLine('Replaying all projections%s', [$maximumSequenceNumber ? ' until sequence number ' . $maximumSequenceNumber : '']);
@@ -194,7 +194,7 @@ class ProjectionCommandController extends CommandController
      * @see neos.eventsourcing:projection:list
      * @see neos.eventsourcing:projection:replay
      */
-    public function catchUpCommand(string $projection, int $maximumSequenceNumber = null, $quiet = false): void
+    public function catchUpCommand(string $projection, ?int $maximumSequenceNumber = null, $quiet = false): void
     {
         $projectionDto = $this->resolveProjectionOrQuit($projection);
 
@@ -240,7 +240,7 @@ class ProjectionCommandController extends CommandController
      * @see neos.eventsourcing:projection:replay
      * @noinspection DisconnectedForeachInstructionInspection
      */
-    public function catchUpAllCommand(int $maximumSequenceNumber = null, $quiet = false): void
+    public function catchUpAllCommand(?int $maximumSequenceNumber = null, $quiet = false): void
     {
         if (!$quiet) {
             $this->outputLine('Catching up on events for all projections%s', [$maximumSequenceNumber ? ' until sequence number ' . $maximumSequenceNumber : '']);

@@ -102,7 +102,7 @@ class ProjectionManager
      * @throws EventCouldNotBeAppliedException
      * @api
      */
-    public function replay(string $projectionIdentifier, Closure $progressCallback = null): void
+    public function replay(string $projectionIdentifier, ?Closure $progressCallback = null): void
     {
         $eventListenerInvoker = $this->createEventListenerInvokerForProjection($projectionIdentifier);
         if ($progressCallback !== null) {
@@ -124,7 +124,7 @@ class ProjectionManager
      * @param Closure|null $progressCallback If set, this callback is invoked for every applied event during replay with the arguments $sequenceNumber and $eventStreamVersion
      * @throws EventCouldNotBeAppliedException
      */
-    public function replayUntilSequenceNumber(string $projectionIdentifier, int $maximumSequenceNumber, Closure $progressCallback = null): void
+    public function replayUntilSequenceNumber(string $projectionIdentifier, int $maximumSequenceNumber, ?Closure $progressCallback = null): void
     {
         $eventListenerInvoker = $this->createEventListenerInvokerForProjection($projectionIdentifier)->withMaximumSequenceNumber($maximumSequenceNumber);
         if ($progressCallback !== null) {
@@ -145,7 +145,7 @@ class ProjectionManager
      * @param Closure|null $progressCallback If set, this callback is invoked for every applied event during catch-up with the arguments $sequenceNumber and $eventStreamVersion
      * @throws EventCouldNotBeAppliedException
      */
-    public function catchUp(string $projectionIdentifier, Closure $progressCallback = null): void
+    public function catchUp(string $projectionIdentifier, ?Closure $progressCallback = null): void
     {
         $eventListenerInvoker = $this->createEventListenerInvokerForProjection($projectionIdentifier);
         if ($progressCallback !== null) {
@@ -162,7 +162,7 @@ class ProjectionManager
       * @param Closure|null $progressCallback If set, this callback is invoked for every applied event during catch-up with the arguments $sequenceNumber and $eventStreamVersion
      * @throws EventCouldNotBeAppliedException
      */
-    public function catchUpUntilSequenceNumber(string $projectionIdentifier, int $maximumSequenceNumber, Closure $progressCallback = null): void
+    public function catchUpUntilSequenceNumber(string $projectionIdentifier, int $maximumSequenceNumber, ?Closure $progressCallback = null): void
     {
         $eventListenerInvoker = $this->createEventListenerInvokerForProjection($projectionIdentifier)->withMaximumSequenceNumber($maximumSequenceNumber);
         if ($progressCallback !== null) {
