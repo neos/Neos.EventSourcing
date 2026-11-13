@@ -13,7 +13,8 @@ Neos:
 #              When using the DoctrineEventStorage adapter events are stored in a table called "neos_eventsourcing_eventstore_events" by default. This can be changed per Event Store:
 #            eventTableName: 'some_package_custom_events'
 #
-#              By default the Flow database connection is reused for the EventEvent store backend, but this can be changed per Event Store. Note: BackendOptions will be merged with the Flow default backend options
+#              By default the Flow database connection is reused for the EventEvent store backend, but this can be changed per Event Store. Note: backendOptions will be merged with the Flow default backend options
+#              If you want to use the same database as Flow, do not set backendOptions otherwise errors in the schema generation might happen.
 #            backendOptions:
 #              driver: pdo_mysql
 #              host: 127.0.0.1

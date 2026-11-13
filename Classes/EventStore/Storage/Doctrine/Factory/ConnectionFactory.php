@@ -22,22 +22,13 @@ use Neos\Flow\Annotations as Flow;
 use Neos\Utility\Arrays;
 
 /**
- * Factory for Doctrine connections
+ * Factory for Doctrine connections, this should only be used outside of Flow
+ * OR if you actually want to use a different database than the one Flow uses.
  *
  * @Flow\Scope("singleton")
  */
 class ConnectionFactory
 {
-
-    /**
-     * NOTE: We inject the Doctrine ObjectManager in order to initialize the EntityManagerConfiguration::configureEntityManager
-     * slot is invoked. Without this an exception 'Unknown column type "flow_json_array" requested' might be thrown
-     *
-     * @Flow\Inject(lazy=false)
-     * @var EntityManagerInterface
-     */
-    protected $doctrineEntityManager;
-
     /**
      * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence.backendOptions")
      */
