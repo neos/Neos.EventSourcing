@@ -11,4 +11,4 @@ Neos\EventSourcing\EventStore\Storage\Doctrine\DoctrineEventStorage:
       object: 'Neos\EventSourcing\EventStore\EventNormalizer'
     3:
       object:
-        factoryObjectName: 'Neos\EventSourcing\EventStore\Storage\Doctrine\Factory\ConnectionFactory'
+        factoryObjectName: 'Neos\Flow\Persistence\Doctrine\ConnectionFactory'
