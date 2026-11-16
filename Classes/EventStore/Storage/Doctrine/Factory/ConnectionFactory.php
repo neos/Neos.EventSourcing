@@ -22,26 +22,16 @@ use Neos\Flow\Annotations as Flow;
 use Neos\Utility\Arrays;
 
 /**
- * Factory for Doctrine connections
+ * Factory for Doctrine connections.
  *
  * @Flow\Scope("singleton")
  */
 class ConnectionFactory
 {
-
     /**
-     * NOTE: We inject the Doctrine ObjectManager in order to initialize the EntityManagerConfiguration::configureEntityManager
-     * slot is invoked. Without this an exception 'Unknown column type "flow_json_array" requested' might be thrown
-     *
-     * @Flow\Inject(lazy=false)
-     * @var EntityManagerInterface
+     * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence")
      */
-    protected $doctrineEntityManager;
-
-    /**
-     * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence.backendOptions")
-     */
-    protected $defaultFlowDatabaseConfiguration;
+    protected $flowPersistenceConfiguration;
 
     /**
      * @param array|null $options
@@ -52,16 +42,24 @@ class ConnectionFactory
     {
         $config = new Configuration();
         $connectionParams = $options['backendOptions'] ?? [];
-        $connectionParams = Arrays::arrayMergeRecursiveOverrule($this->defaultFlowDatabaseConfiguration, $connectionParams);
+        $connectionParams = Arrays::arrayMergeRecursiveOverrule($this->flowPersistenceConfiguration['backendOptions'], $connectionParams);
 
         $connection = DriverManager::getConnection($connectionParams, $config);
+        $databasePlatform = $connection->getDatabasePlatform();
+
+        foreach ($this->flowPersistenceConfiguration['doctrine']['dbal']['mappingTypes'] ?? [] as $typeName => $typeConfiguration) {
+            if (!Type::hasType($typeName)) {
+                Type::addType($typeName, $typeConfiguration['className']);
+            }
+            $databasePlatform->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
+        }
 
         if (isset($options['mappingTypes']) && \is_array($options['mappingTypes'])) {
             foreach ($options['mappingTypes'] as $typeName => $typeConfiguration) {
                 if (!Type::hasType($typeName)) {
                     Type::addType($typeName, $typeConfiguration['className']);
                 }
-                $connection->getDatabasePlatform()->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
+                $databasePlatform->registerDoctrineTypeMapping($typeConfiguration['dbType'], $typeName);
             }
         }
 
