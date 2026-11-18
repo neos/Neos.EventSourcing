@@ -17,7 +17,6 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
-use Doctrine\ORM\EntityManagerInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Utility\Arrays;
 
@@ -29,7 +28,8 @@ use Neos\Utility\Arrays;
 class ConnectionFactory
 {
     /**
-     * @var @Flow\InjectConfiguration(package="Neos.Flow", path="persistence")
+     * @Flow\InjectConfiguration(package="Neos.Flow", path="persistence")
+     * @var array
      */
     protected $flowPersistenceConfiguration;
 
@@ -42,7 +42,7 @@ class ConnectionFactory
     {
         $config = new Configuration();
         $connectionParams = $options['backendOptions'] ?? [];
-        $connectionParams = Arrays::arrayMergeRecursiveOverrule($this->flowPersistenceConfiguration['backendOptions'], $connectionParams);
+        $connectionParams = Arrays::arrayMergeRecursiveOverrule($this->flowPersistenceConfiguration['backendOptions'] ?? [], $connectionParams);
 
         $connection = DriverManager::getConnection($connectionParams, $config);
         $databasePlatform = $connection->getDatabasePlatform();
