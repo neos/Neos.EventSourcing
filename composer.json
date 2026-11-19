@@ -7,8 +7,8 @@
         "php": ">=8.0",
         "neos/flow": "^7.0 || ^8.0 || ^9.0 || dev-master",
         "flowpack/jobqueue-common": "^3.0 || dev-master",
-        "symfony/serializer": "^5.1",
-        "symfony/property-access": "^5.1",
+        "symfony/serializer": "^5.1 || ^6.0",
+        "symfony/property-access": "^5.1 || ^6.0",
         "ramsey/uuid": "^3.9 || ^4.0"
     },
     "require-dev": {
